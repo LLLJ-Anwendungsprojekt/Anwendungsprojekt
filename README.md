@@ -34,7 +34,7 @@ jupyter notebook
 Siehe [README_2.md](./README_2.md) für Dependencies.
 
 ## Algorithmen
-1. DB Scan
-2. K-Means Clustering
-3. Lineare Regression
-4. KNN 
+1. DB Scan (Lorenz)
+2. K-Means Clustering (Leonard)
+3. Lineare Regression (Lukas)
+4. KNN (Johannes)
