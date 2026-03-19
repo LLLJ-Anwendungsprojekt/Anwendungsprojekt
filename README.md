@@ -32,3 +32,9 @@ jupyter notebook
 ```
 
 Siehe [README_2.md](./README_2.md) für Dependencies.
+
+## Algorithmen
+1. DB Scan
+2. K-Means Clustering
+3. Lineare Regression
+4. KNN 
