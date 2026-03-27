@@ -1,5 +1,9 @@
 # Anwendungsprojekt: CRISP-DM Data-Science
 
+## Fact Sheet
+https://telekom-my.sharepoint.de/:x:/r/personal/lukas_niessen_telekom_de/Documents/Datenschema%20AWP.xlsx?d=wbea638ca5d42487cb926684175e76b68&csf=1&web=1&e=lyTyS4
+
+
 ## Struktur
 
 ```
