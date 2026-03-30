@@ -1,0 +1,234 @@
+\documentclass[12pt,a4paper]{article}
+
+% ---------------------------------------------------
+% Pakete
+% ---------------------------------------------------
+\usepackage[ngerman]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{caption}
+\usepackage{csquotes}
+
+% Literatur (Harvard Style, FOM-konform)
+\usepackage[
+backend=biber,
+style=authoryear,
+citestyle=authoryear,
+sorting=nyt,
+maxcitenames=2,
+maxbibnames=99,
+giveninits=true,
+uniquename=false,
+uniquelist=false,
+doi=false,
+isbn=false,
+url=true
+]{biblatex}
+\addbibresource{literatur.bib}
+
+% Absatz ohne Einzug
+\setlength{\parindent}{0pt}
+
+% Seitenränder gemäß FOM-Leitfaden
+\geometry{
+    left=4cm,
+    right=2cm,
+    top=4cm,
+    bottom=2cm
+}
+
+% Zeilenabstand
+\onehalfspacing
+
+% ---------------------------------------------------
+% Dokument
+% ---------------------------------------------------
+\begin{document}
+
+% ---------------------------------------------------
+% Titelblatt
+% ---------------------------------------------------
+\begin{titlepage}
+\begin{center}
+
+{\Large FOM Hochschule für Oekonomie \& Management}\\[1cm]
+
+{\large Seminararbeit im Modul Anwendungsprojekt}\\[1cm]
+
+{\huge\bfseries Analyse der Auswirkung geopolitischer Konflikte auf Aktienindizes}\\[1.2cm]
+
+\end{center}
+
+\vfill
+
+\begin{flushleft}
+Autoren: Lorenz Chylka, Leonard Reglin, Lukas X., Johannes X.\\
+Matrikelnummer: 736986,740270\\
+Studiengang: Wirtschaftsinformatik (B.Sc.)\\
+Semester: 6. Semester\\
+Betreuer: N.N.\\
+Abgabedatum: TT.MM.JJJJ\\
+\end{flushleft}
+
+\end{titlepage}
+
+% ---------------------------------------------------
+% Verzeichnisse
+% ---------------------------------------------------
+\pagenumbering{Roman}
+
+\tableofcontents
+\newpage
+
+\listoffigures
+\newpage
+
+\listoftables
+\newpage
+
+\section*{Abkürzungsverzeichnis}
+\addcontentsline{toc}{section}{Abkürzungsverzeichnis}
+
+\begin{tabular}{ll}
+CRISP-DM & Cross Industry Standard Process for Data Mining \\
+KNN & k-Nearest Neighbour Algorithmus \\
+ML & Machine Learning \\
+\end{tabular}
+
+\newpage
+
+% ---------------------------------------------------
+% Textteil
+% ---------------------------------------------------
+\pagenumbering{arabic}
+
+% =======================
+\section{Einleitung}
+
+Im Rahmen des Moduls Anwendungsprojekt wird ein datengetriebenes System entwickelt, das untersucht, inwiefern geopolitische Konflikte messbare Auswirkungen auf die kurzfristige Volatilität internationaler Aktienmärkte haben. Grundlage bilden öffentlich verfügbare Zeitreihendaten internationaler Aktienindizes sowie konfliktbezogene Ereignisdaten des UCDP Armed Conflict Data Sets. Die Analyse basiert auf der Prozessstruktur des CRISP-DM-Modells.
+
+Ziel des Projekts ist die Extraktion, Verarbeitung und Modellierung hochdimensionaler Datenquellen, um mithilfe verschiedener Algorithmen – darunter DBSCAN, K-Means, lineare Regression und KNN – potenzielle Zusammenhänge und Muster zu identifizieren. Darüber hinaus wird eine modulare Datenpipeline entwickelt, die Reproduzierbarkeit, Nachvollziehbarkeit und automatisierte Prozessschritte sicherstellt.
+
+% =======================
+\section{CRISP-DM Prozessmodell}
+
+\subsection{Business Understanding}
+Kurze Beschreibung des Analyseziels, Hypothesen, Geschäftsrelevanz und potenzieller Mehrwert.
+
+\subsection{Data Understanding}
+Beschreibung der Datenquellen:\\
+– Stock Exchange Dataset (Kaggle): \url{https://www.kaggle.com/datasets/mattiuzc/stock-exchange-data}\\
+– UCDP Conflict Data: \url{https://ucdp.uu.se/downloads/\#ged_global}
+
+Überblick über Umfang, Zeiträume, Struktur, Missing Values, Besonderheiten.
+
+\subsection{Data Preparation}
+Datenbereinigung, Matching zwischen Konflikt- und Aktienmarktdaten, Normalisierung, Feature Engineering, Ableitung eines Konfliktintensitätsfaktors, etc.
+
+\subsection{Modeling}
+Eingesetzte Modelle:
+\begin{itemize}
+    \item DBSCAN (Clustering) – Lorenz
+    \item K-Means (Clustering) – Leonard
+    \item Lineare Regression (Regression) – Lukas
+    \item KNN (Klassifikation/Regression) – Johannes
+\end{itemize}
+
+Beschreibung der Hyperparameter, Validierung, Visualisierungen.
+
+\subsection{Evaluation}
+Modellgüte, Vergleich der Algorithmen, Interpretation der Ergebnisse, Grenzen der Aussagekraft.
+
+\subsection{Deployment}
+Beschreibung des Projekt-Repositorys:
+
+\begin{verbatim}
+Anwendungsprojekt/
+├── src/               
+├── data/raw/          
+├── data/processed/    
+├── configs/           
+├── tests/             
+└── requirements.txt
+\end{verbatim}
+
+Kurze Erläuterung der Projektdokumentation (README), Jupyter-Notebooks und Reproduzierbarkeit.
+
+% =======================
+\section{Datenschema}
+
+\subsection{Konfliktdaten (UCDP GED)}
+Basierend auf \texttt{Datenschema\_AWP.xlsx} wurden die wichtigsten Attribute extrahiert:
+
+\begin{table}[h]
+\centering
+\caption{Datenschema Konfliktdaten}
+\begin{tabular}{ll}
+\toprule
+Spalte & Beschreibung \\
+\midrule
+conflict\_id & eindeutige Identifikation eines Konflikts \\
+region & geographische Region \\
+where\_coordinates & Ort des Konflikts \\
+start\_date & Startdatum des Ereignisses \\
+deaths\_best & Anzahl der Toten (Best Estimate) \\
+date\_prec & Genauigkeit der Datumsangabe \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Aktienmarktdaten}
+\begin{table}[h]
+\centering
+\caption{Datenschema Aktienindizes}
+\begin{tabular}{ll}
+\toprule
+Spalte & Beschreibung \\
+\midrule
+Indexname & Name des Aktienindex \\
+Date & Datum (Match zu Konfliktdaten) \\
+Open & Eröffnungswert \\
+Close & Schlusswert \\
+Adj. Close & Bereinigter Schlusswert \\
+Differenz & Prozentuale Veränderung \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% =======================
+\section{Fazit}
+Kurze Zusammenfassung der Ergebnisse und wissenschaftliche Einordnung.
+
+% ---------------------------------------------------
+% Literatur
+% ---------------------------------------------------
+\newpage
+\printbibliography
+\addcontentsline{toc}{section}{Literaturverzeichnis}
+
+% ---------------------------------------------------
+% Anhang
+% ---------------------------------------------------
+\newpage
+\appendix
+\section{Anhang}
+Screenshots, Diagramme, Code-Auszüge, etc.
+
+% ---------------------------------------------------
+% KI-Hilfsmittelverzeichnis
+% ---------------------------------------------------
+\newpage
+\section*{KI-Hilfsmittelverzeichnis}
+\addcontentsline{toc}{section}{KI-Hilfsmittelverzeichnis}
+
+\begin{itemize}
+    \item M365 Copilot (GPT‑5), Zugriff am TT.MM.JJJJ.
+\end{itemize}
+
+\end{document}
