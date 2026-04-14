@@ -6,6 +6,7 @@
 \usepackage[ngerman]{babel}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage{mathptmx} % Times New Roman
 \usepackage{setspace}
 \usepackage{graphicx}
 \usepackage{booktabs}
@@ -14,6 +15,27 @@
 \usepackage{geometry}
 \usepackage{caption}
 \usepackage{csquotes}
+\usepackage{fancyhdr} % Für die Seitenzahlen im Format - 1 -
+
+% ---------------------------------------------------
+% Literatur-Datenbank (wird automatisch erstellt)
+% ---------------------------------------------------
+\begin{filecontents}{literatur.bib}
+@inproceedings{wirth2000crisp,
+  title={CRISP-DM: Towards a standard process model for data mining},
+  author={Wirth, Rüdiger and Hipp, Jochen},
+  booktitle={Proceedings of the 4th international conference on the practical applications of knowledge discovery and data mining},
+  pages={29--39},
+  year={2000},
+  organization={Manchester}
+}
+@techreport{chapman2000crisp,
+  title={CRISP-DM 1.0: Step-by-step data mining guide},
+  author={Chapman, Pete and Clinton, Julian and Kerber, Randy and Khabaza, Thomas and Reinartz, Thomas and Shearer, Colin and Wirth, Rüdiger},
+  year={2000},
+  institution={NCR Systems Engineering Copenhagen}
+}
+\end{filecontents}
 
 % Literatur (Harvard Style, FOM-konform)
 \usepackage[
@@ -32,9 +54,6 @@ url=true
 ]{biblatex}
 \addbibresource{literatur.bib}
 
-% Absatz ohne Einzug
-\setlength{\parindent}{0pt}
-
 % Seitenränder gemäß FOM-Leitfaden
 \geometry{
     left=4cm,
@@ -43,45 +62,63 @@ url=true
     bottom=2cm
 }
 
-% Zeilenabstand
+% Zeilenabstand (1,5-zeilig)
 \onehalfspacing
+\setlength{\parindent}{0pt}
+
+% Seitenzahlen-Stil definieren (- 1 -)
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[C]{- \thepage{} -}
 
 % ---------------------------------------------------
-% Dokument
+% Dokument Beginn
 % ---------------------------------------------------
 \begin{document}
 
 % ---------------------------------------------------
-% Titelblatt
+% TITELBLATT (1:1 Anpassung an Word-Vorlage)
 % ---------------------------------------------------
 \begin{titlepage}
 \begin{center}
+    \vspace*{-2.5cm} 
+    \includegraphics[width=4cm]{fom_logo.png} \\[0.5cm]
+    
+    \textbf{FOM Hochschule für Oekonomie \& Management} \\
+    Hochschulzentrum Bonn \\[1.0cm]
 
-{\Large FOM Hochschule für Oekonomie \& Management}\\[1cm]
+    {\Large Berufsbegleitender Studiengang Wirtschaftsinformatik} \\[0.2cm]
+    zum \\[0.2cm]
+    Bachelor of Science (B.Sc.) \\[0.2cm]
+    6. Semester \\[1.5cm]
 
-{\large Seminararbeit im Modul Anwendungsprojekt}\\[1cm]
+    Seminararbeit im Modul Anwendungsprojekt zum Thema \\[1.5cm]
 
-{\huge\bfseries Analyse der Auswirkung geopolitischer Konflikte auf Aktienindizes}\\[1.2cm]
-
+    {\Large \textbf{„Analyse der Auswirkung geopolitischer Konflikte auf \\ Aktienindizes“}} \\[1.5cm]
 \end{center}
 
 \vfill
 
 \begin{flushleft}
-Autoren: Lorenz Chylka, Leonard Reglin, Lukas X., Johannes Solbach\\
-Matrikelnummer: 736986,740270, XXXXXX, 732936\\
-Studiengang: Wirtschaftsinformatik (B.Sc.)\\
-Semester: 6. Semester\\
-Betreuer: N.N.\\
-Abgabedatum: TT.MM.JJJJ\\
+    \begin{tabular}{@{}ll} 
+        Dozent: & Prof. Dr. Julian Schröter \\
+        Name: & Lorenz Chylka, Leonard Reglin, \\
+              & Lukas Nießen, Johannes Solbach \\
+        Matrikelnummer: & 736986, 740270, 728085, 732936 \\
+        Abgabedatum: & 15.06.2026 \\
+        Wörter Hausarbeit: & XXX \\
+        Wörter Code: & XXX \\
+    \end{tabular}
 \end{flushleft}
-
 \end{titlepage}
 
 % ---------------------------------------------------
-% Verzeichnisse
+% VERZEICHNISSE (Römische Seitenzahlen)
 % ---------------------------------------------------
+\newpage
 \pagenumbering{Roman}
+\pagestyle{fancy}
 
 \tableofcontents
 \newpage
@@ -94,141 +131,152 @@ Abgabedatum: TT.MM.JJJJ\\
 
 \section*{Abkürzungsverzeichnis}
 \addcontentsline{toc}{section}{Abkürzungsverzeichnis}
-
-\begin{tabular}{ll}
-CRISP-DM & Cross Industry Standard Process for Data Mining \\
-KNN & k-Nearest Neighbour Algorithmus \\
-ML & Machine Learning \\
+\begin{tabular}{@{}ll}
+    CRISP-DM & Cross Industry Standard Process for Data Mining \\
+    DBSCAN & Density-Based Spatial Clustering of Applications with Noise \\
+    KNN & K-Nearest Neighbor Algorithmus \\
+    ML & Machine Learning \\
+    API & Application Programming Interface \\
 \end{tabular}
-
 \newpage
 
 % ---------------------------------------------------
-% Textteil
+% TEXTTEIL (Arabische Seitenzahlen)
 % ---------------------------------------------------
 \pagenumbering{arabic}
+\setcounter{page}{8} % Start bei Seite 8 zur Anpassung an eure Vorlage
 
-% =======================
 \section{Einleitung}
-
 Im Rahmen des Moduls Anwendungsprojekt wird ein datengetriebenes System entwickelt, das untersucht, inwiefern geopolitische Konflikte messbare Auswirkungen auf die kurzfristige Volatilität internationaler Aktienmärkte haben. Grundlage bilden öffentlich verfügbare Zeitreihendaten internationaler Aktienindizes sowie konfliktbezogene Ereignisdaten des UCDP Armed Conflict Data Sets. Die Analyse basiert auf der Prozessstruktur des CRISP-DM-Modells.
 
 Ziel des Projekts ist die Extraktion, Verarbeitung und Modellierung hochdimensionaler Datenquellen, um mithilfe verschiedener Algorithmen – darunter DBSCAN, K-Means, lineare Regression und KNN – potenzielle Zusammenhänge und Muster zu identifizieren. Darüber hinaus wird eine modulare Datenpipeline entwickelt, die Reproduzierbarkeit, Nachvollziehbarkeit und automatisierte Prozessschritte sicherstellt.
 
-% =======================
-\section{CRISP-DM Prozessmodell}
+% ===================================================
+\section{Projektbeschreibung nach CRISP-DM}
 
 \subsection{Business Understanding}
-Kurze Beschreibung des Analyseziels, Hypothesen, Geschäftsrelevanz und potenzieller Mehrwert.
+Die Phase des Business Understanding bildet das Fundament des Projekts nach dem CRISP-DM-Standardmodell \parencite{wirth2000crisp}. In diesem ersten Schritt werden die Projektziele aus einer fachlichen Perspektive definiert. Das primäre Ziel dieser Arbeit besteht darin, die Sensitivität globaler Finanzmärkte gegenüber geopolitischen Schocks quantitativ zu untersuchen und zu bewerten. 
 
-\subsection{Data Understanding}
-Beschreibung der Datenquellen:\\
-– Stock Exchange Dataset (Kaggle): \url{https://www.kaggle.com/datasets/mattiuzc/stock-exchange-data}\\
-– UCDP Conflict Data: \url{https://ucdp.uu.se/downloads/\#ged_global}
+Geopolitische Ereignisse wie Kriege oder bewaffnete Konflikte führen häufig zu abrupten Verhaltensänderungen bei Marktteilnehmern, was sich in erhöhter Volatilität und Kapitalabflüssen aus risikobehafteten Anlagen widerspiegelt. Die zentrale Forschungsfrage lautet: Inwiefern lassen sich durch die Kombination historischer Konfliktdaten (UCDP) und Marktdaten signifikante Muster der Marktreaktion identifizieren?
 
-Überblick über Umfang, Zeiträume, Struktur, Missing Values, Besonderheiten.
-
-\subsection{Data Preparation}
-Datenbereinigung, Matching zwischen Konflikt- und Aktienmarktdaten, Normalisierung, Feature Engineering, Ableitung eines Konfliktintensitätsfaktors, etc.
-
-\subsection{Modeling}
-Eingesetzte Modelle:
+Daraus leiten sich folgende Hypothesen ab:
 \begin{itemize}
-    \item DBSCAN (Clustering) – Lorenz
-    \item K-Means (Clustering) – Leonard
-    \item Lineare Regression (Regression) – Lukas
-    \item KNN (Klassifikation/Regression) – Johannes
+    \item H1: Geopolitische Krisen führen zu signifikanten, aber kurzfristigen Kursrückgängen in Leitindizes wie dem S\&P 500 oder DAX.
+    \item H2: Die Resistenz gegenüber Konflikten variiert stark zwischen verschiedenen regionalen Indizes (Geopolitische Resilienz).
+    \item H3: Mithilfe von Clustering-Verfahren (DBSCAN, K-Means) lassen sich Marktphasen identifizieren, die eindeutig mit Eskalationsstufen von Konflikten korrelieren.
 \end{itemize}
 
-Beschreibung der Hyperparameter, Validierung, Visualisierungen.
+Der wirtschaftliche Mehrwert liegt in einer verbesserten Risikobewertung für Portfoliomanager und Investoren, um krisenbedingte Marktanomalien frühzeitig zu erkennen und Asset-Allocation-Strategien resilienter zu gestalten. (in Anlehnung an Google Gemini)
+
+\subsection{Data Understanding}
+Die Phase des Data Understanding befasst sich mit der Erhebung, Beschreibung und ersten Exploration der Daten, um eine solide Basis für die spätere Modellierung zu schaffen \parencite{chapman2000crisp}. Für dieses Projekt werden zwei heterogene Datenquellen fusioniert: hochfrequente Finanzmarktdaten und ereignisbasierte Konfliktdaten.
+
+\subsubsection{Datenquellen und Umfang}
+Der primäre Datensatz für die Finanzmarktanalyse stammt von \textbf{Kaggle} (Stock Exchange Dataset). Dieser umfasst historische Kursdaten zahlreicher globaler Indizes (u.a. NYSE, NASDAQ, DAX, Nikkei 225) über mehrere Jahrzehnte. Die Daten liegen in täglicher Granularität vor und enthalten klassische Kennzahlen wie Eröffnungs- und Schlusskurse sowie das Handelsvolumen.
+
+Als zweite Säule dient das \textbf{UCDP GED (Global Event Dataset)}. Das Uppsala Conflict Data Program stellt hierbei den weltweit detailliertesten Datensatz für organisierte Gewalt bereit. Er enthält georeferenzierte Einzelereignisse, die Informationen über die beteiligten Akteure, den Ort (Koordinaten) und die Intensität (Todesopfer) liefern.
+
+\subsubsection{Datenschema und Struktur}
+Die folgende Tabelle \ref{tab:konflikt} beschreibt die extrahierten Kernattribute der Konfliktdaten, welche für die zeitliche und räumliche Zuordnung zu den Marktereignissen entscheidend sind.
+
+\begin{table}[h!]
+\centering
+\caption{Datenschema Konfliktdaten (UCDP GED)}
+\label{tab:konflikt}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Spalte & Beschreibung \\ \midrule
+conflict\_id & Eindeutige Identifikation eines spezifischen Konfliktherdes \\
+region & Geographische Region des Geschehens (z.B. Middle East, Europe) \\
+where\_coordinates & Exakte GPS-Koordinaten des Ereignisortes \\
+start\_date & Startdatum des Ereignisses \\
+deaths\_best & Verlässlichste Schätzung der Todesopfer als Intensitätsmaß \\
+date\_prec & Genauigkeitsgrad der zeitlichen Erfassung \\ \bottomrule
+\end{tabular}
+\end{table}
+
+Parallel dazu werden die Aktienmarktdaten (Tabelle \ref{tab:aktien}) strukturiert, um Volatilitäten und prozentuale Kursänderungen berechnen zu können.
+
+\begin{table}[h!]
+\centering
+\caption{Datenschema Aktienindizes (Kaggle)}
+\label{tab:aktien}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Spalte & Beschreibung \\ \midrule
+Indexname & Name des betrachteten Leitindex \\
+Date & Handelstag (Primärschlüssel für das Matching) \\
+Open / Close & Kursniveau bei Handelsbeginn und -ende \\
+Adj. Close & Bereinigter Schlusskurs \\
+Differenz & Die berechnete tägliche Rendite in Prozent \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Datenqualität und Vorprüfung}
+Eine erste Sichtung der Daten zeigt, dass insbesondere bei den Aktienmarktdaten eine Bereinigung um Feiertage und Wochenenden notwendig ist. Bei den UCDP-Daten ist die zeitliche Präzision (\texttt{date\_prec}) zu beachten; Ereignisse mit geringer Präzision müssen ggf. ausgeschlossen werden, um keine Rauschsignale in die Analyse der kurzfristigen Marktreaktionen einzuführen. (in Anlehnung an Google Gemini)
+
+\subsection{Data Preparation}
+Datenbereinigung, Matching zwischen Konflikt- und Aktienmarktdaten sowie Normalisierung.
+
+\subsection{Modeling}
+Einordnung der in Kapitel 3 beschriebenen Algorithmen in den Workflow.
 
 \subsection{Evaluation}
-Modellgüte, Vergleich der Algorithmen, Interpretation der Ergebnisse, Grenzen der Aussagekraft.
+Methodik der Modellgüteprüfung (Train-Test-Split, Metriken etc.).
 
 \subsection{Deployment}
-Beschreibung des Projekt-Repositorys:
+Beschreibung des Projekt-Repositorys und der Reproduzierbarkeit.
 
-\begin{verbatim}
-Anwendungsprojekt/
-├── src/               
-├── data/raw/          
-├── data/processed/    
-├── configs/           
-├── tests/             
-└── requirements.txt
-\end{verbatim}
+\section{Implementierung der Algorithmen}
+\subsection{Lineare Regression}
+Beschreibung der Implementierung durch Lukas.
 
-Kurze Erläuterung der Projektdokumentation (README), Jupyter-Notebooks und Reproduzierbarkeit.
+\subsection{K-Means}
+Beschreibung der Implementierung durch Leonard.
 
-% =======================
-\section{Datenschema}
+\subsection{DBSCAN}
+Beschreibung der Implementierung durch Lorenz.
 
-\subsection{Konfliktdaten (UCDP GED)}
-Basierend auf \texttt{Datenschema\_AWP.xlsx} wurden die wichtigsten Attribute extrahiert:
+\subsection{KNN}
+Beschreibung der Implementierung durch Johannes.
 
-\begin{table}[h]
-\centering
-\caption{Datenschema Konfliktdaten}
-\begin{tabular}{ll}
-\toprule
-Spalte & Beschreibung \\
-\midrule
-conflict\_id & eindeutige Identifikation eines Konflikts \\
-region & geographische Region \\
-where\_coordinates & Ort des Konflikts \\
-start\_date & Startdatum des Ereignisses \\
-deaths\_best & Anzahl der Toten (Best Estimate) \\
-date\_prec & Genauigkeit der Datumsangabe \\
-\bottomrule
-\end{tabular}
-\end{table}
+\section{Ergebnisse und Visualisierungen}
+\subsection{Vergleich der Algorithmen}
+Gegenüberstellung der Performance der einzelnen Verfahren.
 
-\subsection{Aktienmarktdaten}
-\begin{table}[h]
-\centering
-\caption{Datenschema Aktienindizes}
-\begin{tabular}{ll}
-\toprule
-Spalte & Beschreibung \\
-\midrule
-Indexname & Name des Aktienindex \\
-Date & Datum (Match zu Konfliktdaten) \\
-Open & Eröffnungswert \\
-Close & Schlusswert \\
-Adj. Close & Bereinigter Schlusswert \\
-Differenz & Prozentuale Veränderung \\
-\bottomrule
-\end{tabular}
-\end{table}
+\subsection{Ergebnisse und Erkenntnisse}
+Darstellung der gefundenen Muster und wissenschaftliche Einordnung.
 
-% =======================
+\subsection{Visualisierung als Dashboard}
+Vorstellung der Grafiken zur Darstellung der Ergebnisse.
+
+\section{Limitationen}
+Kritische Reflexion der Datenqualität und des Untersuchungszeitraums.
+
 \section{Fazit}
-Kurze Zusammenfassung der Ergebnisse und wissenschaftliche Einordnung.
+Zusammenfassung der zentralen Ergebnisse.
 
 % ---------------------------------------------------
-% Literatur
+% LITERATUR & KI-VERZEICHNIS
 % ---------------------------------------------------
 \newpage
-\printbibliography
-\addcontentsline{toc}{section}{Literaturverzeichnis}
+\printbibliography[heading=bibintoc, title={Literaturverzeichnis}]
 
-% ---------------------------------------------------
-% Anhang
-% ---------------------------------------------------
-\newpage
-\appendix
-\section{Anhang}
-Screenshots, Diagramme, Code-Auszüge, etc.
-
-% ---------------------------------------------------
-% KI-Hilfsmittelverzeichnis
-% ---------------------------------------------------
 \newpage
 \section*{KI-Hilfsmittelverzeichnis}
 \addcontentsline{toc}{section}{KI-Hilfsmittelverzeichnis}
 
-\begin{itemize}
-    \item M365 Copilot (GPT‑5), Zugriff am TT.MM.JJJJ.
-\end{itemize}
+\begin{tabular}{@{} l l p{9.5cm} @{}}
+\toprule
+\textbf{Nr.} & \textbf{KI-System} & \textbf{Prompt / Einsatzzweck} \\ \midrule
+1 & M365 Copilot (GPT-5) & Unterstützung bei der Strukturierung des LaTeX-Dokuments. \\
+2 & Google Gemini & Erstellung des Textentwurfs für Kapitel 2.1 (Business Understanding) unter Berücksichtigung von Projektzielen und Hypothesen. \\
+3 & Google Gemini & Ausarbeitung von Kapitel 2.2 (Data Understanding), inkl. Beschreibung der Kaggle- und UCDP-Datenquellen und Integration der Datenschemata. \\ \bottomrule
+\end{tabular}
+
+\newpage
+\appendix
+\section{Anhang}
+Screenshots, Diagramme, Code-Auszüge etc.
 
 \end{document}
