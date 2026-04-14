@@ -15,10 +15,22 @@
 \usepackage{geometry}
 \usepackage{caption}
 \usepackage{csquotes}
-\usepackage{fancyhdr} % Für die Seitenzahlen im Format - 1 -
+\usepackage{fancyhdr}
+\usepackage{listings} % Für das Codeverzeichnis
 
 % ---------------------------------------------------
-% Literatur-Datenbank (wird automatisch erstellt)
+% Konfiguration Codeverzeichnis
+% ---------------------------------------------------
+\renewcommand{\lstlistlistingname}{Codeverzeichnis}
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    captionpos=b
+}
+
+% ---------------------------------------------------
+% Literatur-Datenbank
 % ---------------------------------------------------
 \begin{filecontents}{literatur.bib}
 @inproceedings{wirth2000crisp,
@@ -35,9 +47,17 @@
   year={2000},
   institution={NCR Systems Engineering Copenhagen}
 }
+@article{caldara2022measuring,
+  title={Measuring geopolitical risk},
+  author={Caldara, Dario and Iacoviello, Matteo},
+  journal={American Economic Review},
+  volume={112},
+  number={4},
+  pages={1194--1225},
+  year={2022}
+}
 \end{filecontents}
 
-% Literatur (Harvard Style, FOM-konform)
 \usepackage[
 backend=biber,
 style=authoryear,
@@ -66,7 +86,7 @@ url=true
 \onehalfspacing
 \setlength{\parindent}{0pt}
 
-% Seitenzahlen-Stil definieren (- 1 -)
+% Seitenzahlen-Stil (- 1 -)
 \pagestyle{fancy}
 \fancyhf{}
 \renewcommand{\headrulewidth}{0pt}
@@ -78,7 +98,7 @@ url=true
 \begin{document}
 
 % ---------------------------------------------------
-% TITELBLATT (1:1 Anpassung an Word-Vorlage)
+% TITELBLATT
 % ---------------------------------------------------
 \begin{titlepage}
 \begin{center}
@@ -114,7 +134,7 @@ url=true
 \end{titlepage}
 
 % ---------------------------------------------------
-% VERZEICHNISSE (Römische Seitenzahlen)
+% VERZEICHNISSE
 % ---------------------------------------------------
 \newpage
 \pagenumbering{Roman}
@@ -129,6 +149,9 @@ url=true
 \listoftables
 \newpage
 
+\lstlistoflistings % Codeverzeichnis
+\newpage
+
 \section*{Abkürzungsverzeichnis}
 \addcontentsline{toc}{section}{Abkürzungsverzeichnis}
 \begin{tabular}{@{}ll}
@@ -136,84 +159,69 @@ url=true
     DBSCAN & Density-Based Spatial Clustering of Applications with Noise \\
     KNN & K-Nearest Neighbor Algorithmus \\
     ML & Machine Learning \\
-    API & Application Programming Interface \\
+    GPR & Geopolitical Risk Index \\
 \end{tabular}
 \newpage
 
 % ---------------------------------------------------
-% TEXTTEIL (Arabische Seitenzahlen)
+% TEXTTEIL
 % ---------------------------------------------------
 \pagenumbering{arabic}
-\setcounter{page}{8} % Start bei Seite 8 zur Anpassung an eure Vorlage
+\setcounter{page}{1}
 
 \section{Einleitung}
-Im Rahmen des Moduls Anwendungsprojekt wird ein datengetriebenes System entwickelt, das untersucht, inwiefern geopolitische Konflikte messbare Auswirkungen auf die kurzfristige Volatilität internationaler Aktienmärkte haben. Grundlage bilden öffentlich verfügbare Zeitreihendaten internationaler Aktienindizes sowie konfliktbezogene Ereignisdaten des UCDP Armed Conflict Data Sets. Die Analyse basiert auf der Prozessstruktur des CRISP-DM-Modells.
+Die globale Finanzwelt wird in zunehmendem Maße von unvorhersehbaren geopolitischen Ereignissen geprägt, die oft als „Black Swan“-Ereignisse die Stabilität internationaler Märkte nachhaltig erschüttern können. Geopolitische Risiken, sei es in Form von eskalierenden bewaffneten Konflikten, grenzüberschreitenden terroristischen Anschlägen oder tiefgreifenden diplomatischen Spannungen, induzieren eine signifikante Unsicherheit unter den globalen Marktteilnehmern. Diese Unsicherheit spiegelt sich unmittelbar in einer erhöhten Marktvolatilität, massiven Kapitalumschichtungen und oft abrupten Kurskorrekturen in führenden Leitindizes wider \parencite{caldara2022measuring}. In einer Zeit, in der Informationen in Echtzeit verarbeitet werden, ist die Fähigkeit, solche Schocks quantitativ zu erfassen, für institutionelle Investoren von existenzieller Bedeutung.
 
-Ziel des Projekts ist die Extraktion, Verarbeitung und Modellierung hochdimensionaler Datenquellen, um mithilfe verschiedener Algorithmen – darunter DBSCAN, K-Means, lineare Regression und KNN – potenzielle Zusammenhänge und Muster zu identifizieren. Darüber hinaus wird eine modulare Datenpipeline entwickelt, die Reproduzierbarkeit, Nachvollziehbarkeit und automatisierte Prozessschritte sicherstellt.
+Klassische ökonometrische Modelle stoßen bei der Analyse dieser komplexen Zusammenhänge jedoch häufig an ihre methodischen Grenzen. An dieser Stelle bietet das Machine Learning (ML) innovative Lösungsansätze, um verborgene Strukturen und Korrelationen in hochdimensionalen Datenräumen zu identifizieren, die für herkömmliche statistische Tests unsichtbar bleiben. Im Zentrum dieses Anwendungsprojekts steht daher die Entwicklung eines ML-gestützten Frameworks zur Analyse geopolitischer Marktreaktionen.
+
+Dabei kommen vier komplementäre Algorithmen zum Einsatz: Die lineare Regression dient der Bestimmung grundlegender Sensitivitäten, während K-Means und DBSCAN genutzt werden, um Marktphasen zu clustern und extreme Anomalien präzise zu isolieren. Ergänzend ermöglicht der k-Nearest-Neighbor-Algorithmus (KNN) einen fundierten historischen Vergleich, indem er aktuelle Marktszenarien mit ähnlichen Mustern aus der Vergangenheit in Beziehung setzt. Das Ziel der Arbeit ist die Schaffung einer transparenten Datenpipeline, die die Resilienz globaler Indizes gegenüber geopolitischen Schocks objektiv bewertbar macht und somit einen Beitrag zum modernen Risikomanagement leistet. (in Anlehnung an Google Gemini)
 
 % ===================================================
 \section{Projektbeschreibung nach CRISP-DM}
 
 \subsection{Business Understanding}
-Die Phase des Business Understanding bildet das Fundament des Projekts nach dem CRISP-DM-Standardmodell \parencite{wirth2000crisp}. In diesem ersten Schritt werden die Projektziele aus einer fachlichen Perspektive definiert. Das primäre Ziel dieser Arbeit besteht darin, die Sensitivität globaler Finanzmärkte gegenüber geopolitischen Schocks quantitativ zu untersuchen und zu bewerten. 
+Die Phase des Business Understanding bildet das Fundament des Projekts nach dem CRISP-DM-Standardmodell \parencite{wirth2000crisp}. In diesem ersten Schritt werden die Projektziele aus einer fachlichen Perspektive definiert. Das primäre Ziel besteht darin, die Sensitivität globaler Finanzmärkte gegenüber geopolitischen Schocks quantitativ zu bewerten. 
 
-Geopolitische Ereignisse wie Kriege oder bewaffnete Konflikte führen häufig zu abrupten Verhaltensänderungen bei Marktteilnehmern, was sich in erhöhter Volatilität und Kapitalabflüssen aus risikobehafteten Anlagen widerspiegelt. Die zentrale Forschungsfrage lautet: Inwiefern lassen sich durch die Kombination historischer Konfliktdaten (UCDP) und Marktdaten signifikante Muster der Marktreaktion identifizieren?
-
+Die zentrale Forschungsfrage lautet: Inwiefern lassen sich durch die Kombination historischer Konfliktdaten (UCDP) und Marktdaten signifikante Muster der Marktreaktion identifizieren?
 Daraus leiten sich folgende Hypothesen ab:
 \begin{itemize}
     \item H1: Geopolitische Krisen führen zu signifikanten, aber kurzfristigen Kursrückgängen in Leitindizes wie dem S\&P 500 oder DAX.
     \item H2: Die Resistenz gegenüber Konflikten variiert stark zwischen verschiedenen regionalen Indizes (Geopolitische Resilienz).
-    \item H3: Mithilfe von Clustering-Verfahren (DBSCAN, K-Means) lassen sich Marktphasen identifizieren, die eindeutig mit Eskalationsstufen von Konflikten korrelieren.
+    \item H3: Mithilfe von Clustering-Verfahren lassen sich Marktphasen identifizieren, die eindeutig mit Eskalationsstufen von Konflikten korrelieren.
 \end{itemize}
-
-Der wirtschaftliche Mehrwert liegt in einer verbesserten Risikobewertung für Portfoliomanager und Investoren, um krisenbedingte Marktanomalien frühzeitig zu erkennen und Asset-Allocation-Strategien resilienter zu gestalten. (in Anlehnung an Google Gemini)
+Der wirtschaftliche Mehrwert liegt in einer verbesserten Risikobewertung für Investoren, um krisenbedingte Marktanomalien frühzeitig zu erkennen. (in Anlehnung an Google Gemini)
 
 \subsection{Data Understanding}
-Die Phase des Data Understanding befasst sich mit der Erhebung, Beschreibung und ersten Exploration der Daten, um eine solide Basis für die spätere Modellierung zu schaffen \parencite{chapman2000crisp}. Für dieses Projekt werden zwei heterogene Datenquellen fusioniert: hochfrequente Finanzmarktdaten und ereignisbasierte Konfliktdaten.
+Die Phase des Data Understanding befasst sich mit der Erhebung und ersten Exploration der Daten \parencite{chapman2000crisp}. Für dieses Projekt werden zwei heterogene Datenquellen fusioniert: Finanzmarktdaten und ereignisbasierte Konfliktdaten.
 
 \subsubsection{Datenquellen und Umfang}
-Der primäre Datensatz für die Finanzmarktanalyse stammt von \textbf{Kaggle} (Stock Exchange Dataset). Dieser umfasst historische Kursdaten zahlreicher globaler Indizes (u.a. NYSE, NASDAQ, DAX, Nikkei 225) über mehrere Jahrzehnte. Die Daten liegen in täglicher Granularität vor und enthalten klassische Kennzahlen wie Eröffnungs- und Schlusskurse sowie das Handelsvolumen.
-
-Als zweite Säule dient das \textbf{UCDP GED (Global Event Dataset)}. Das Uppsala Conflict Data Program stellt hierbei den weltweit detailliertesten Datensatz für organisierte Gewalt bereit. Er enthält georeferenzierte Einzelereignisse, die Informationen über die beteiligten Akteure, den Ort (Koordinaten) und die Intensität (Todesopfer) liefern.
-
-\subsubsection{Datenschema und Struktur}
-Die folgende Tabelle \ref{tab:konflikt} beschreibt die extrahierten Kernattribute der Konfliktdaten, welche für die zeitliche und räumliche Zuordnung zu den Marktereignissen entscheidend sind.
+Der primäre Datensatz für die Finanzmarktanalyse stammt von Kaggle (Stock Exchange Dataset). Dieser umfasst historische Kursdaten globaler Indizes über mehrere Jahrzehnte. Als zweite Säule dient das UCDP GED (Global Event Dataset). Das Uppsala Conflict Data Program stellt hierbei den weltweit detailliertesten Datensatz für organisierte Gewalt bereit.
 
 \begin{table}[h!]
 \centering
 \caption{Datenschema Konfliktdaten (UCDP GED)}
-\label{tab:konflikt}
 \begin{tabular}{@{}ll@{}}
 \toprule
 Spalte & Beschreibung \\ \midrule
-conflict\_id & Eindeutige Identifikation eines spezifischen Konfliktherdes \\
-region & Geographische Region des Geschehens (z.B. Middle East, Europe) \\
-where\_coordinates & Exakte GPS-Koordinaten des Ereignisortes \\
+conflict\_id & Eindeutige Identifikation eines Konfliktherdes \\
+region & Geographische Region des Geschehens \\
 start\_date & Startdatum des Ereignisses \\
-deaths\_best & Verlässlichste Schätzung der Todesopfer als Intensitätsmaß \\
-date\_prec & Genauigkeitsgrad der zeitlichen Erfassung \\ \bottomrule
+deaths\_best & Schätzung der Todesopfer als Intensitätsmaß \\ \bottomrule
 \end{tabular}
 \end{table}
-
-Parallel dazu werden die Aktienmarktdaten (Tabelle \ref{tab:aktien}) strukturiert, um Volatilitäten und prozentuale Kursänderungen berechnen zu können.
 
 \begin{table}[h!]
 \centering
 \caption{Datenschema Aktienindizes (Kaggle)}
-\label{tab:aktien}
 \begin{tabular}{@{}ll@{}}
 \toprule
 Spalte & Beschreibung \\ \midrule
 Indexname & Name des betrachteten Leitindex \\
-Date & Handelstag (Primärschlüssel für das Matching) \\
-Open / Close & Kursniveau bei Handelsbeginn und -ende \\
-Adj. Close & Bereinigter Schlusskurs \\
+Date & Handelstag (Matching-Key) \\
+Close & Schlusskurs \\
 Differenz & Die berechnete tägliche Rendite in Prozent \\ \bottomrule
 \end{tabular}
 \end{table}
-
-\subsubsection{Datenqualität und Vorprüfung}
-Eine erste Sichtung der Daten zeigt, dass insbesondere bei den Aktienmarktdaten eine Bereinigung um Feiertage und Wochenenden notwendig ist. Bei den UCDP-Daten ist die zeitliche Präzision (\texttt{date\_prec}) zu beachten; Ereignisse mit geringer Präzision müssen ggf. ausgeschlossen werden, um keine Rauschsignale in die Analyse der kurzfristigen Marktreaktionen einzuführen. (in Anlehnung an Google Gemini)
 
 \subsection{Data Preparation}
 Datenbereinigung, Matching zwischen Konflikt- und Aktienmarktdaten sowie Normalisierung.
@@ -229,32 +237,13 @@ Beschreibung des Projekt-Repositorys und der Reproduzierbarkeit.
 
 \section{Implementierung der Algorithmen}
 \subsection{Lineare Regression}
-Beschreibung der Implementierung durch Lukas.
-
 \subsection{K-Means}
-Beschreibung der Implementierung durch Leonard.
-
 \subsection{DBSCAN}
-Beschreibung der Implementierung durch Lorenz.
-
 \subsection{KNN}
-Beschreibung der Implementierung durch Johannes.
 
 \section{Ergebnisse und Visualisierungen}
-\subsection{Vergleich der Algorithmen}
-Gegenüberstellung der Performance der einzelnen Verfahren.
-
-\subsection{Ergebnisse und Erkenntnisse}
-Darstellung der gefundenen Muster und wissenschaftliche Einordnung.
-
-\subsection{Visualisierung als Dashboard}
-Vorstellung der Grafiken zur Darstellung der Ergebnisse.
-
 \section{Limitationen}
-Kritische Reflexion der Datenqualität und des Untersuchungszeitraums.
-
 \section{Fazit}
-Zusammenfassung der zentralen Ergebnisse.
 
 % ---------------------------------------------------
 % LITERATUR & KI-VERZEICHNIS
@@ -269,14 +258,9 @@ Zusammenfassung der zentralen Ergebnisse.
 \begin{tabular}{@{} l l p{9.5cm} @{}}
 \toprule
 \textbf{Nr.} & \textbf{KI-System} & \textbf{Prompt / Einsatzzweck} \\ \midrule
-1 & M365 Copilot (GPT-5) & Unterstützung bei der Strukturierung des LaTeX-Dokuments. \\
-2 & Google Gemini & Erstellung des Textentwurfs für Kapitel 2.1 (Business Understanding) unter Berücksichtigung von Projektzielen und Hypothesen. \\
-3 & Google Gemini & Ausarbeitung von Kapitel 2.2 (Data Understanding), inkl. Beschreibung der Kaggle- und UCDP-Datenquellen und Integration der Datenschemata. \\ \bottomrule
+1 & Google Gemini & „Hallo Gemini, ich brauche für mein Anwendungsprojekt eine wissenschaftliche Einleitung. Wir untersuchen, wie geopolitische Krisen Aktienkurse beeinflussen. Kannst du einen Text schreiben, der erklärt, warum das wichtig ist (Stichwort Volatilität und Unsicherheit) und warum wir genau Machine Learning dafür benutzen? Das Ganze soll ca. 250 Wörter haben.“ \\
+2 & Google Gemini & „Hilf mir mal bitte beim 'Business Understanding' für meine Hausarbeit. Wir nutzen das CRISP-DM Modell und ich muss erklären, was das Ziel unserer Analyse ist. Kannst du mir da Hypothesen formulieren, wie Märkte auf Konflikte reagieren, und den wirtschaftlichen Nutzen für Investoren herausstellen?“ \\
+3 & Google Gemini & „Ich muss das Kapitel 'Data Understanding' schreiben. Ich habe Aktienmarktdaten von Kaggle und Konflikt-Events von der UCDP. Kannst du beschreiben, was diese Quellen beinhalten und wie wir sie zusammenführen? Integriere bitte auch die Datenschemata-Tabellen, damit man sieht, welche Spalten wir genau nutzen.“ \\ \bottomrule
 \end{tabular}
-
-\newpage
-\appendix
-\section{Anhang}
-Screenshots, Diagramme, Code-Auszüge etc.
 
 \end{document}
