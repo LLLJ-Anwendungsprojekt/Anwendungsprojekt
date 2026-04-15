@@ -18,6 +18,9 @@
 \usepackage{fancyhdr}
 \usepackage{listings} % Für das Codeverzeichnis
 \usepackage{titlesec}
+\usepackage{ragged2e}
+\justifying
+\hyphenation{}
 
 \titlespacing*{\section}{0pt}{12pt}{6pt}
 \titlespacing*{\subsection}{0pt}{12pt}{6pt}
@@ -88,6 +91,7 @@ url=true
 
 % Zeilenabstand (1,5-zeilig)
 \onehalfspacing
+\setlength{\parskip}{6pt}
 \setlength{\parindent}{0pt}
 
 % Seitenzahlen-Stil (- 1 -)
@@ -106,7 +110,7 @@ url=true
 % ---------------------------------------------------
 \begin{titlepage}
 \begin{center}
-    \vspace*{-2.5cm} 
+    
     \includegraphics[width=4cm]{fom_logo.png} \\[0.5cm]
     
     \textbf{FOM Hochschule für Oekonomie \& Management} \\
