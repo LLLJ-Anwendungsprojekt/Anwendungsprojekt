@@ -203,7 +203,17 @@ Der wirtschaftliche Mehrwert liegt in einer verbesserten Risikobewertung für In
 Die Phase des Data Understanding befasst sich mit der Erhebung und ersten Exploration der Daten \parencite{chapman2000crisp}. Für dieses Projekt werden zwei heterogene Datenquellen fusioniert: Finanzmarktdaten und ereignisbasierte Konfliktdaten.
 
 \subsubsection{Datenquellen und Umfang}
-Der primäre Datensatz für die Finanzmarktanalyse stammt von Kaggle (Stock Exchange Dataset). Dieser umfasst historische Kursdaten globaler Indizes über mehrere Jahrzehnte. Als zweite Säule dient das UCDP GED (Global Event Dataset). Das Uppsala Conflict Data Program stellt hierbei den weltweit detailliertesten Datensatz für organisierte Gewalt bereit.
+Der primäre Datensatz für die Finanzmarktanalyse stammt von Kaggle (Stock Exchange Dataset). Dieser umfasst historische Kursdaten globaler Indizes über mehrere Jahrzehnte.
+
+Das Uppsala Conflict Data Program (UCDP) stellt eine der zentralen wissenschaftlichen Datenquellen zur Analyse organisierter Gewalt dar und wird seit den 1980er-Jahren an der Uppsala University entwickelt. Ziel des Programms ist die systematische Erfassung, Klassifikation und Bereitstellung von Daten zu bewaffneten Konflikten weltweit. Dabei wird ein klar definiertes Konfliktverständnis zugrunde gelegt, bei dem organisierte Gewaltformen anhand standardisierter Kriterien – insbesondere hinsichtlich beteiligter Akteure, Gewaltintensität und Konfliktart – erfasst werden.
+
+Das UCDP GED (Global Event Dataset) bildet hierbei die feinste Granularität der Datensammlung ab, indem einzelne Gewaltereignisse (Events) auf tagesgenauer Ebene dokumentiert werden. Für jedes Ereignis werden strukturierte Attribute bereitgestellt, darunter geografische Koordinaten, beteiligte Konfliktparteien (sogenannte Dyaden), Opferzahlen sowie zeitliche Präzision. Durch diese Ereignisorientierung wird eine hochauflösende Analyse von Konfliktdynamiken ermöglicht, etwa im Hinblick auf räumliche Verteilung, Eskalationsmuster oder zeitliche Clusterbildungen.
+
+Ein wesentliches Merkmal des UCDP-Datensatzes besteht in der konsistenten Typisierung von Konflikten. Es wird zwischen staatlichen Konflikten (zwischen Regierungen und organisierten Gruppen), nichtstaatlichen Konflikten sowie einseitiger Gewalt gegen Zivilbevölkerungen unterschieden. Diese Differenzierung erlaubt eine präzise Abgrenzung verschiedener Gewaltformen und unterstützt vergleichende Analysen über Länder und Zeiträume hinweg.
+
+Darüber hinaus wird eine hohe Datenqualität durch die Nutzung multipler Quellen sowie durch standardisierte Kodierungsverfahren sichergestellt. Jedes Ereignis wird anhand mehrerer unabhängiger Berichte validiert, wodurch eine hohe Reliabilität erreicht wird. Gleichzeitig werden Unsicherheiten, etwa hinsichtlich der exakten Opferzahlen oder Ortsangaben, durch entsprechende Präzisionsindikatoren explizit im Datensatz abgebildet.
+
+Insgesamt stellt das UCDP GED eine empirisch fundierte Grundlage für quantitative Analysen geopolitischer Konflikte dar. Durch die Kombination mit Finanzmarktdaten wird es ermöglicht, potenzielle Zusammenhänge zwischen Konfliktintensität und ökonomischen Entwicklungen systematisch zu untersuchen. \parencite{ucdpbackground2024}
 
 \begin{table}[h!]
 \centering
