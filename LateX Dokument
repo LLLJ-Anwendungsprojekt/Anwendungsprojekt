@@ -207,14 +207,28 @@ Der primäre Datensatz für die Finanzmarktanalyse stammt von Kaggle (Stock Exch
 
 \begin{table}[h!]
 \centering
-\caption{Datenschema Konfliktdaten (UCDP GED)}
+\caption{Datenschema Konfliktdaten und Aktienindizes}
 \begin{tabular}{@{}ll@{}}
 \toprule
 Spalte & Beschreibung \\ \midrule
-conflict\_id & Eindeutige Identifikation eines Konfliktherdes \\
-region & Geographische Region des Geschehens \\
-start\_date & Startdatum des Ereignisses \\
-deaths\_best & Schätzung der Todesopfer als Intensitätsmaß \\ \bottomrule
+id & Eindeutige Identifikation des Datensatzes \\
+active\_year & Kalenderjahr des Ereignisses \\
+type\_of\_violence & Kategorie der Gewaltform \\
+conflict\_new\_id & Eindeutige Identifikation des Konflikts \\
+dyad\_new\_id & Eindeutige Identifikation der Konfliktdyade \\
+dyad\_name & Bezeichnung der Konfliktdyade \\
+number\_of\_sources & Anzahl der zugrunde liegenden Quellen \\
+where\_prec & Präzisionsstufe der Ortsangabe \\
+where\_coordinates & Ortsbezeichnung der Koordinatenreferenz \\
+latitude & Breitengrad des Ereignisortes \\
+longitude & Längengrad des Ereignisortes \\
+country & Staat, in dem das Ereignis verortet wurde \\
+country\_id & Eindeutige Identifikation des Staates \\
+region & Geographische Region des Ereignisses \\
+event\_clarity & Eindeutigkeit bzw. Klarheit der Ereigniszuordnung \\
+date\_prec & Präzisionsstufe der Datumsangabe \\
+date\_start & Startdatum des Ereignisses \\
+best & Beste verfügbare Schätzung der Todesopfer \\ \bottomrule
 \end{tabular}
 \end{table}
 
@@ -224,10 +238,14 @@ deaths\_best & Schätzung der Todesopfer als Intensitätsmaß \\ \bottomrule
 \begin{tabular}{@{}ll@{}}
 \toprule
 Spalte & Beschreibung \\ \midrule
-Indexname & Name des betrachteten Leitindex \\
-Date & Handelstag (Matching-Key) \\
-Close & Schlusskurs \\
-Differenz & Die berechnete tägliche Rendite in Prozent \\ \bottomrule
+Index & Bezeichnung des betrachteten Aktienindex \\
+Date & Handelstag bzw. Beobachtungsdatum \\
+Open & Eröffnungskurs des Handelstags \\
+High & Tageshöchstkurs \\
+Low & Tagestiefstkurs \\
+Close & Schlusskurs des Handelstags \\
+Adj Close & Adjustierter Schlusskurs \\
+Volume & Gehandeltes Volumen \\ \bottomrule
 \end{tabular}
 \end{table}
 
