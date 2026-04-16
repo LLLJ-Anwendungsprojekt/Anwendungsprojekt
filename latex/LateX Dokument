@@ -1,33 +1,52 @@
 \documentclass[12pt,a4paper]{article}
 
 % ---------------------------------------------------
-% Pakete
+% GRUNDSPRACHE & SCHRIFT
 % ---------------------------------------------------
 \usepackage[ngerman]{babel}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{mathptmx} % Times New Roman
-\usepackage{setspace}
-\usepackage{graphicx}
-\usepackage{booktabs}
-\usepackage{amsmath}
-\usepackage{hyperref}
+
+% ---------------------------------------------------
+% SEITENLAYOUT
+% ---------------------------------------------------
 \usepackage{geometry}
-\usepackage{caption}
-\usepackage{csquotes}
-\usepackage{fancyhdr}
-\usepackage{listings} % Für das Codeverzeichnis
-\usepackage{titlesec}
+\geometry{
+    left=4cm,
+    right=2cm,
+    top=4cm,
+    bottom=2cm
+}
+
+% ---------------------------------------------------
+% FORMATIERUNG
+% ---------------------------------------------------
+\usepackage{setspace}
+\onehalfspacing
+\setlength{\parskip}{6pt}
+\setlength{\parindent}{0pt}
+
 \usepackage{ragged2e}
 \justifying
 \hyphenation{}
 
+\usepackage{titlesec}
 \titlespacing*{\section}{0pt}{12pt}{6pt}
 \titlespacing*{\subsection}{0pt}{12pt}{6pt}
 
 % ---------------------------------------------------
-% Konfiguration Codeverzeichnis
+% GRAFIKEN, TABELLEN, MATHE
 % ---------------------------------------------------
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{caption}
+
+% ---------------------------------------------------
+% CODEVERZEICHNIS
+% ---------------------------------------------------
+\usepackage{listings}
 \renewcommand{\lstlistlistingname}{Codeverzeichnis}
 \lstset{
     basicstyle=\ttfamily\small,
@@ -37,7 +56,23 @@
 }
 
 % ---------------------------------------------------
-% Literatur-Datenbank
+% ZITATE, LINKS, VERZEICHNISSE
+% ---------------------------------------------------
+\usepackage{csquotes}
+\usepackage[hidelinks]{hyperref}
+\usepackage[nottoc]{tocbibind} % << WICHTIG: Inhaltsverzeichnis NICHT im ToC
+
+% ---------------------------------------------------
+% KOPF-/FUSSZEILEN
+% ---------------------------------------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyhead[C]{\thepage}
+
+% ---------------------------------------------------
+% LITERATURDATENBANK
 % ---------------------------------------------------
 \begin{filecontents}{literatur.bib}
 @inproceedings{wirth2000crisp,
@@ -81,27 +116,8 @@ url=true
 ]{biblatex}
 \addbibresource{literatur.bib}
 
-% Seitenränder gemäß FOM-Leitfaden
-\geometry{
-    left=4cm,
-    right=2cm,
-    top=4cm,
-    bottom=2cm
-}
-
-% Zeilenabstand (1,5-zeilig)
-\onehalfspacing
-\setlength{\parskip}{6pt}
-\setlength{\parindent}{0pt}
-
-% Seitenzahlen-Stil (- 1 -)
-\pagestyle{fancy}
-\fancyhf{}
-\renewcommand{\headrulewidth}{0pt}
-\fancyhead[C]{\thepage}
-
 % ---------------------------------------------------
-% Dokument Beginn
+% DOKUMENTBEGINN
 % ---------------------------------------------------
 \begin{document}
 
@@ -110,9 +126,7 @@ url=true
 % ---------------------------------------------------
 \begin{titlepage}
 \begin{center}
-    
-    \includegraphics[width=4cm]{fom_logo.png} \\[0.5cm]
-    
+    \includegraphics[width=4cm]{FOM_Logo01_2012_rgb.jpg} \\[0.5cm]
     \textbf{FOM Hochschule für Oekonomie \& Management} \\
     Hochschulzentrum Bonn \\[1.0cm]
 
@@ -129,25 +143,23 @@ url=true
 \vfill
 
 \begin{flushleft}
-    \begin{tabular}{@{}ll} 
-        Dozent: & Prof. Dr. Julian Schröter \\
-        Name: & Lorenz Chylka, Leonard Reglin, \\
-              & Lukas Nießen, Johannes Solbach \\
-        Matrikelnummer: & 736986, 740270, 728085, 732936 \\
-        Abgabedatum: & 15.06.2026 \\
-        Wörter Hausarbeit: & XXX \\
-        Wörter Code: & XXX \\
-    \end{tabular}
+\begin{tabular}{@{}ll} 
+Dozent: & Prof. Dr. Julian Schröter \\
+Name: & Lorenz Chylka, Leonard Reglin, \\
+      & Lukas Nießen, Johannes Solbach \\
+Matrikelnummer: & 736986, 740270, 728085, 732936 \\
+Abgabedatum: & 15.06.2026 \\
+Wörter Hausarbeit: & XXX \\
+Wörter Code: & XXX \\
+\end{tabular}
 \end{flushleft}
 \end{titlepage}
 
 % ---------------------------------------------------
-% VERZEICHNISSE
+% VERZEICHNISSE (RÖMISCH)
 % ---------------------------------------------------
-\newpage
 \pagenumbering{Roman}
-\pagestyle{fancy}
-
+\setcounter{page}{2}
 \tableofcontents
 \newpage
 
@@ -157,19 +169,39 @@ url=true
 \listoftables
 \newpage
 
-\lstlistoflistings % Codeverzeichnis
+\lstlistoflistings
 \newpage
 
 \section*{Abkürzungsverzeichnis}
 \addcontentsline{toc}{section}{Abkürzungsverzeichnis}
 \begin{tabular}{@{}ll}
-    CRISP-DM & Cross Industry Standard Process for Data Mining \\
-    DBSCAN & Density-Based Spatial Clustering of Applications with Noise \\
-    KNN & K-Nearest Neighbor Algorithmus \\
-    ML & Machine Learning \\
-    GPR & Geopolitical Risk Index \\
+CRISP-DM & Cross Industry Standard Process for Data Mining \\
+DBSCAN & Density-Based Spatial Clustering of Applications with Noise \\
+KNN & K-Nearest Neighbor Algorithmus \\
+ML & Machine Learning \\
+GPR & Geopolitical Risk Index \\
 \end{tabular}
 \newpage
+% ---------------------------------------------------
+% LITERATUR-VERZEICHNIS
+% ---------------------------------------------------
+\newpage
+\printbibliography[heading=bibintoc, title={Literaturverzeichnis}]
+% ---------------------------------------------------
+% KI-VERZEICHNIS
+% ---------------------------------------------------
+\newpage
+\section*{KI-Hilfsmittelverzeichnis}
+\addcontentsline{toc}{section}{KI-Hilfsmittelverzeichnis}
+
+\begin{tabular}{@{} l l p{9.5cm} @{}}
+\toprule
+\textbf{Nr.} & \textbf{KI-System} & \textbf{Prompt / Einsatzzweck} \\ \midrule
+1 & Google Gemini & „Hallo Gemini, ich brauche für mein Anwendungsprojekt eine wissenschaftliche Einleitung. Wir untersuchen, wie geopolitische Krisen Aktienkurse beeinflussen. Kannst du einen Text schreiben, der erklärt, warum das wichtig ist (Stichwort Volatilität und Unsicherheit) und warum wir genau Machine Learning dafür benutzen? Das Ganze soll ca. 250 Wörter haben.“ \\
+2 & Google Gemini & „Hilf mir mal bitte beim 'Business Understanding' für meine Hausarbeit. Wir nutzen das CRISP-DM Modell und ich muss erklären, was das Ziel unserer Analyse ist. Kannst du mir da Hypothesen formulieren, wie Märkte auf Konflikte reagieren, und den wirtschaftlichen Nutzen für Investoren herausstellen?“ \\
+3 & Google Gemini & „Ich muss das Kapitel 'Data Understanding' schreiben. Ich habe Aktienmarktdaten von Kaggle und Konflikt-Events von der UCDP. Kannst du beschreiben, was diese Quellen beinhalten und wie wir sie zusammenführen? Integriere bitte auch die Datenschemata-Tabellen, damit man sieht, welche Spalten wir genau nutzen.“ \\ \bottomrule
+\end{tabular}
+
 
 % ---------------------------------------------------
 % TEXTTEIL
@@ -203,42 +235,18 @@ Der wirtschaftliche Mehrwert liegt in einer verbesserten Risikobewertung für In
 Die Phase des Data Understanding befasst sich mit der Erhebung und ersten Exploration der Daten \parencite{chapman2000crisp}. Für dieses Projekt werden zwei heterogene Datenquellen fusioniert: Finanzmarktdaten und ereignisbasierte Konfliktdaten.
 
 \subsubsection{Datenquellen und Umfang}
-Der primäre Datensatz für die Finanzmarktanalyse stammt von Kaggle (Stock Exchange Dataset). Dieser umfasst historische Kursdaten globaler Indizes über mehrere Jahrzehnte.
-
-Das Uppsala Conflict Data Program (UCDP) stellt eine der zentralen wissenschaftlichen Datenquellen zur Analyse organisierter Gewalt dar und wird seit den 1980er-Jahren an der Uppsala University entwickelt. Ziel des Programms ist die systematische Erfassung, Klassifikation und Bereitstellung von Daten zu bewaffneten Konflikten weltweit. Dabei wird ein klar definiertes Konfliktverständnis zugrunde gelegt, bei dem organisierte Gewaltformen anhand standardisierter Kriterien – insbesondere hinsichtlich beteiligter Akteure, Gewaltintensität und Konfliktart – erfasst werden.
-
-Das UCDP GED (Global Event Dataset) bildet hierbei die feinste Granularität der Datensammlung ab, indem einzelne Gewaltereignisse (Events) auf tagesgenauer Ebene dokumentiert werden. Für jedes Ereignis werden strukturierte Attribute bereitgestellt, darunter geografische Koordinaten, beteiligte Konfliktparteien (sogenannte Dyaden), Opferzahlen sowie zeitliche Präzision. Durch diese Ereignisorientierung wird eine hochauflösende Analyse von Konfliktdynamiken ermöglicht, etwa im Hinblick auf räumliche Verteilung, Eskalationsmuster oder zeitliche Clusterbildungen.
-
-Ein wesentliches Merkmal des UCDP-Datensatzes besteht in der konsistenten Typisierung von Konflikten. Es wird zwischen staatlichen Konflikten (zwischen Regierungen und organisierten Gruppen), nichtstaatlichen Konflikten sowie einseitiger Gewalt gegen Zivilbevölkerungen unterschieden. Diese Differenzierung erlaubt eine präzise Abgrenzung verschiedener Gewaltformen und unterstützt vergleichende Analysen über Länder und Zeiträume hinweg.
-
-Darüber hinaus wird eine hohe Datenqualität durch die Nutzung multipler Quellen sowie durch standardisierte Kodierungsverfahren sichergestellt. Jedes Ereignis wird anhand mehrerer unabhängiger Berichte validiert, wodurch eine hohe Reliabilität erreicht wird. Gleichzeitig werden Unsicherheiten, etwa hinsichtlich der exakten Opferzahlen oder Ortsangaben, durch entsprechende Präzisionsindikatoren explizit im Datensatz abgebildet.
-
-Insgesamt stellt das UCDP GED eine empirisch fundierte Grundlage für quantitative Analysen geopolitischer Konflikte dar. Durch die Kombination mit Finanzmarktdaten wird es ermöglicht, potenzielle Zusammenhänge zwischen Konfliktintensität und ökonomischen Entwicklungen systematisch zu untersuchen. \parencite{ucdpbackground2024}
+Der primäre Datensatz für die Finanzmarktanalyse stammt von Kaggle (Stock Exchange Dataset). Dieser umfasst historische Kursdaten globaler Indizes über mehrere Jahrzehnte. Als zweite Säule dient das UCDP GED (Global Event Dataset). Das Uppsala Conflict Data Program stellt hierbei den weltweit detailliertesten Datensatz für organisierte Gewalt bereit.
 
 \begin{table}[h!]
 \centering
-\caption{Datenschema Konfliktdaten und Aktienindizes}
+\caption{Datenschema Konfliktdaten (UCDP GED)}
 \begin{tabular}{@{}ll@{}}
 \toprule
 Spalte & Beschreibung \\ \midrule
-id & Eindeutige Identifikation des Datensatzes \\
-active\_year & Kalenderjahr des Ereignisses \\
-type\_of\_violence & Kategorie der Gewaltform \\
-conflict\_new\_id & Eindeutige Identifikation des Konflikts \\
-dyad\_new\_id & Eindeutige Identifikation der Konfliktdyade \\
-dyad\_name & Bezeichnung der Konfliktdyade \\
-number\_of\_sources & Anzahl der zugrunde liegenden Quellen \\
-where\_prec & Präzisionsstufe der Ortsangabe \\
-where\_coordinates & Ortsbezeichnung der Koordinatenreferenz \\
-latitude & Breitengrad des Ereignisortes \\
-longitude & Längengrad des Ereignisortes \\
-country & Staat, in dem das Ereignis verortet wurde \\
-country\_id & Eindeutige Identifikation des Staates \\
-region & Geographische Region des Ereignisses \\
-event\_clarity & Eindeutigkeit bzw. Klarheit der Ereigniszuordnung \\
-date\_prec & Präzisionsstufe der Datumsangabe \\
-date\_start & Startdatum des Ereignisses \\
-best & Beste verfügbare Schätzung der Todesopfer \\ \bottomrule
+conflict\_id & Eindeutige Identifikation eines Konfliktherdes \\
+region & Geographische Region des Geschehens \\
+start\_date & Startdatum des Ereignisses \\
+deaths\_best & Schätzung der Todesopfer als Intensitätsmaß \\ \bottomrule
 \end{tabular}
 \end{table}
 
@@ -248,14 +256,10 @@ best & Beste verfügbare Schätzung der Todesopfer \\ \bottomrule
 \begin{tabular}{@{}ll@{}}
 \toprule
 Spalte & Beschreibung \\ \midrule
-Index & Bezeichnung des betrachteten Aktienindex \\
-Date & Handelstag bzw. Beobachtungsdatum \\
-Open & Eröffnungskurs des Handelstags \\
-High & Tageshöchstkurs \\
-Low & Tagestiefstkurs \\
-Close & Schlusskurs des Handelstags \\
-Adj Close & Adjustierter Schlusskurs \\
-Volume & Gehandeltes Volumen \\ \bottomrule
+Indexname & Name des betrachteten Leitindex \\
+Date & Handelstag (Matching-Key) \\
+Close & Schlusskurs \\
+Differenz & Die berechnete tägliche Rendite in Prozent \\ \bottomrule
 \end{tabular}
 \end{table}
 
@@ -281,23 +285,5 @@ Beschreibung des Projekt-Repositorys und der Reproduzierbarkeit.
 \section{Limitationen}
 \section{Fazit}
 
-% ---------------------------------------------------
-% LITERATUR & KI-VERZEICHNIS
-% ---------------------------------------------------
-\newpage
-\printbibliography[heading=bibintoc, title={Literaturverzeichnis}]
-
-\newpage
-\section*{KI-Hilfsmittelverzeichnis}
-\addcontentsline{toc}{section}{KI-Hilfsmittelverzeichnis}
-
-\begin{tabular}{@{} l l p{9.5cm} @{}}
-\toprule
-\textbf{Nr.} & \textbf{KI-System} & \textbf{Prompt / Einsatzzweck} \\ \midrule
-1 & Google Gemini & „Hallo Gemini, ich brauche für mein Anwendungsprojekt eine wissenschaftliche Einleitung. Wir untersuchen, wie geopolitische Krisen Aktienkurse beeinflussen. Kannst du einen Text schreiben, der erklärt, warum das wichtig ist (Stichwort Volatilität und Unsicherheit) und warum wir genau Machine Learning dafür benutzen? Das Ganze soll ca. 250 Wörter haben.“ \\
-2 & Google Gemini & „Hilf mir mal bitte beim 'Business Understanding' für meine Hausarbeit. Wir nutzen das CRISP-DM Modell und ich muss erklären, was das Ziel unserer Analyse ist. Kannst du mir da Hypothesen formulieren, wie Märkte auf Konflikte reagieren, und den wirtschaftlichen Nutzen für Investoren herausstellen?“ \\
-3 & Google Gemini & „Ich muss das Kapitel 'Data Understanding' schreiben. Ich habe Aktienmarktdaten von Kaggle und Konflikt-Events von der UCDP. Kannst du beschreiben, was diese Quellen beinhalten und wie wir sie zusammenführen? Integriere bitte auch die Datenschemata-Tabellen, damit man sieht, welche Spalten wir genau nutzen.“ \\
-4 & ChatGPT & „Schreibe einen wissenschaftlichen Absatz zum Uppsala Conflict Data Program (UCDP) auf Basis von https://www.uu.se/en/department/peace-and-conflict-research/research/ucdp/about-ucdp/ucdp-background/. Der Text soll das Ziel des Programms, die Struktur des GED-Datensatzes, die Klassifikation von Konflikten sowie die Sicherstellung der Datenqualität beschreiben und in einen Data-Understanding-Kontext einordnen.“\\ \bottomrule
-\end{tabular}
-
 \end{document}
+
