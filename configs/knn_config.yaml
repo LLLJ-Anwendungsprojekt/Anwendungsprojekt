@@ -1,0 +1,38 @@
+# KNN Klassifikations-Konfiguration
+# ====================================
+
+# Daten-Konfiguration
+data:
+  raw_path: '../data/raw/'
+  processed_path: '../data/processed/'
+  filename: 'merged_data.csv'
+  target_column: 'market_direction'  # Target-Spalte Name
+  test_size: 0.2  # Train/Test Split
+  random_state: 42
+
+# Modell-Hyperparameter
+model:
+  k_range: [1, 21]  # Range für Hyperparameter-Tuning
+  metric: 'euclidean'  # Distance Metrik
+  weights: 'distance'  # 'uniform' oder 'distance'
+  algorithm: 'auto'
+
+# Cross-Validation
+cv:
+  n_splits: 5
+  strategy: 'stratified'  # 'stratified' für unbalancierte Daten
+
+# Output
+output:
+  model_dir: 'models'
+  results_dir: 'results'
+  log_file: 'knn_analysis.log'
+  figures_dir: 'figures'
+  dpi: 300
+
+# Feature Engineering
+features:
+  scaling: true  # Wichtig für KNN!
+  scaler_type: 'standard'  # StandardScaler normalisiert auf mean=0, std=1
+  remove_outliers: false
+  outlier_threshold: 3  # IQR multiplier
