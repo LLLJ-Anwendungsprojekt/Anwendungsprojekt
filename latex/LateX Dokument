@@ -1,0 +1,294 @@
+\documentclass[12pt,a4paper]{article}
+
+% ---------------------------------------------------
+% GRUNDSPRACHE & SCHRIFT
+% ---------------------------------------------------
+\usepackage[ngerman]{babel}
+\usepackage{fontspec}
+\setmainfont{Times New Roman} % Times New Roman
+
+% ---------------------------------------------------
+% SEITENLAYOUT
+% ---------------------------------------------------
+\usepackage{geometry}
+\geometry{
+    left=4cm,
+    right=2cm,
+    top=4cm,
+    bottom=2cm
+}
+
+% ---------------------------------------------------
+% FORMATIERUNG
+% ---------------------------------------------------
+\usepackage{setspace}
+\onehalfspacing
+\setlength{\parskip}{6pt}
+\setlength{\parindent}{0pt}
+
+\usepackage{ragged2e}
+\justifying
+\hyphenation{}
+
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{12pt}{6pt}
+\titlespacing*{\subsection}{0pt}{12pt}{6pt}
+\usepackage{etoolbox}
+\pretocmd{\section}{\clearpage}{}{}
+
+
+% ---------------------------------------------------
+% GRAFIKEN, TABELLEN, MATHE
+% ---------------------------------------------------
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{caption}
+
+% ---------------------------------------------------
+% CODEVERZEICHNIS
+% ---------------------------------------------------
+\usepackage{listings}
+\renewcommand{\lstlistlistingname}{Codeverzeichnis}
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    captionpos=b
+}
+
+% ---------------------------------------------------
+% ZITATE, LINKS, VERZEICHNISSE
+% ---------------------------------------------------
+\usepackage{csquotes}
+\usepackage[hidelinks]{hyperref}
+\usepackage[nottoc]{tocbibind} % << WICHTIG: Inhaltsverzeichnis NICHT im ToC
+
+% ---------------------------------------------------
+% KOPF-/FUSSZEILEN
+% ---------------------------------------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyhead[C]{\thepage}
+\setlength{\headheight}{15pt}
+\setlength{\headsep}{20pt}
+
+% ---------------------------------------------------
+% LITERATURDATENBANK
+% ---------------------------------------------------
+\begin{filecontents}{literatur.bib}
+@inproceedings{wirth2000crisp,
+  title={CRISP-DM: Towards a standard process model for data mining},
+  author={Wirth, Rüdiger and Hipp, Jochen},
+  booktitle={Proceedings of the 4th international conference on the practical applications of knowledge discovery and data mining},
+  pages={29--39},
+  year={2000},
+  organization={Manchester}
+}
+@techreport{chapman2000crisp,
+  title={CRISP-DM 1.0: Step-by-step data mining guide},
+  author={Chapman, Pete and Clinton, Julian and Kerber, Randy and Khabaza, Thomas and Reinartz, Thomas and Shearer, Colin and Wirth, Rüdiger},
+  year={2000},
+  institution={NCR Systems Engineering Copenhagen}
+}
+@article{caldara2022measuring,
+  title={Measuring geopolitical risk},
+  author={Caldara, Dario and Iacoviello, Matteo},
+  journal={American Economic Review},
+  volume={112},
+  number={4},
+  pages={1194--1225},
+  year={2022}
+}
+\end{filecontents}
+
+\usepackage[
+backend=biber,
+style=authoryear,
+citestyle=authoryear,
+sorting=nyt,
+maxcitenames=2,
+maxbibnames=99,
+giveninits=true,
+uniquename=false,
+uniquelist=false,
+doi=false,
+isbn=false,
+url=true
+]{biblatex}
+\addbibresource{literatur.bib}
+
+% ---------------------------------------------------
+% DOKUMENTBEGINN
+% ---------------------------------------------------
+\begin{document}
+
+% ---------------------------------------------------
+% TITELBLATT
+% ---------------------------------------------------
+\begin{titlepage}
+\begin{center}
+    \includegraphics[width=4cm]{FOM_Logo01_2012_rgb.jpg} \\[0.5cm]
+    \textbf{FOM Hochschule für Oekonomie \& Management} \\
+    Hochschulzentrum Bonn \\[1.0cm]
+
+    {\Large Berufsbegleitender Studiengang Wirtschaftsinformatik} \\[0.2cm]
+    zum \\[0.2cm]
+    Bachelor of Science (B.Sc.) \\[0.2cm]
+    6. Semester \\[1.5cm]
+
+    Seminararbeit im Modul Anwendungsprojekt zum Thema \\[1.5cm]
+
+    {\Large \textbf{„Analyse der Auswirkung geopolitischer Konflikte auf \\ Aktienindizes“}} \\[1.5cm]
+\end{center}
+
+\vfill
+
+\begin{flushleft}
+\begin{tabular}{@{}ll} 
+Dozent: & Prof. Dr. Julian Schröter \\
+Name: & Lorenz Chylka, Leonard Reglin, \\
+      & Lukas Nießen, Johannes Solbach \\
+Matrikelnummer: & 736986, 740270, 728085, 732936 \\
+Abgabedatum: & 15.06.2026 \\
+Wörter Hausarbeit: & XXX \\
+Wörter Code: & XXX \\
+\end{tabular}
+\end{flushleft}
+\end{titlepage}
+
+% ---------------------------------------------------
+% VERZEICHNISSE (RÖMISCH)
+% ---------------------------------------------------
+\pagenumbering{Roman}
+\setcounter{page}{2}
+\tableofcontents
+\newpage
+
+\listoffigures
+\newpage
+
+\listoftables
+\newpage
+
+\lstlistoflistings
+\newpage
+
+\section*{Abkürzungsverzeichnis}
+\addcontentsline{toc}{section}{Abkürzungsverzeichnis}
+\begin{tabular}{@{}ll}
+CRISP-DM & Cross Industry Standard Process for Data Mining \\
+DBSCAN & Density-Based Spatial Clustering of Applications with Noise \\
+KNN & K-Nearest Neighbor Algorithmus \\
+ML & Machine Learning \\
+GPR & Geopolitical Risk Index \\
+\end{tabular}
+\newpage
+% ---------------------------------------------------
+% LITERATUR-VERZEICHNIS
+% ---------------------------------------------------
+\newpage
+\printbibliography[heading=bibintoc, title={Literaturverzeichnis}]
+% ---------------------------------------------------
+% KI-VERZEICHNIS
+% ---------------------------------------------------
+\newpage
+\section*{KI-Hilfsmittelverzeichnis}
+\addcontentsline{toc}{section}{KI-Hilfsmittelverzeichnis}
+
+\begin{tabular}{@{} l l p{9.5cm} @{}}
+\toprule
+\textbf{Nr.} & \textbf{KI-System} & \textbf{Prompt / Einsatzzweck} \\ \midrule
+1 & Google Gemini & „Hallo Gemini, ich brauche für mein Anwendungsprojekt eine wissenschaftliche Einleitung. Wir untersuchen, wie geopolitische Krisen Aktienkurse beeinflussen. Kannst du einen Text schreiben, der erklärt, warum das wichtig ist (Stichwort Volatilität und Unsicherheit) und warum wir genau Machine Learning dafür benutzen? Das Ganze soll ca. 250 Wörter haben.“ \\
+2 & Google Gemini & „Hilf mir mal bitte beim 'Business Understanding' für meine Hausarbeit. Wir nutzen das CRISP-DM Modell und ich muss erklären, was das Ziel unserer Analyse ist. Kannst du mir da Hypothesen formulieren, wie Märkte auf Konflikte reagieren, und den wirtschaftlichen Nutzen für Investoren herausstellen?“ \\
+3 & Google Gemini & „Ich muss das Kapitel 'Data Understanding' schreiben. Ich habe Aktienmarktdaten von Kaggle und Konflikt-Events von der UCDP. Kannst du beschreiben, was diese Quellen beinhalten und wie wir sie zusammenführen? Integriere bitte auch die Datenschemata-Tabellen, damit man sieht, welche Spalten wir genau nutzen.“ \\ \bottomrule
+\end{tabular}
+
+
+% ---------------------------------------------------
+% TEXTTEIL
+% ---------------------------------------------------
+\newpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\section{Einleitung}
+Die globale Finanzwelt wird in zunehmendem Maße von unvorhersehbaren geopolitischen Ereignissen geprägt, die oft als „Black Swan“-Ereignisse die Stabilität internationaler Märkte nachhaltig erschüttern können. Geopolitische Risiken, sei es in Form von eskalierenden bewaffneten Konflikten, grenzüberschreitenden terroristischen Anschlägen oder tiefgreifenden diplomatischen Spannungen, induzieren eine signifikante Unsicherheit unter den globalen Marktteilnehmern. Diese Unsicherheit spiegelt sich unmittelbar in einer erhöhten Marktvolatilität, massiven Kapitalumschichtungen und oft abrupten Kurskorrekturen in führenden Leitindizes wider \parencite{caldara2022measuring}. In einer Zeit, in der Informationen in Echtzeit verarbeitet werden, ist die Fähigkeit, solche Schocks quantitativ zu erfassen, für institutionelle Investoren von existenzieller Bedeutung.
+
+Klassische ökonometrische Modelle stoßen bei der Analyse dieser komplexen Zusammenhänge jedoch häufig an ihre methodischen Grenzen. An dieser Stelle bietet das Machine Learning (ML) innovative Lösungsansätze, um verborgene Strukturen und Korrelationen in hochdimensionalen Datenräumen zu identifizieren, die für herkömmliche statistische Tests unsichtbar bleiben. Im Zentrum dieses Anwendungsprojekts steht daher die Entwicklung eines ML-gestützten Frameworks zur Analyse geopolitischer Marktreaktionen.
+
+Dabei kommen vier komplementäre Algorithmen zum Einsatz: Die lineare Regression dient der Bestimmung grundlegender Sensitivitäten, während K-Means und DBSCAN genutzt werden, um Marktphasen zu clustern und extreme Anomalien präzise zu isolieren. Ergänzend ermöglicht der k-Nearest-Neighbor-Algorithmus (KNN) einen fundierten historischen Vergleich, indem er aktuelle Marktszenarien mit ähnlichen Mustern aus der Vergangenheit in Beziehung setzt. Das Ziel der Arbeit ist die Schaffung einer transparenten Datenpipeline, die die Resilienz globaler Indizes gegenüber geopolitischen Schocks objektiv bewertbar macht und somit einen Beitrag zum modernen Risikomanagement leistet. (in Anlehnung an Google Gemini)
+
+% ===================================================
+\section{Projektbeschreibung nach CRISP-DM}
+
+\subsection{Business Understanding}
+Die Phase des Business Understanding bildet das Fundament des Projekts nach dem CRISP-DM-Standardmodell \parencite{wirth2000crisp}. In diesem ersten Schritt werden die Projektziele aus einer fachlichen Perspektive definiert. Das primäre Ziel besteht darin, die Sensitivität globaler Finanzmärkte gegenüber geopolitischen Schocks quantitativ zu bewerten. 
+
+Die zentrale Forschungsfrage lautet: Inwiefern lassen sich durch die Kombination historischer Konfliktdaten (UCDP) und Marktdaten signifikante Muster der Marktreaktion identifizieren?
+Daraus leiten sich folgende Hypothesen ab:
+\begin{itemize}
+    \item H1: Geopolitische Krisen führen zu signifikanten, aber kurzfristigen Kursrückgängen in Leitindizes wie dem S\&P 500 oder DAX.
+    \item H2: Die Resistenz gegenüber Konflikten variiert stark zwischen verschiedenen regionalen Indizes (Geopolitische Resilienz).
+    \item H3: Mithilfe von Clustering-Verfahren lassen sich Marktphasen identifizieren, die eindeutig mit Eskalationsstufen von Konflikten korrelieren.
+\end{itemize}
+Der wirtschaftliche Mehrwert liegt in einer verbesserten Risikobewertung für Investoren, um krisenbedingte Marktanomalien frühzeitig zu erkennen. (in Anlehnung an Google Gemini)
+
+\subsection{Data Understanding}
+Die Phase des Data Understanding befasst sich mit der Erhebung und ersten Exploration der Daten \parencite{chapman2000crisp}. Für dieses Projekt werden zwei heterogene Datenquellen fusioniert: Finanzmarktdaten und ereignisbasierte Konfliktdaten.
+
+\subsubsection{Datenquellen und Umfang}
+Der primäre Datensatz für die Finanzmarktanalyse stammt von Kaggle (Stock Exchange Dataset). Dieser umfasst historische Kursdaten globaler Indizes über mehrere Jahrzehnte. Als zweite Säule dient das UCDP GED (Global Event Dataset). Das Uppsala Conflict Data Program stellt hierbei den weltweit detailliertesten Datensatz für organisierte Gewalt bereit.
+
+\begin{table}[h!]
+\centering
+\caption{Datenschema Konfliktdaten (UCDP GED)}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Spalte & Beschreibung \\ \midrule
+conflict\_id & Eindeutige Identifikation eines Konfliktherdes \\
+region & Geographische Region des Geschehens \\
+start\_date & Startdatum des Ereignisses \\
+deaths\_best & Schätzung der Todesopfer als Intensitätsmaß \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h!]
+\centering
+\caption{Datenschema Aktienindizes (Kaggle)}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Spalte & Beschreibung \\ \midrule
+Indexname & Name des betrachteten Leitindex \\
+Date & Handelstag (Matching-Key) \\
+Close & Schlusskurs \\
+Differenz & Die berechnete tägliche Rendite in Prozent \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Data Preparation}
+Datenbereinigung, Matching zwischen Konflikt- und Aktienmarktdaten sowie Normalisierung.
+
+\subsection{Modeling}
+Einordnung der in Kapitel 3 beschriebenen Algorithmen in den Workflow.
+
+\subsection{Evaluation}
+Methodik der Modellgüteprüfung (Train-Test-Split, Metriken etc.).
+
+\subsection{Deployment}
+Beschreibung des Projekt-Repositorys und der Reproduzierbarkeit.
+
+\section{Implementierung der Algorithmen}
+\subsection{Lineare Regression}
+\subsection{K-Means}
+\subsection{DBSCAN}
+\subsection{KNN}
+
+\section{Ergebnisse und Visualisierungen}
+\section{Limitationen}
+\section{Fazit}
+
+\end{document}
+
