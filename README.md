@@ -42,3 +42,14 @@ Siehe [README_2.md](./README_2.md) für Dependencies.
 2. K-Means Clustering (Leonard)
 3. Lineare Regression (Lukas)
 4. KNN (Johannes)
+
+## K-Means ausfuehren
+
+```bash
+python src/kmeans_analyse.py --data-path data/processed/ConfilicsIndex2010.zip --k-min 2 --k-max 10
+```
+
+Outputs werden in `results/` gespeichert:
+- `kmeans_cluster_assignments.csv`
+- `kmeans_clusters_pca.png`
+- `kmeans_summary.txt`
