@@ -1,0 +1,8 @@
+K-Means Analyse Summary
+=======================
+best_k: 3
+silhouette: 0.4946
+inertia: 157264.36
+samples: 30000
+features: 13
+feature_columns: active_year, type_of_violence, number_of_sources, where_prec, event_clarity, date_prec, best, Open, High, Low, Close, Adj Close, Volume

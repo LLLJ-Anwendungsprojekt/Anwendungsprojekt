@@ -58,16 +58,30 @@ class KMeansAnalyzer:
 
     def load_data(self, path: str) -> pd.DataFrame:
         """Laedt CSV oder ZIP (mit genau einer CSV) in ein DataFrame."""
-        if not os.path.exists(path):
+        # Resolve relative paths robustly so the script works from different CWDs.
+        candidates = [path]
+        if not os.path.isabs(path):
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(script_dir)
+            candidates.extend([
+                os.path.join(project_root, path),
+                os.path.join(script_dir, path),
+            ])
+
+        resolved_path = next((p for p in candidates if os.path.exists(p)), None)
+        if resolved_path is None:
             raise FileNotFoundError(f"Datei nicht gefunden: {path}")
 
-        lower_path = path.lower()
-        if lower_path.endswith(".zip"):
-            df = pd.read_csv(path, compression="zip")
-        else:
-            df = pd.read_csv(path)
+        lower_path = resolved_path.lower()
+        read_kwargs = {"compression": "zip"} if lower_path.endswith(".zip") else {}
 
-        logger.info("Daten geladen: %s (%s Zeilen, %s Spalten)", path, df.shape[0], df.shape[1])
+        try:
+            df = pd.read_csv(resolved_path, **read_kwargs)
+        except UnicodeDecodeError:
+            # Some provided datasets are ANSI/Latin encoded.
+            df = pd.read_csv(resolved_path, encoding="latin1", **read_kwargs)
+
+        logger.info("Daten geladen: %s (%s Zeilen, %s Spalten)", resolved_path, df.shape[0], df.shape[1])
         return df
 
     def prepare_features(
@@ -119,7 +133,13 @@ class KMeansAnalyzer:
         for k in range(k_min, k_max_allowed + 1):
             model = KMeans(n_clusters=k, random_state=self.random_state, n_init=20)
             labels = model.fit_predict(x)
-            sil = silhouette_score(x, labels)
+            sil_sample_size = min(20000, x.shape[0])
+            sil = silhouette_score(
+                x,
+                labels,
+                sample_size=sil_sample_size,
+                random_state=self.random_state,
+            )
             logger.info("k=%s | silhouette=%.4f | inertia=%.2f", k, sil, model.inertia_)
 
             if sil > best_silhouette:
