@@ -209,3 +209,7 @@ __marimo__/
 # Generated clustering outputs (can be very large)
 results/kmeans_cluster_assignments.csv
 results_test_sample/kmeans_cluster_assignments.csv
+
+# Generated analysis datasets (too large for regular Git workflow)
+data/processed/conflict_market_features.csv
+data/processed/conflict_market_features_sample50k.csv

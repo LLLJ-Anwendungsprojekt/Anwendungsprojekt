@@ -49,6 +49,21 @@ Siehe [README_2.md](./README_2.md) für Dependencies.
 python src/kmeans_analyse.py --data-path data/processed/ConfilicsIndex2010.zip --k-min 2 --k-max 10
 ```
 
+## Neue Analyse-Datenbasis (GED + Indexdaten)
+
+Eine gruppentaugliche Dokumentation zur Erstellung der neuen Datenbasis steht hier:
+- [docs/DATENBASIS_GED_INDEX.md](./docs/DATENBASIS_GED_INDEX.md)
+
+Hinweis fuer GitHub:
+- Die volle Datei `data/processed/conflict_market_features.csv` ist zu gross fuer den normalen Repo-Workflow.
+- Fuer das Repo bitte die kleine Beispieldatei `data/processed/conflict_market_features_sample10k.csv` verwenden.
+
+Skript zur Erstellung:
+
+```bash
+c:/playground/AWP/.venv/Scripts/python.exe src/build_analysis_dataset.py
+```
+
 Outputs werden in `results/` gespeichert:
 - `kmeans_cluster_assignments.csv`
 - `kmeans_clusters_pca.png`
