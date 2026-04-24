@@ -68,3 +68,24 @@ Outputs werden in `results/` gespeichert:
 - `kmeans_cluster_assignments.csv`
 - `kmeans_clusters_pca.png`
 - `kmeans_summary.txt`
+
+## Ad-hoc Analysen
+
+Neu erstellte Analyse-Skripte liegen gebuendelt unter:
+- `src/ad_hoc_analysen/`
+
+Enthaltene Skripte:
+- `src/ad_hoc_analysen/check_codebook.py`
+- `src/ad_hoc_analysen/analyze_outlier.py`
+- `src/ad_hoc_analysen/analyze_rwanda_market_impact.py`
+
+Codebook-Referenz:
+- `docs/references/ged251.pdf`
+
+Ausfuehren (aus `Anwendungsprojekt/`):
+
+```bash
+c:/playground/AWP/.venv/Scripts/python.exe src/ad_hoc_analysen/check_codebook.py
+c:/playground/AWP/.venv/Scripts/python.exe src/ad_hoc_analysen/analyze_outlier.py
+c:/playground/AWP/.venv/Scripts/python.exe src/ad_hoc_analysen/analyze_rwanda_market_impact.py
+```

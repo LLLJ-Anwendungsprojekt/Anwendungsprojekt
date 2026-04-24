@@ -8,7 +8,7 @@ from pathlib import Path
 
 # Codebook URL
 codebook_url = "https://ucdp.uu.se/downloads/ged/ged251.pdf"
-codebook_path = Path("ged251.pdf")
+codebook_path = Path("docs/references/ged251.pdf")
 
 print("="*70)
 print("GED CODEBOOK ANALYSE")
@@ -21,14 +21,15 @@ if not codebook_path.exists():
     try:
         response = requests.get(codebook_url, timeout=10)
         response.raise_for_status()
+        codebook_path.parent.mkdir(parents=True, exist_ok=True)
         with open(codebook_path, 'wb') as f:
             f.write(response.content)
-        print(f"✓ Codebook geladen: {codebook_path}")
+        print(f"[OK] Codebook geladen: {codebook_path}")
     except Exception as e:
-        print(f"✗ Fehler beim Download: {e}")
+        print(f"[ERR] Fehler beim Download: {e}")
         print("Verwende lokale Informationen stattdessen...")
 else:
-    print(f"✓ Codebook gefunden: {codebook_path}")
+    print(f"[OK] Codebook gefunden: {codebook_path}")
 
 print()
 print("="*70)
@@ -122,8 +123,8 @@ print()
 print("="*70)
 print("ZUSAMMENFASSUNG")
 print("="*70)
-print("✓ Datenbasis basiert auf GED Event Data v25.1")
-print("✓ Enthält die 3 Konflikttypen laut Codebook")
-print("✓ Marktfeatures wurden korrekt aggregiert")
-print("✓ Zielspalten für KNN/K-Means sind definiert")
-print("✓ Keine kritischen Fehlwerte in Kernfeldern")
+print("[OK] Datenbasis basiert auf GED Event Data v25.1")
+print("[OK] Enthält die 3 Konflikttypen laut Codebook")
+print("[OK] Marktfeatures wurden korrekt aggregiert")
+print("[OK] Zielspalten für KNN/K-Means sind definiert")
+print("[OK] Keine kritischen Fehlwerte in Kernfeldern")
