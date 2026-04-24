@@ -1,0 +1,8 @@
+K-Means Analyse Summary
+=======================
+best_k: 2
+silhouette: 0.9729
+inertia: 210627.36
+samples: 10000
+features: 25
+feature_columns: type_of_violence, number_of_sources, where_prec, event_clarity, date_prec, deaths_a, deaths_b, deaths_civilians, deaths_unknown, best, high, low, total_deaths, lethality_ratio, conflict_duration_days, pre_return, pre_volatility, event_return, post_return, post_volatility, market_reaction, volatility_change, n_indices_tracked, market_direction_5d, severity_class
