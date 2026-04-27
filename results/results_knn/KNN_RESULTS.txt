@@ -1,0 +1,71 @@
+================================================================================
+KNN-KLASSIFIKATION: KONFLIKT-MARKTREAKTION
+Datei: conflict_market_features.csv
+================================================================================
+
+KONFIGURATION
+--------------------------------------------------------------------------------
+Algorithmus:        K-Nearest Neighbors
+k-Wert:             15
+Distanzmetrik:      Euklidisch
+Gewichtung:         Nach Distanz
+Anzahl Features:    17
+Features:           year, type_of_violence, number_of_sources, where_prec, event_clarity, date_prec, lethality_ratio, conflict_duration_days, pre_return, pre_volatility, event_return, post_return, post_volatility, market_reaction, volatility_change, n_indices_tracked, severity_class
+
+ERGEBNISSE
+--------------------------------------------------------------------------------
+Accuracy:           0.9494 (94.94%)
+Precision:          0.9477
+Recall:             0.9663
+F1-Score:           0.9569
+ROC-AUC Score:      0.9916
+
+CONFUSION MATRIX
+--------------------------------------------------------------------------------
+                    Predicted
+                Down (0)  Up (1)
+Actual Down (0)     3876      310
+       Up (1)        196     5618
+
+DATEN-INFORMATIONEN
+--------------------------------------------------------------------------------
+Verwendet:          50,000 Samples (aus 300,165 Original)
+Training-Set:       40,000 (80.0%)
+Test-Set:           10,000 (20.0%)
+Klasse 0 (Down):    4,186
+Klasse 1 (Up):      5,814
+
+KLASSIFIKATIONSBERICHT
+--------------------------------------------------------------------------------
+              precision    recall  f1-score   support
+
+    Down (0)       0.95      0.93      0.94      4186
+      Up (1)       0.95      0.97      0.96      5814
+
+    accuracy                           0.95     10000
+   macro avg       0.95      0.95      0.95     10000
+weighted avg       0.95      0.95      0.95     10000
+
+
+INTERPRETATION
+--------------------------------------------------------------------------------
+Das KNN-Modell klassifiziert Marktreaktionen (Up/Down) basierend auf
+Konfliktmerkmalen. Die Zielvariable 'market_direction_5d' beschreibt
+die Marktrichtung über 5 Tage nach einem Konflikt-Ereignis.
+
+Mit k=15 (Anzahl der nächsten Nachbarn) erreicht das Modell:
+  • Genauigkeit: 94.9%
+  • True Positive Rate (Recall): 96.6%
+  • ROC-AUC: 0.9916
+
+Eine ROC-AUC von 0.99 ist AUSGEZEICHNET (1.0 = perfekt, 0.5 = zufällig).
+Das Modell diskriminiert sehr gut zwischen 'Down' und 'Up' Reaktionen.
+
+METRIKEN-ERKLÄRUNG:
+--------------------------------------------------------------------------------
+Accuracy:   Anteil korrekt klassifizierter Samples gesamt
+Precision:  Von den als 'Up' klassifizierten, wie viele waren wirklich 'Up'
+Recall:     Von den tatsächlichen 'Up', wie viele wurden erkannt
+F1-Score:   Harmonisches Mittel aus Precision und Recall
+ROC-AUC:    Fläche unter der ROC-Kurve (Trennfähigkeit)
+
