@@ -1,0 +1,107 @@
+
+================================================================================
+DBSCAN-MARKTANOMALIEANALYSE MIT KONTROLLGRUPPE
+================================================================================
+
+FRAGESTELLUNG
+================================================================================
+Es wird untersucht, ob ungewöhnliche Marktreaktionen häufiger an Handelstagen
+auftreten, denen geopolitische Konfliktereignisse zugeordnet wurden.
+
+METHODISCHE LOGIK
+================================================================================
+DBSCAN wird ausschließlich auf Marktvariablen angewendet. Konfliktinformationen
+werden nicht für das Clustering verwendet. Beobachtungen mit DBSCAN-Label -1
+werden als Marktanomalien interpretiert.
+
+Danach wird geprüft, ob diese Marktanomalien an Konflikttagen oder in kurzen
+Konfliktfenstern häufiger auftreten als an normalen Handelstagen.
+
+WICHTIG:
+Diese Analyse zeigt statistische Zusammenhänge, aber keine Kausalität.
+
+DATENGRUNDLAGE
+================================================================================
+Beobachtungen gesamt:              110112
+Konflikttage:                      90792
+Nicht-Konflikttage:                19320
+DBSCAN-Marktanomalien:             5482
+Anomalieanteil gesamt:             4.98 %
+
+High-Intensity-Schwelle:
+total_deaths_sum >= 605.00
+
+DBSCAN-MARKTFEATURES
+================================================================================
+['return_1d', 'abs_return_1d', 'return_z_20', 'volatility_20', 'volume_z_20']
+
+GEWÄHLTE DBSCAN-PARAMETER
+================================================================================
+eps:                               0.442163
+min_samples:                       20
+eps_percentile:                    92
+
+KONTINGENZTESTS
+================================================================================
+                   conflict_variable  n_non_conflict  n_conflict  anomaly_non_conflict  anomaly_conflict  anomaly_rate_non_conflict  anomaly_rate_conflict  difference_conflict_minus_non_conflict       chi2  p_value_chi2  fisher_odds_ratio  p_value_fisher  corrected_odds_ratio
+                     is_conflict_day           19320       90792                   203              5279                   0.010507               0.058144                                0.047637 763.139456 5.577550e-168           5.813574   7.841365e-229              5.799957
+      is_high_intensity_conflict_day          101029        9083                  4986               496                   0.049352               0.054608                                0.005255   4.754924  2.921458e-02           1.112637    2.845552e-02              1.113588
+               is_conflict_window_3d           19280       90832                   198              5284                   0.010270               0.058173                                0.047904 770.462965 1.425920e-169           5.952668   8.733088e-232              5.938356
+is_high_intensity_conflict_window_3d           85356       24756                  4358              1124                   0.051057               0.045403                               -0.005654  12.846782  3.380601e-04           0.884001    2.963328e-04              0.884280
+
+LOGISTISCHE REGRESSIONEN
+================================================================================
+Kontrolliert für:
+- Index
+- Wochentag
+- Jahr-Monat
+
+Standardfehler:
+- nach Index geclustert
+
+Logistische Regression wurde nicht berechnet.
+
+INTENSITÄTSTESTS INNERHALB DER KONFLIKTTAGE
+================================================================================
+              variable  median_anomaly_days  median_normal_days  mean_anomaly_days  mean_normal_days  mann_whitney_u      p_value  significant_5pct
+        conflict_count            24.000000           26.000000          38.873271         46.720978     219218020.5 4.412135e-04              True
+      total_deaths_sum           141.000000          151.000000         333.412389        512.104850     222151815.0 5.408363e-02             False
+      total_deaths_max            33.000000           33.000000         130.240576        149.047022     226175882.0 8.016092e-01             False
+conflict_duration_mean             0.230769            0.217391           1.420294          1.273986     229555207.0 3.689875e-02              True
+    lethality_abs_mean             4.306452            3.895643           8.398638          8.059839     246459482.0 3.019468e-29              True
+
+ROBUSTHEITSANALYSE ÜBER DBSCAN-PARAMETER
+================================================================================
+Zusammenfassung:
+                   conflict_variable  median_odds_ratio  share_significant_chi2  median_difference
+                     is_conflict_day           6.212166                1.000000           0.053972
+               is_conflict_window_3d           6.385099                1.000000           0.054297
+      is_high_intensity_conflict_day           1.148775                0.708333           0.007198
+is_high_intensity_conflict_window_3d           0.908612                0.583333          -0.002991
+
+INTERPRETATION FÜR DIE HAUSARBEIT
+================================================================================
+Ein statistisch signifikanter positiver Zusammenhang würde bedeuten, dass
+DBSCAN-Marktanomalien an Konflikttagen oder in Konfliktfenstern häufiger
+auftreten als an normalen Handelstagen.
+
+Wenn die p-Werte nicht signifikant sind, kann nicht gezeigt werden, dass
+ungewöhnliche Marktreaktionen systematisch häufiger mit geopolitischen
+Konfliktereignissen zusammenfallen.
+
+Auch bei Signifikanz gilt:
+DBSCAN liefert keine kausale Erklärung. Es handelt sich um eine explorative
+Anomalieanalyse mit statistischem Vergleich gegen eine Kontrollgruppe.
+
+DATEIEN
+================================================================================
+- results/clean_market_conflict_panel.csv
+- results/dbscan_market_gridsearch.csv
+- results/dbscan_market_anomaly_results.csv
+- results/dbscan_market_anomaly_cases.csv
+- results/stat_tests_anomaly_vs_conflict_definitions.csv
+- results/logistic_regression_conflict_anomaly_robust.csv
+- results/conflict_intensity_tests_within_conflict_days.csv
+- results/robustness_anomaly_conflict_by_dbscan_params.csv
+- results/DBSCAN_clean_statistical_report.txt
+================================================================================
