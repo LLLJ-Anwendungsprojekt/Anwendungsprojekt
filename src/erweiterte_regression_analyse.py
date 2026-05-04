@@ -346,7 +346,7 @@ was zu weniger Preis-Fluktuation führt.
 
 
 def main():
-    data_path = Path(__file__).parent.parent / 'data' / 'processed' / 'ConfilicsIndex2010_sample30k.csv'
+    data_path = Path(__file__).parent.parent / 'data' / 'processed' / 'conflict_market_features.csv'
 
     if not data_path.exists():
         print(f"Fehler: Datei nicht gefunden: {data_path}")

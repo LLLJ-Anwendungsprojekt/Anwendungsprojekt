@@ -400,7 +400,7 @@ def main():
     Vergleicht: Konflikte vs. Börsenpreise
     """
     # Pfad zu den Daten
-    data_path = Path(__file__).parent.parent / 'data' / 'processed' / 'ConfilicsIndex2010_sample30k.csv'
+    data_path = Path(__file__).parent.parent / 'data' / 'processed' / 'conflict_market_features.csv'
 
     if not data_path.exists():
         print(f"Fehler: Datendatei nicht gefunden: {data_path}")
