@@ -71,14 +71,15 @@ class TestKMeansAnalyzer(unittest.TestCase):
                 data_path=str(data_path),
                 output_dir=str(output_dir),
                 include_columns=["f1", "f2"],
+                output_prefix="_NEU_DB",
                 k_min=2,
                 k_max=4,
             )
 
             self.assertIsInstance(results, KMeansResults)
-            self.assertTrue((output_dir / "kmeans_cluster_assignments.csv").exists())
-            self.assertTrue((output_dir / "kmeans_clusters_pca.png").exists())
-            self.assertTrue((output_dir / "kmeans_summary.txt").exists())
+            self.assertTrue((output_dir / "kmeans_cluster_assignments_NEU_DB.csv").exists())
+            self.assertTrue((output_dir / "kmeans_clusters_pca_NEU_DB.png").exists())
+            self.assertTrue((output_dir / "kmeans_summary_NEU_DB.txt").exists())
 
 
 if __name__ == "__main__":

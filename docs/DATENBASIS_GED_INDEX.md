@@ -80,6 +80,9 @@ Zielspalten fuer Modelle:
 Datei:
 - `Anwendungsprojekt/data/processed/conflict_market_features.csv`
 
+Alternative indexzentrierte Datei:
+- `Anwendungsprojekt/data/processed/index_conflict_features.csv`
+
 Typischer Inhalt:
 - Eine Zeile pro Ereignis
 - Konfliktfeatures + Marktreaktionsfeatures + Zielspalten
@@ -117,6 +120,28 @@ c:/playground/AWP/.venv/Scripts/python.exe src/build_analysis_dataset.py \
 ```
 
 ## Nutzung fuer K-Means und KNN
+
+## Indexzentrierte Variante
+
+Falls die Analyse nicht pro Konflikt, sondern pro Index-Handelstag aufgebaut werden
+soll, gibt es zusaetzlich das Skript `src/build_index_conflict_dataset.py`.
+
+Eigenschaften:
+- Basis ist jede Zeile aus `indexData.csv`
+- Konflikte werden exakt ueber das Kalenderdatum auf den Handelstag gematcht
+- Es werden nur GED-Ereignisse mit `date_prec = 1` einbezogen
+- Konflikte werden pro Tag aggregiert, z. B. `conflict_count`,
+  `fatalities_best_sum`, `countries_affected` und Counts je
+  `type_of_violence`
+
+Ausfuehrung:
+
+```bash
+c:/playground/AWP/.venv/Scripts/python.exe src/build_index_conflict_dataset.py \
+  --ged-path c:/playground/AWP/GEDEvent_v25_1.csv \
+  --idx-path c:/playground/AWP/indexData.csv \
+  --out-path c:/playground/AWP/Anwendungsprojekt/data/processed/index_conflict_features.csv
+```
 
 ### K-Means (Clustering)
 

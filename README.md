@@ -49,10 +49,23 @@ Siehe [README_2.md](./README_2.md) für Dependencies.
 python src/kmeans_analyse.py --data-path data/processed/ConfilicsIndex2010.zip --k-min 2 --k-max 10
 ```
 
+Fuer die neue indexzentrierte Datenbasis mit durchgaengigem `NEU_DB`-Naming:
+
+```bash
+c:/playground/AWP/.venv/Scripts/python.exe src/kmeans_analyse_NEU_DB.py
+```
+
 ## Neue Analyse-Datenbasis (GED + Indexdaten)
 
 Eine gruppentaugliche Dokumentation zur Erstellung der neuen Datenbasis steht hier:
 - [docs/DATENBASIS_GED_INDEX.md](./docs/DATENBASIS_GED_INDEX.md)
+
+Fuer eine indexzentrierte Datenbasis mit tagesgenau gematchten Konfliktaggregaten
+und strikt `date_prec = 1` steht zusaetzlich dieses Skript bereit:
+
+```bash
+c:/playground/AWP/.venv/Scripts/python.exe src/build_index_conflict_dataset.py
+```
 
 Hinweis fuer GitHub:
 - Die volle Datei `data/processed/conflict_market_features.csv` ist zu gross fuer den normalen Repo-Workflow.

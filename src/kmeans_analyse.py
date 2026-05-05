@@ -9,6 +9,7 @@ import argparse
 import logging
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
 
 import matplotlib.pyplot as plt
@@ -25,15 +26,31 @@ from sklearn.preprocessing import StandardScaler
 sns.set_style("whitegrid")
 plt.rcParams["figure.figsize"] = (12, 7)
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("kmeans_analysis.log"),
-        logging.StreamHandler(),
-    ],
-)
 logger = logging.getLogger(__name__)
+
+
+def setup_logging(log_path: Optional[str] = None) -> None:
+    """Konfiguriert Logging optional mit Dateiausgabe."""
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+
+    for handler in list(root_logger.handlers):
+        root_logger.removeHandler(handler)
+
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+    root_logger.addHandler(stream_handler)
+
+    if log_path:
+        log_file = Path(log_path)
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        file_handler = logging.FileHandler(log_file, encoding="utf-8")
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
+
+
+setup_logging()
 
 
 @dataclass
@@ -106,6 +123,7 @@ class KMeansAnalyzer:
         if numeric_df.empty:
             raise ValueError("Keine numerischen Features nach Filterung verfuegbar.")
 
+        numeric_df = numeric_df.replace([np.inf, -np.inf], np.nan)
         self.numeric_columns = list(numeric_df.columns)
 
         x_imputed = self.imputer.fit_transform(numeric_df)
@@ -193,6 +211,7 @@ class KMeansAnalyzer:
         output_dir: str = "results",
         include_columns: Optional[Sequence[str]] = None,
         exclude_columns: Optional[Sequence[str]] = None,
+        output_prefix: str = "",
         k_min: int = 2,
         k_max: int = 10,
     ) -> KMeansResults:
@@ -207,14 +226,14 @@ class KMeansAnalyzer:
         result_df["cluster"] = labels
 
         os.makedirs(output_dir, exist_ok=True)
-        assignments_path = os.path.join(output_dir, "kmeans_cluster_assignments.csv")
+        assignments_path = os.path.join(output_dir, f"kmeans_cluster_assignments{output_prefix}.csv")
         result_df.to_csv(assignments_path, index=False)
         logger.info("Cluster-Zuordnungen gespeichert: %s", assignments_path)
 
-        plot_path = os.path.join(output_dir, "kmeans_clusters_pca.png")
+        plot_path = os.path.join(output_dir, f"kmeans_clusters_pca{output_prefix}.png")
         self.plot_clusters(x, labels, plot_path)
 
-        summary_path = os.path.join(output_dir, "kmeans_summary.txt")
+        summary_path = os.path.join(output_dir, f"kmeans_summary{output_prefix}.txt")
         with open(summary_path, "w", encoding="utf-8") as f:
             f.write("K-Means Analyse Summary\n")
             f.write("=======================\n")
@@ -249,6 +268,16 @@ def parse_args() -> argparse.Namespace:
         help="Verzeichnis fuer Outputs",
     )
     parser.add_argument(
+        "--output-prefix",
+        default="",
+        help="Suffix fuer alle Output-Dateien, z. B. _NEU_DB",
+    )
+    parser.add_argument(
+        "--log-path",
+        default=None,
+        help="Optionaler Pfad fuer die Logdatei",
+    )
+    parser.add_argument(
         "--include-columns",
         nargs="*",
         default=None,
@@ -267,12 +296,14 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    setup_logging(args.log_path)
     analyzer = KMeansAnalyzer(random_state=42)
     results = analyzer.run_pipeline(
         data_path=args.data_path,
         output_dir=args.output_dir,
         include_columns=args.include_columns,
         exclude_columns=args.exclude_columns,
+        output_prefix=args.output_prefix,
         k_min=args.k_min,
         k_max=args.k_max,
     )

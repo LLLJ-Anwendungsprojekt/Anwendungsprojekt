@@ -1,0 +1,8 @@
+K-Means Analyse Summary
+=======================
+best_k: 2
+silhouette: 0.9720
+inertia: 1442957.46
+samples: 92294
+features: 20
+feature_columns: daily_return, intraday_range, volume_change, conflict_count, countries_affected, regions_affected, violence_type_count, type_of_violence_1_count, type_of_violence_2_count, type_of_violence_3_count, fatalities_best_sum, fatalities_high_sum, fatalities_low_sum, civilian_deaths_sum, unknown_deaths_sum, total_deaths_sum, avg_sources, avg_conflict_duration_days, share_high_clarity, share_high_where_prec
