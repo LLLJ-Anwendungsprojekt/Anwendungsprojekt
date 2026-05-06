@@ -1,3 +1,0 @@
-cluster,n_handelstage,daily_return,intraday_range,volume_change,conflict_count,countries_affected,regions_affected,violence_type_count,type_of_violence_1_count,type_of_violence_2_count,type_of_violence_3_count,fatalities_best_sum,fatalities_high_sum,fatalities_low_sum,civilian_deaths_sum,unknown_deaths_sum,total_deaths_sum,avg_sources,avg_conflict_duration_days,share_high_clarity,share_high_where_prec
-0,92280,0.0003,0.0138,inf,24.0022,7.9616,3.7615,2.5835,17.3701,2.8755,3.7567,120.8336,148.5673,111.0403,43.961,13.7052,120.8336,1.2045,0.0,0.9965,0.4564
-1,14,-0.0022,0.0122,-0.0213,55.5,8.5,3.5,2.5,12.0,0.5,43.0,42168.0,101424.0,20548.5,41893.5,38.5,42168.0,1.411,0.0,0.9652,0.7098

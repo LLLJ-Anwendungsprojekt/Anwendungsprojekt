@@ -39,21 +39,8 @@ Siehe [README_2.md](./README_2.md) für Dependencies.
 
 ## Algorithmen
 1. DB Scan (Lorenz)
-2. K-Means Clustering (Leonard)
-3. Lineare Regression (Lukas)
-4. KNN (Johannes)
-
-## K-Means ausfuehren
-
-```bash
-python src/kmeans_analyse.py --data-path data/processed/ConfilicsIndex2010.zip --k-min 2 --k-max 10
-```
-
-Fuer die neue indexzentrierte Datenbasis mit durchgaengigem `NEU_DB`-Naming:
-
-```bash
-c:/playground/AWP/.venv/Scripts/python.exe src/kmeans_analyse_NEU_DB.py
-```
+2. Lineare Regression (Lukas)
+3. KNN (Johannes)
 
 ## Neue Analyse-Datenbasis (GED + Indexdaten)
 
@@ -68,37 +55,15 @@ c:/playground/AWP/.venv/Scripts/python.exe src/build_index_conflict_dataset.py
 ```
 
 Hinweis fuer GitHub:
-- Die volle Datei `data/processed/conflict_market_features.csv` ist zu gross fuer den normalen Repo-Workflow.
-- Fuer das Repo bitte die kleine Beispieldatei `data/processed/conflict_market_features_sample10k.csv` verwenden.
+- Die Ausgabedatei `data/processed/index_conflict_features.csv` kann lokal neu erzeugt werden und muss nicht in voller Groesse versioniert werden.
 
 Skript zur Erstellung:
 
 ```bash
-c:/playground/AWP/.venv/Scripts/python.exe src/build_analysis_dataset.py
+c:/playground/AWP/.venv/Scripts/python.exe src/build_index_conflict_dataset.py
 ```
 
-Outputs werden in `results/` gespeichert:
-- `kmeans_cluster_assignments.csv`
-- `kmeans_clusters_pca.png`
-- `kmeans_summary.txt`
+## Hinweise
 
-## Ad-hoc Analysen
-
-Neu erstellte Analyse-Skripte liegen gebuendelt unter:
-- `src/ad_hoc_analysen/`
-
-Enthaltene Skripte:
-- `src/ad_hoc_analysen/check_codebook.py`
-- `src/ad_hoc_analysen/analyze_outlier.py`
-- `src/ad_hoc_analysen/analyze_rwanda_market_impact.py`
-
-Codebook-Referenz:
-- `docs/references/ged251.pdf`
-
-Ausfuehren (aus `Anwendungsprojekt/`):
-
-```bash
-c:/playground/AWP/.venv/Scripts/python.exe src/ad_hoc_analysen/check_codebook.py
-c:/playground/AWP/.venv/Scripts/python.exe src/ad_hoc_analysen/analyze_outlier.py
-c:/playground/AWP/.venv/Scripts/python.exe src/ad_hoc_analysen/analyze_rwanda_market_impact.py
-```
+- Die aktuelle Datenpipeline ist auf die indexzentrierte Datenbasis ausgerichtet.
+- Das Build-Skript liegt in `src/build_index_conflict_dataset.py`.

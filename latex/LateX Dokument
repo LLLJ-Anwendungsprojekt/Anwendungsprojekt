@@ -219,7 +219,7 @@ Die globale Finanzwelt wird in zunehmendem Maße von unvorhersehbaren geopolitis
 
 Klassische ökonometrische Modelle stoßen bei der Analyse dieser komplexen Zusammenhänge jedoch häufig an ihre methodischen Grenzen. An dieser Stelle bietet das Machine Learning (ML) innovative Lösungsansätze, um verborgene Strukturen und Korrelationen in hochdimensionalen Datenräumen zu identifizieren, die für herkömmliche statistische Tests unsichtbar bleiben. Im Zentrum dieses Anwendungsprojekts steht daher die Entwicklung eines ML-gestützten Frameworks zur Analyse geopolitischer Marktreaktionen.
 
-Dabei kommen vier komplementäre Algorithmen zum Einsatz: Die lineare Regression dient der Bestimmung grundlegender Sensitivitäten, während K-Means und DBSCAN genutzt werden, um Marktphasen zu clustern und extreme Anomalien präzise zu isolieren. Ergänzend ermöglicht der k-Nearest-Neighbor-Algorithmus (KNN) einen fundierten historischen Vergleich, indem er aktuelle Marktszenarien mit ähnlichen Mustern aus der Vergangenheit in Beziehung setzt. Das Ziel der Arbeit ist die Schaffung einer transparenten Datenpipeline, die die Resilienz globaler Indizes gegenüber geopolitischen Schocks objektiv bewertbar macht und somit einen Beitrag zum modernen Risikomanagement leistet. (in Anlehnung an Google Gemini)
+Dabei kommen komplementäre Algorithmen zum Einsatz: Die lineare Regression dient der Bestimmung grundlegender Sensitivitäten, waehrend DBSCAN zur Identifikation von Marktphasen und Anomalien genutzt wird. Ergänzend ermöglicht der k-Nearest-Neighbor-Algorithmus (KNN) einen fundierten historischen Vergleich, indem er aktuelle Marktszenarien mit ähnlichen Mustern aus der Vergangenheit in Beziehung setzt. Das Ziel der Arbeit ist die Schaffung einer transparenten Datenpipeline, die die Resilienz globaler Indizes gegenüber geopolitischen Schocks objektiv bewertbar macht und somit einen Beitrag zum modernen Risikomanagement leistet. (in Anlehnung an Google Gemini)
 
 % ===================================================
 \section{Projektbeschreibung nach CRISP-DM}
@@ -282,7 +282,6 @@ Beschreibung des Projekt-Repositorys und der Reproduzierbarkeit.
 
 \section{Implementierung der Algorithmen}
 \subsection{Lineare Regression}
-\subsection{K-Means}
 \subsection{DBSCAN}
 \subsection{KNN}
 
