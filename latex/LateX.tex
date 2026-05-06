@@ -75,35 +75,6 @@
 \setlength{\headheight}{15pt}
 \setlength{\headsep}{20pt}
 
-% ---------------------------------------------------
-% LITERATURDATENBANK
-% ---------------------------------------------------
-\begin{filecontents}{literatur.bib}
-@inproceedings{wirth2000crisp,
-  title={CRISP-DM: Towards a standard process model for data mining},
-  author={Wirth, Rüdiger and Hipp, Jochen},
-  booktitle={Proceedings of the 4th international conference on the practical applications of knowledge discovery and data mining},
-  pages={29--39},
-  year={2000},
-  organization={Manchester}
-}
-@techreport{chapman2000crisp,
-  title={CRISP-DM 1.0: Step-by-step data mining guide},
-  author={Chapman, Pete and Clinton, Julian and Kerber, Randy and Khabaza, Thomas and Reinartz, Thomas and Shearer, Colin and Wirth, Rüdiger},
-  year={2000},
-  institution={NCR Systems Engineering Copenhagen}
-}
-@article{caldara2022measuring,
-  title={Measuring geopolitical risk},
-  author={Caldara, Dario and Iacoviello, Matteo},
-  journal={American Economic Review},
-  volume={112},
-  number={4},
-  pages={1194--1225},
-  year={2022}
-}
-\end{filecontents}
-
 \usepackage[
 backend=biber,
 style=authoryear,
@@ -130,7 +101,11 @@ url=true
 % ---------------------------------------------------
 \begin{titlepage}
 \begin{center}
+  \IfFileExists{FOM_Logo01_2012_rgb.jpg}{%
     \includegraphics[width=4cm]{FOM_Logo01_2012_rgb.jpg} \\[0.5cm]
+  }{%
+    {\Large \textbf{FOM}}\\[0.5cm]
+  }
     \textbf{FOM Hochschule für Oekonomie \& Management} \\
     Hochschulzentrum Bonn \\[1.0cm]
 
@@ -237,34 +212,49 @@ Daraus leiten sich folgende Hypothesen ab:
 Der wirtschaftliche Mehrwert liegt in einer verbesserten Risikobewertung für Investoren, um krisenbedingte Marktanomalien frühzeitig zu erkennen. (in Anlehnung an Google Gemini)
 
 \subsection{Data Understanding}
-Die Phase des Data Understanding befasst sich mit der Erhebung und ersten Exploration der Daten \parencite{chapman2000crisp}. Für dieses Projekt werden zwei heterogene Datenquellen fusioniert: Finanzmarktdaten und ereignisbasierte Konfliktdaten.
+Die Phase des Data Understanding befasst sich mit der Erhebung, Qualitaetspruefung und strukturellen Einordnung der Daten \parencite{chapman2000crisp}. Fuer die vorliegende Analyse werden taegliche Indexdaten mit ereignisbasierten Konfliktdaten auf Kalendertagebene zusammengefuehrt. Zentrale Pruefpunkte in dieser Phase sind die Datumsabdeckung beider Quellen, fehlende Handelswerte sowie die Praezision der Konfliktdatierung. Fuer die spaetere Modellierung werden nur diejenigen Attribute beruecksichtigt, die unmittelbar fuer das tagesgenaue Matching und die Konstruktion der finalen Analysemerkmale benoetigt werden.
 
 \subsubsection{Datenquellen und Umfang}
-Der primäre Datensatz für die Finanzmarktanalyse stammt von Kaggle (Stock Exchange Dataset). Dieser umfasst historische Kursdaten globaler Indizes über mehrere Jahrzehnte. Als zweite Säule dient das UCDP GED (Global Event Dataset). Das Uppsala Conflict Data Program stellt hierbei den weltweit detailliertesten Datensatz für organisierte Gewalt bereit.
+Der primaere Datensatz fuer die Finanzmarktanalyse stammt aus dem Kaggle-Stock-Exchange-Datensatz und enthaelt historische Tageswerte internationaler Indizes. Als zweite Quelle wird das UCDP GED (Global Event Dataset) verwendet, das konfliktbezogene Einzelereignisse mit Datums- und Intensitaetsangaben bereitstellt. Fuer die tatsaechliche Datenpipeline wurden die in Tabelle~\ref{tab:ucdp_used_attrs} und Tabelle~\ref{tab:index_used_attrs} aufgefuehrten Attribute genutzt.
 
 \begin{table}[h!]
 \centering
-\caption{Datenschema Konfliktdaten (UCDP GED)}
+\caption{Genutzte Attribute aus den Konfliktdaten (UCDP GED)}
+\label{tab:ucdp_used_attrs}
 \begin{tabular}{@{}ll@{}}
 \toprule
 Spalte & Beschreibung \\ \midrule
-conflict\_id & Eindeutige Identifikation eines Konfliktherdes \\
-region & Geographische Region des Geschehens \\
-start\_date & Startdatum des Ereignisses \\
-deaths\_best & Schätzung der Todesopfer als Intensitätsmaß \\ \bottomrule
+date\_start & Ereignisdatum fuer das Matching auf Handelstage \\
+date\_prec & Datumsqualitaet; verwendet als Filter (nur Wert 1) \\
+type\_of\_violence & Konflikttyp zur taeglichen Konfliktstruktur \\
+country\_id & Anzahl betroffener Laender pro Tag \\
+region & Anzahl betroffener Regionen pro Tag \\
+event\_clarity & Qualitaetsmerkmal des Ereignisses \\
+where\_prec & Praezision der Ortsangabe \\
+number\_of\_sources & Quellenanzahl als Robustheitsindikator \\
+best & Zentrale Schaetzung der Todesopfer (Intensitaet) \\
+deaths\_civilians & Zivile Opfer pro Ereignis \\ \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{table}[h!]
 \centering
-\caption{Datenschema Aktienindizes (Kaggle)}
+\caption{Genutzte Attribute aus den Indexdaten (Kaggle)}
+\label{tab:index_used_attrs}
 \begin{tabular}{@{}ll@{}}
 \toprule
 Spalte & Beschreibung \\ \midrule
-Indexname & Name des betrachteten Leitindex \\
-Date & Handelstag (Matching-Key) \\
+Index & Eindeutige Indexkennung \\
+Date & Handelstag und Matching-Key \\
+Open & Eroeffnungskurs \\
+High & Tageshoch \\
+Low & Tagestief \\
 Close & Schlusskurs \\
-Differenz & Die berechnete tägliche Rendite in Prozent \\ \bottomrule
+Adj\_Close & Bereinigter Schlusskurs \\
+Volume & Handelsvolumen \\
+daily\_return & Abgeleitete Tagesrendite \\
+intraday\_range & Abgeleitete Tagesvolatilitaet \\
+volume\_change & Abgeleitete Veraenderung des Volumens \\ \bottomrule
 \end{tabular}
 \end{table}
 
@@ -284,6 +274,32 @@ Beschreibung des Projekt-Repositorys und der Reproduzierbarkeit.
 \subsection{Lineare Regression}
 \subsection{DBSCAN}
 \subsection{KNN}
+\subsection{K-Means Clustering}
+
+Das K-Means-Verfahren wurde als exploratives, unueberwachtes Verfahren eingesetzt,
+um aehnliche Markt-Konflikt-Situationen in der Datenbasis zu segmentieren. Ziel war
+nicht die kausale Schaetzung eines Effekts, sondern die Identifikation von
+wiederkehrenden Strukturen im Merkmalsraum. Hierfuer wurden numerische Merkmale wie
+taegliche Rendite, Intraday-Range, Konfliktanzahl und Konfliktschwere verwendet.
+
+Vor der Modellierung erfolgte eine Standardisierung aller Features, damit keine
+einzelne Variable allein aufgrund ihrer Skala die Distanz dominiert. Anschliessend
+wurde K-Means fuer mehrere Werte von $k$ berechnet. Die Wahl der Clusterzahl
+erfolgte datengetrieben ueber den Silhouette-Score. Formal minimiert K-Means die
+quadratische Distanz der Beobachtungen zu ihren jeweiligen Clusterzentren:
+
+\[
+\min_{C_1,\ldots,C_k} \sum_{j=1}^{k} \sum_{x_i \in C_j} \lVert x_i - \mu_j \rVert^2
+\]
+
+mit $\mu_j$ als Zentrum von Cluster $C_j$.
+
+Die Ergebnisse wurden ueber Clusterprofile (Mittelwerte je Cluster) interpretiert.
+Dabei zeigte sich, dass K-Means insbesondere zwischen konfliktarmen und
+konfliktreichen Handelstagen differenziert. Diese Erkenntnis ist fuer die
+Hypothesengenerierung hilfreich, ersetzt jedoch keine inferenzstatistische
+Wirkungsanalyse. Daher wird die kausale bzw. statistisch-signifikante Pruefung des
+Zusammenhangs in der Arbeit ueber Event-Study- und Regressionsansaetze ergaenzt.
 
 \section{Ergebnisse und Visualisierungen}
 \section{Limitationen}

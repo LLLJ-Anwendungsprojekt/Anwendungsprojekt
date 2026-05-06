@@ -209,3 +209,17 @@ __marimo__/
 # Local generated datasets
 data/processed/index_conflict_features.csv
 data/processed/index_conflict_features_NEU_DB.csv
+
+# LaTeX build artifacts
+latex/*.aux
+latex/*.bbl
+latex/*.bcf
+latex/*.blg
+latex/*.log
+latex/*.out
+latex/*.run.xml
+latex/*.toc
+latex/*.lof
+latex/*.lot
+latex/*.lol
+latex/*.synctex.gz
