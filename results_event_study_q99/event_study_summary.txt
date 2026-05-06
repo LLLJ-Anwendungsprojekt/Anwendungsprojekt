@@ -1,0 +1,14 @@
+Event Study Summary
+===================
+data_path: data\processed\index_conflict_features.csv
+event_mode: high_fatality
+fatality_quantile: 0.99
+event_window: +/-5
+est_window: 60
+gap: 5
+min_est_obs: 30
+n_unique_event_dates: 85
+caar_-1_+1: -0.001303
+caar_-5_+5: 0.001325
+
+Significance by rel_day is in event_study_aar_caar.csv (t_stat, p_value).
