@@ -1,0 +1,65 @@
+OVERVIEW: K-MEANS NEU_DB NACH LUECKENBEHUEBUNG
+================================================================================
+
+[A] DATENSATZBESCHREIBUNG
+    Handelstage: 112.457
+    Zeitraum: 1965-01-05 bis 2021-06-03
+    Indizes: 14
+    Mit Konflikt-Match: 92.519 (82%)
+    Ohne Konflikt-Match: 19.938 (18%)
+
+[B] PREPROCESSING-VERBESSERUNGEN
+    - NaN-Handling: Winsorizing zu p1/p99 statt Median
+    - Inf-Werte: 109 Werte bereinigt
+    - Feature: 21 -> 16 (High/Low-Duplikate raus)
+    - Volume-Change: Entfernt (39.8% NaN)
+    - Standardisierung: StandardScaler
+    - Stabilitaet: n_init=50
+
+[C] NEUES K-MEANS ERGEBNIS (ROBUST)
+    Beste k: 3 (nach Silhouette)
+    Silhouette-Score: 0.1975
+    Inertia: 815.849
+    Cluster-Groessen:
+      Cluster 0:  30751 Tage ( 27.3%)
+      Cluster 1:  20312 Tage ( 18.1%)
+      Cluster 2:  61394 Tage ( 54.6%)
+
+[D] CLUSTER-PROFILE
+    Cluster 0:
+      conflict_count: 43.6
+      fatalities_best: 255.2
+      civilian_deaths: 119.6
+      countries_affected: 10.2
+      intraday_range: 0.011972
+    Cluster 1:
+      conflict_count: 0.0
+      fatalities_best: 0.2
+      civilian_deaths: 0.1
+      countries_affected: 0.0
+      intraday_range: 0.001558
+    Cluster 2:
+      conflict_count: 14.3
+      fatalities_best: 63.4
+      civilian_deaths: 15.7
+      countries_affected: 6.9
+      intraday_range: 0.014811
+
+[E] KATASTROPHENTAGE (Rwanda 1994)
+    1994-04-18:  20362 Tote (60 Events)
+    1994-04-21:  63974 Tote (51 Events)
+
+[F] VERBLEIBENDE LIMITS
+    - Schwache Trennung (Silhouette 0.20)
+    - Marktreaktionen: 0.0 Korrelation mit Konflikten
+    - Zeitliche Struktur ignoriert
+    - Keine externe Validation
+
+[G] EMPFEHLUNGEN FUER WEITERES VORGEHEN
+    1. KNN-Klassifikation: market_direction_5d vorhersagen
+    2. Regionale Sub-Analysen: Afrika, Asien getrennt
+    3. Katastrophentage dokumentieren: Rwanda Genocide
+    4. Zeitmodelle: HMM fuer Regime-Wechsel
+    5. LaTeX: Ergebnisse in Projektbericht einbauen
+
+================================================================================
