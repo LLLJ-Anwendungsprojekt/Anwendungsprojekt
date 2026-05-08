@@ -8,14 +8,26 @@ FRAGESTELLUNG
 Es wird untersucht, ob ungewöhnliche Marktreaktionen häufiger an Handelstagen
 auftreten, denen geopolitische Konfliktereignisse zugeordnet wurden.
 
+VERWENDETE DATEIEN
+================================================================================
+- data/processed/indexData.csv
+- data/processed/GDEEvent_v25_1.csv
+
+DATENPRÜFUNG
+================================================================================
+       dataset  usable_for_dbscan_market_anomaly  n_rows  n_unique_indexes   date_min   date_max                                                            main_check                                           comment
+     indexData                              True  110253              14.0 1965-01-05 2021-06-03        Muss vollständige Handelstage und numerische Preise enthalten.           Geeignet für DBSCAN auf Marktvariablen.
+GDEEvent_v25_1                             False  385918               NaN 1989-01-01 2024-12-31 Wird nicht für DBSCAN genutzt, sondern als Konfliktlabel nach DBSCAN. Geeignet als Konfliktlabel und Intensitätsquelle.
+
 METHODISCHE LOGIK
 ================================================================================
-DBSCAN wird ausschließlich auf Marktvariablen angewendet. Konfliktinformationen
-werden nicht für das Clustering verwendet. Beobachtungen mit DBSCAN-Label -1
-werden als Marktanomalien interpretiert.
+DBSCAN wird ausschließlich auf Marktvariablen aus indexData.csv angewendet.
 
-Danach wird geprüft, ob diese Marktanomalien an Konflikttagen oder in kurzen
-Konfliktfenstern häufiger auftreten als an normalen Handelstagen.
+Konfliktinformationen aus GDEEvent_v25_1.csv werden nicht für das Clustering
+verwendet. Sie werden erst nachträglich als Konfliktindikatoren auf Handelstage
+gemappt.
+
+Beobachtungen mit DBSCAN-Label -1 werden als Marktanomalien interpretiert.
 
 WICHTIG:
 Diese Analyse zeigt statistische Zusammenhänge, aber keine Kausalität.
@@ -23,61 +35,64 @@ Diese Analyse zeigt statistische Zusammenhänge, aber keine Kausalität.
 DATENGRUNDLAGE
 ================================================================================
 Beobachtungen gesamt:              110112
-Konflikttage:                      90792
-Nicht-Konflikttage:                19320
-DBSCAN-Marktanomalien:             5482
-Anomalieanteil gesamt:             4.98 %
+Konflikttage:                      90793
+Nicht-Konflikttage:                19319
+DBSCAN-Marktanomalien:             5715
+Anomalieanteil gesamt:             5.19 %
 
 High-Intensity-Schwelle:
-total_deaths_sum >= 605.00
+total_deaths_sum >= 603.80
 
 DBSCAN-MARKTFEATURES
 ================================================================================
-['return_1d', 'abs_return_1d', 'return_z_20', 'volatility_20', 'volume_z_20']
+['return_1d', 'abs_return_1d', 'return_z_20', 'volatility_20', 'intraday_range', 'open_close_return', 'volume_z_20']
 
 GEWÄHLTE DBSCAN-PARAMETER
 ================================================================================
-eps:                               0.442163
-min_samples:                       20
+eps:                               0.729675
+min_samples:                       10
 eps_percentile:                    92
 
 KONTINGENZTESTS
 ================================================================================
-                   conflict_variable  n_non_conflict  n_conflict  anomaly_non_conflict  anomaly_conflict  anomaly_rate_non_conflict  anomaly_rate_conflict  difference_conflict_minus_non_conflict       chi2  p_value_chi2  fisher_odds_ratio  p_value_fisher  corrected_odds_ratio
-                     is_conflict_day           19320       90792                   203              5279                   0.010507               0.058144                                0.047637 763.139456 5.577550e-168           5.813574   7.841365e-229              5.799957
-      is_high_intensity_conflict_day          101029        9083                  4986               496                   0.049352               0.054608                                0.005255   4.754924  2.921458e-02           1.112637    2.845552e-02              1.113588
-               is_conflict_window_3d           19280       90832                   198              5284                   0.010270               0.058173                                0.047904 770.462965 1.425920e-169           5.952668   8.733088e-232              5.938356
-is_high_intensity_conflict_window_3d           85356       24756                  4358              1124                   0.051057               0.045403                               -0.005654  12.846782  3.380601e-04           0.884001    2.963328e-04              0.884280
+                   conflict_variable  n_non_conflict  n_conflict  anomaly_non_conflict  anomaly_conflict  anomaly_rate_non_conflict  anomaly_rate_conflict  difference_conflict_minus_non_conflict       chi2  p_value_chi2  fisher_odds_ratio  p_value_fisher  corrected_odds_ratio  test_valid  p_value_chi2_fdr_bh  p_value_fisher_fdr_bh
+                     is_conflict_day           19319       90793                   183              5532                   0.009473               0.060930                                0.051457 856.112533 3.409528e-188           6.784718   1.412770e-261              6.766980        True        6.819056e-188          2.825539e-261
+      is_high_intensity_conflict_day          101032        9080                  5213               502                   0.051598               0.055286                                0.003689   2.229486  1.353988e-01           1.075676    1.319202e-01              1.076587        True         1.353988e-01           1.319202e-01
+               is_conflict_window_3d           19280       90832                   178              5537                   0.009232               0.060959                                0.051726 863.717119 7.576412e-190           6.966422   6.060824e-265              6.947677        True        3.030565e-189          2.424329e-264
+is_high_intensity_conflict_window_3d           85363       24749                  4563              1152                   0.053454               0.046547                               -0.006907  18.459507  1.735529e-05           0.864483    1.385072e-05              0.864751        True         2.314039e-05           1.846763e-05
 
 LOGISTISCHE REGRESSIONEN
 ================================================================================
 Kontrolliert für:
 - Index
 - Wochentag
-- Jahr-Monat
+- Jahr
 
 Standardfehler:
 - nach Index geclustert
 
-Logistische Regression wurde nicht berechnet.
+                   conflict_variable  coef_logit  odds_ratio  p_value  significant_5pct  p_value_fdr_bh
+               is_conflict_window_3d    1.555948    4.739578 0.999995             False        0.999995
+is_high_intensity_conflict_window_3d    0.093650    1.098176 0.000102              True        0.000204
 
 INTENSITÄTSTESTS INNERHALB DER KONFLIKTTAGE
 ================================================================================
-              variable  median_anomaly_days  median_normal_days  mean_anomaly_days  mean_normal_days  mann_whitney_u      p_value  significant_5pct
-        conflict_count            24.000000           26.000000          38.873271         46.720978     219218020.5 4.412135e-04              True
-      total_deaths_sum           141.000000          151.000000         333.412389        512.104850     222151815.0 5.408363e-02             False
-      total_deaths_max            33.000000           33.000000         130.240576        149.047022     226175882.0 8.016092e-01             False
-conflict_duration_mean             0.230769            0.217391           1.420294          1.273986     229555207.0 3.689875e-02              True
-    lethality_abs_mean             4.306452            3.895643           8.398638          8.059839     246459482.0 3.019468e-29              True
+              variable  median_anomaly_days  median_normal_days  mean_anomaly_days  mean_normal_days  mann_whitney_u      p_value  significant_5pct  p_value_fdr_bh
+        conflict_count            23.000000           27.000000          36.466377         41.624412     220256378.5 1.635743e-16              True    1.145020e-15
+      total_deaths_sum           127.000000          152.000000         338.336406        376.901373     224420726.0 1.535565e-09              True    3.582984e-09
+      total_deaths_max            32.000000           33.000000         148.800072        144.164624     232494817.5 7.728038e-02             False    9.016045e-02
+     total_deaths_mean             4.792892            4.666667           9.464192          9.298060     244519869.0 4.245242e-06              True    7.429174e-06
+        log_deaths_sum            29.674250           35.073609          48.351734         54.201729     222891950.5 7.394267e-12              True    2.587993e-11
+ death_uncertainty_sum            24.000000           25.000000         106.233369        213.680088     230857406.0 8.436114e-03              True    1.181056e-02
+conflict_duration_mean             0.229041            0.217391           1.442979          1.271779     237809400.0 2.935519e-01             False    2.935519e-01
 
 ROBUSTHEITSANALYSE ÜBER DBSCAN-PARAMETER
 ================================================================================
-Zusammenfassung:
                    conflict_variable  median_odds_ratio  share_significant_chi2  median_difference
-                     is_conflict_day           6.212166                1.000000           0.053972
-               is_conflict_window_3d           6.385099                1.000000           0.054297
-      is_high_intensity_conflict_day           1.148775                0.708333           0.007198
-is_high_intensity_conflict_window_3d           0.908612                0.583333          -0.002991
+                     is_conflict_day           6.433613                1.000000           0.051679
+               is_conflict_window_3d           6.619314                1.000000           0.051978
+      is_high_intensity_conflict_day           1.068204                0.166667           0.003550
+is_high_intensity_conflict_window_3d           0.870833                1.000000          -0.007239
 
 INTERPRETATION FÜR DIE HAUSARBEIT
 ================================================================================
@@ -89,19 +104,33 @@ Wenn die p-Werte nicht signifikant sind, kann nicht gezeigt werden, dass
 ungewöhnliche Marktreaktionen systematisch häufiger mit geopolitischen
 Konfliktereignissen zusammenfallen.
 
+Falls sehr viele Handelstage als Konflikttage markiert werden, ist die einfache
+Variable is_conflict_day nur eingeschränkt aussagekräftig. Dann sollten vor allem
+High-Intensity-Konflikttage betrachtet werden.
+
 Auch bei Signifikanz gilt:
 DBSCAN liefert keine kausale Erklärung. Es handelt sich um eine explorative
 Anomalieanalyse mit statistischem Vergleich gegen eine Kontrollgruppe.
 
 DATEIEN
 ================================================================================
-- results/clean_market_conflict_panel.csv
-- results/dbscan_market_gridsearch.csv
-- results/dbscan_market_anomaly_results.csv
-- results/dbscan_market_anomaly_cases.csv
-- results/stat_tests_anomaly_vs_conflict_definitions.csv
-- results/logistic_regression_conflict_anomaly_robust.csv
-- results/conflict_intensity_tests_within_conflict_days.csv
-- results/robustness_anomaly_conflict_by_dbscan_params.csv
-- results/DBSCAN_clean_statistical_report.txt
+Direkt in results/:
+- data_usability_report.csv
+- market_feature_quality_check.csv
+- clean_market_conflict_panel.csv
+- dbscan_market_gridsearch.csv
+- dbscan_market_anomaly_results.csv
+- dbscan_market_anomaly_cases.csv
+- stat_tests_anomaly_vs_conflict_definitions.csv
+- logistic_regression_conflict_anomaly_robust.csv
+- conflict_intensity_tests_within_conflict_days.csv
+- robustness_anomaly_conflict_by_dbscan_params.csv
+- DBSCAN_clean_statistical_report.txt
+
+In results/plots/:
+- 01_anomaly_rate_by_conflict_definition.png
+- 02_return_boxplot_anomaly.png
+- 03_volatility_boxplot_anomaly.png
+- 04_anomaly_rate_by_index.png
+- 05_dbscan_grid_noise_share.png
 ================================================================================

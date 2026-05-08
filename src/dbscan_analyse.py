@@ -5,24 +5,22 @@ Ziel:
 Es wird geprüft, ob ungewöhnliche Marktreaktionen häufiger an Handelstagen
 auftreten, denen geopolitische Konfliktereignisse zugeordnet wurden.
 
+Verwendete Dateien:
+1. data/processed/indexData.csv
+   Erwartete Spalten:
+   Index, Date, Open, High, Low, Close, Adj Close, Volume
+
+2. data/processed/GDEEvent_v25_1.csv
+   Erwartete Spalten:
+   id, date_start, date_end, best, high, low, latitude, longitude usw.
+
 Methodische Logik:
-1. DBSCAN wird ausschließlich auf Marktvariablen angewendet.
-2. Konfliktinformationen werden NICHT für das Clustering verwendet.
+1. DBSCAN wird ausschließlich auf Marktvariablen aus indexData.csv angewendet.
+2. Konfliktinformationen aus GDEEvent_v25_1.csv werden NICHT für DBSCAN verwendet.
 3. DBSCAN-Noise-Punkte mit Label -1 werden als Marktanomalien interpretiert.
-4. Danach wird statistisch geprüft, ob Marktanomalien an Konflikttagen
-   häufiger auftreten als an normalen Handelstagen.
+4. Danach wird geprüft, ob Marktanomalien häufiger an Konflikttagen auftreten.
 
-Daten:
-1. Kaggle Stock Exchange Data:
-   Erwartete Datei: data/raw/indexData.csv
-   Mindestspalten: Index, Date, Close
-   Optional: Volume
-
-2. Konfliktdaten:
-   Erwartete Datei: data/processed/conflict_market_features.csv
-   Mindestspalten: date_start, total_deaths oder deaths_best
-
-Wichtiger Hinweis:
+Wichtig:
 Diese Analyse zeigt statistische Zusammenhänge, aber keine Kausalität.
 """
 
@@ -47,8 +45,8 @@ warnings.filterwarnings("ignore")
 # KONFIGURATION
 # =============================================================================
 
-STOCK_DATA_PATH = "data/raw/indexData.csv"
-CONFLICT_DATA_PATH = "data/processed/conflict_market_features.csv"
+STOCK_DATA_PATH = "data/processed/indexData.csv"
+CONFLICT_DATA_PATH = "data/processed/GEDEvent_v25_1.csv"
 
 RESULTS_DIR = "results"
 PLOT_DIR = os.path.join(RESULTS_DIR, "plots")
@@ -66,20 +64,26 @@ TARGET_NOISE_SHARE = 5.0
 MIN_NOISE_SHARE = 1.0
 MAX_NOISE_SHARE = 12.0
 
-# Konfliktfenster
+# Konfliktfenster in Handelstagen
 CONFLICT_WINDOW_DAYS = 3
 
-# Intensitätsdefinition
+# High-Intensity-Definition anhand der Konflikttodeszahlen
 HIGH_INTENSITY_PERCENTILE = 90
 
-# Falls Volume in den Kaggle-Daten zu oft fehlt, wird es automatisch ausgeschlossen.
+# Volume nur verwenden, wenn es brauchbar ist
 MAX_ALLOWED_VOLUME_MISSING_SHARE = 0.40
+MIN_VOLUME_NONZERO_SHARE = 0.20
+
+# Maximale Entfernung zwischen Konfliktdatum und nächstem Handelstag
+MAX_MAPPING_GAP_DAYS = 7
 
 BASE_MARKET_FEATURES = [
     "return_1d",
     "abs_return_1d",
     "return_z_20",
     "volatility_20",
+    "intraday_range",
+    "open_close_return",
 ]
 
 VOLUME_FEATURE = "volume_z_20"
@@ -105,21 +109,67 @@ def clean_column_names(df):
     return df
 
 
-def find_stock_file():
-    if os.path.exists(STOCK_DATA_PATH):
-        return STOCK_DATA_PATH
+def find_file(preferred_path, pattern):
+    if os.path.exists(preferred_path):
+        return preferred_path
 
-    candidates = glob.glob("data/raw/*.csv")
+    candidates = glob.glob(pattern)
 
     if not candidates:
         raise FileNotFoundError(
-            "Keine Kaggle-CSV gefunden.\n"
-            "Bitte lege die Datei indexData.csv unter data/raw/ ab."
+            f"Datei nicht gefunden: {preferred_path}\n"
+            f"Auch keine passende Datei mit Muster gefunden: {pattern}"
         )
 
-    print("[WARNUNG] STOCK_DATA_PATH nicht gefunden.")
+    print("[WARNUNG] Bevorzugter Pfad nicht gefunden.")
     print("[INFO] Nutze stattdessen:", candidates[0])
     return candidates[0]
+
+
+def safe_rate(numerator, denominator):
+    if denominator == 0:
+        return np.nan
+    return numerator / denominator
+
+
+def add_fdr_bh(df, p_col, out_col):
+    """
+    Benjamini-Hochberg-FDR-Korrektur für mehrere Tests.
+    """
+    df = df.copy()
+
+    if p_col not in df.columns or df.empty:
+        df[out_col] = np.nan
+        return df
+
+    p = df[p_col].astype(float)
+    valid = p.notna()
+
+    df[out_col] = np.nan
+
+    if valid.sum() == 0:
+        return df
+
+    p_valid = p[valid].values
+    order = np.argsort(p_valid)
+    ranked_p = p_valid[order]
+    m = len(ranked_p)
+
+    adjusted = np.empty(m)
+    prev = 1.0
+
+    for i in range(m - 1, -1, -1):
+        rank = i + 1
+        value = ranked_p[i] * m / rank
+        prev = min(prev, value)
+        adjusted[i] = prev
+
+    adjusted_original_order = np.empty(m)
+    adjusted_original_order[order] = adjusted
+
+    df.loc[valid, out_col] = np.minimum(adjusted_original_order, 1.0)
+
+    return df
 
 
 # =============================================================================
@@ -127,13 +177,16 @@ def find_stock_file():
 # =============================================================================
 
 def load_stock_data():
-    stock_path = find_stock_file()
+    stock_path = find_file(
+        STOCK_DATA_PATH,
+        "data/processed/*indexData*.csv"
+    )
 
     df = pd.read_csv(stock_path)
     df = clean_column_names(df)
 
     print("\n" + "=" * 80)
-    print("KAGGLE-STOCK-DATEN GELADEN")
+    print("INDEXDATEN GELADEN")
     print("=" * 80)
     print("Datei:", stock_path)
     print("Zeilen:", len(df))
@@ -144,83 +197,215 @@ def load_stock_data():
 
     if missing:
         raise ValueError(
-            f"In den Kaggle-Daten fehlen Pflichtspalten: {missing}\n"
+            f"In indexData fehlen Pflichtspalten: {missing}\n"
             "Erwartet werden mindestens: Index, Date, Close"
         )
 
     df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
-    df["Close"] = pd.to_numeric(df["Close"], errors="coerce")
 
-    if "Volume" in df.columns:
-        df["Volume"] = pd.to_numeric(df["Volume"], errors="coerce")
-    else:
-        df["Volume"] = np.nan
+    numeric_cols = ["Open", "High", "Low", "Close", "Adj Close", "Volume"]
+
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+        else:
+            df[col] = np.nan
 
     df = df.dropna(subset=["Index", "Date", "Close"]).copy()
+
+    # Für Renditen wird Adj Close bevorzugt, falls ausreichend vorhanden.
+    adj_available_share = df["Adj Close"].notna().mean()
+
+    if adj_available_share >= 0.80:
+        df["price_for_return"] = df["Adj Close"]
+        price_col_used = "Adj Close"
+    else:
+        df["price_for_return"] = df["Close"]
+        price_col_used = "Close"
+
+    df = df.dropna(subset=["price_for_return"]).copy()
     df = df.sort_values(["Index", "Date"]).reset_index(drop=True)
 
     counts = df["Index"].value_counts()
     valid_indexes = counts[counts >= MIN_DAYS_PER_INDEX].index.tolist()
+
     df = df[df["Index"].isin(valid_indexes)].copy()
 
     print("\nNach Filter auf ausreichend lange Indexhistorien:")
     print("Zeilen:", len(df))
     print("Indizes:", sorted(df["Index"].unique().tolist()))
+    print("Preisvariable für Renditen:", price_col_used)
+
+    if len(df) < 1000:
+        raise ValueError(
+            "Zu wenige Marktdaten nach Filterung. DBSCAN wäre nicht sinnvoll."
+        )
 
     return df
 
 
 def load_conflict_data():
-    if not os.path.exists(CONFLICT_DATA_PATH):
-        raise FileNotFoundError(
-            f"Konfliktdatei nicht gefunden: {CONFLICT_DATA_PATH}"
-        )
+    conflict_path = find_file(
+        CONFLICT_DATA_PATH,
+        "data/processed/*DEEvent*.csv"
+    )
 
-    df = pd.read_csv(CONFLICT_DATA_PATH)
+    df = pd.read_csv(conflict_path)
     df = clean_column_names(df)
 
     print("\n" + "=" * 80)
-    print("KONFLIKTDATEN GELADEN")
+    print("GDE-KONFLIKTDATEN GELADEN")
     print("=" * 80)
+    print("Datei:", conflict_path)
     print("Zeilen:", len(df))
     print("Spalten:", df.columns.tolist())
 
-    if "total_deaths" not in df.columns and "deaths_best" in df.columns:
-        df["total_deaths"] = df["deaths_best"]
-
-    required = ["date_start", "total_deaths"]
+    required = ["date_start", "best"]
     missing = [col for col in required if col not in df.columns]
 
     if missing:
         raise ValueError(
-            f"In den Konfliktdaten fehlen Pflichtspalten: {missing}"
+            f"In GDEEvent fehlen Pflichtspalten: {missing}\n"
+            "Für diese Analyse werden mindestens date_start und best benötigt."
         )
 
     df["date_start"] = pd.to_datetime(df["date_start"], errors="coerce")
-    df["total_deaths"] = pd.to_numeric(df["total_deaths"], errors="coerce").fillna(0)
+
+    if "date_end" in df.columns:
+        df["date_end"] = pd.to_datetime(df["date_end"], errors="coerce")
+    else:
+        df["date_end"] = df["date_start"]
+
+    df["total_deaths"] = pd.to_numeric(df["best"], errors="coerce").fillna(0)
     df["total_deaths"] = df["total_deaths"].clip(lower=0)
 
-    if "conflict_duration_days" in df.columns:
-        df["conflict_duration_days"] = pd.to_numeric(
-            df["conflict_duration_days"],
-            errors="coerce"
-        ).fillna(0)
+    if "high" in df.columns:
+        df["deaths_high"] = pd.to_numeric(df["high"], errors="coerce").fillna(df["total_deaths"])
     else:
-        df["conflict_duration_days"] = 0
+        df["deaths_high"] = df["total_deaths"]
 
-    if "lethality_ratio" in df.columns:
-        df["lethality_ratio"] = pd.to_numeric(
-            df["lethality_ratio"],
-            errors="coerce"
-        ).fillna(0)
+    if "low" in df.columns:
+        df["deaths_low"] = pd.to_numeric(df["low"], errors="coerce").fillna(df["total_deaths"])
     else:
-        df["lethality_ratio"] = 0
+        df["deaths_low"] = df["total_deaths"]
+
+    df["conflict_duration_days"] = (
+        df["date_end"] - df["date_start"]
+    ).dt.days
+
+    df["conflict_duration_days"] = (
+        df["conflict_duration_days"]
+        .fillna(0)
+        .clip(lower=0)
+    )
+
+    # zusätzliche Intensitätsmaße
+    df["log_deaths"] = np.log1p(df["total_deaths"])
+    df["death_uncertainty"] = (df["deaths_high"] - df["deaths_low"]).clip(lower=0)
 
     df = df.dropna(subset=["date_start"]).copy()
 
     print("Gültige Konfliktereignisse:", len(df))
+    print("Zeitraum:", df["date_start"].min(), "bis", df["date_start"].max())
+    print("Todesvariable: best -> total_deaths")
+
+    if len(df) < 100:
+        print("[WARNUNG] Sehr wenige Konfliktereignisse. Tests können instabil sein.")
 
     return df
+
+
+# =============================================================================
+# DATEN-PRÜFUNG
+# =============================================================================
+
+def check_input_usability(stock_df, conflict_df):
+    """
+    Prüft hart, ob die beiden CSVs für diese DBSCAN-Analyse geeignet sind.
+    """
+    print("\n" + "=" * 80)
+    print("DATENPRÜFUNG: SIND DIE CSVs FÜR DIE ANALYSE GEEIGNET?")
+    print("=" * 80)
+
+    rows = []
+
+    # Stock-Daten
+    n_stock = len(stock_df)
+    n_indexes = stock_df["Index"].nunique()
+    date_min = stock_df["Date"].min()
+    date_max = stock_df["Date"].max()
+    close_missing = stock_df["price_for_return"].isna().mean()
+    close_unique = stock_df["price_for_return"].nunique()
+
+    stock_usable = (
+        n_stock >= 1000
+        and n_indexes >= 1
+        and close_missing < 0.05
+        and close_unique > 100
+    )
+
+    rows.append({
+        "dataset": "indexData",
+        "usable_for_dbscan_market_anomaly": stock_usable,
+        "n_rows": n_stock,
+        "n_unique_indexes": n_indexes,
+        "date_min": date_min,
+        "date_max": date_max,
+        "main_check": "Muss vollständige Handelstage und numerische Preise enthalten.",
+        "comment": (
+            "Geeignet für DBSCAN auf Marktvariablen."
+            if stock_usable
+            else "Nicht sauber geeignet: zu wenige Daten, fehlende Preise oder keine Preisvariation."
+        ),
+    })
+
+    # Konflikt-Daten
+    n_conflict = len(conflict_df)
+    conflict_date_min = conflict_df["date_start"].min()
+    conflict_date_max = conflict_df["date_start"].max()
+    deaths_nonmissing = conflict_df["total_deaths"].notna().mean()
+
+    conflict_usable = (
+        n_conflict >= 100
+        and deaths_nonmissing > 0.95
+        and conflict_df["date_start"].notna().mean() > 0.95
+    )
+
+    rows.append({
+        "dataset": "GDEEvent_v25_1",
+        "usable_for_dbscan_market_anomaly": False,
+        "n_rows": n_conflict,
+        "n_unique_indexes": np.nan,
+        "date_min": conflict_date_min,
+        "date_max": conflict_date_max,
+        "main_check": "Wird nicht für DBSCAN genutzt, sondern als Konfliktlabel nach DBSCAN.",
+        "comment": (
+            "Geeignet als Konfliktlabel und Intensitätsquelle."
+            if conflict_usable
+            else "Nur eingeschränkt geeignet: zu wenige Ereignisse oder fehlende Datums-/Todeswerte."
+        ),
+    })
+
+    report = pd.DataFrame(rows)
+
+    print(report.to_string(index=False))
+
+    output_path = os.path.join(RESULTS_DIR, "data_usability_report.csv")
+    report.to_csv(output_path, index=False)
+
+    if not stock_usable:
+        raise ValueError(
+            "indexData.csv ist für DBSCAN auf Marktvariablen nicht sauber geeignet. "
+            "Bitte Datenqualität prüfen."
+        )
+
+    if not conflict_usable:
+        print(
+            "[WARNUNG] GDEEvent_v25_1.csv ist nur eingeschränkt als Konfliktlabel geeignet. "
+            "Die Analyse läuft weiter, aber Interpretation vorsichtig."
+        )
+
+    return report
 
 
 # =============================================================================
@@ -235,7 +420,7 @@ def create_market_features(stock_df):
     print("MARKTFEATURES ERSTELLEN")
     print("=" * 80)
 
-    df["return_1d"] = df.groupby("Index")["Close"].pct_change()
+    df["return_1d"] = df.groupby("Index")["price_for_return"].pct_change()
     df["abs_return_1d"] = df["return_1d"].abs()
 
     df["volatility_20"] = (
@@ -261,9 +446,20 @@ def create_market_features(stock_df):
 
     df["return_z_20"] = (df["return_1d"] - rolling_mean) / rolling_std
 
-    volume_missing_share = df["Volume"].isna().mean()
+    df["intraday_range"] = (df["High"] - df["Low"]) / df["Close"]
+    df["open_close_return"] = (df["Close"] - df["Open"]) / df["Open"]
 
-    use_volume = volume_missing_share <= MAX_ALLOWED_VOLUME_MISSING_SHARE
+    df["intraday_range"] = df["intraday_range"].replace([np.inf, -np.inf], np.nan)
+    df["open_close_return"] = df["open_close_return"].replace([np.inf, -np.inf], np.nan)
+
+    volume_missing_share = df["Volume"].isna().mean()
+    volume_nonzero_share = (df["Volume"].fillna(0) > 0).mean()
+
+    use_volume = (
+        volume_missing_share <= MAX_ALLOWED_VOLUME_MISSING_SHARE
+        and volume_nonzero_share >= MIN_VOLUME_NONZERO_SHARE
+        and df["Volume"].nunique(dropna=True) > 20
+    )
 
     if use_volume:
         volume_mean = (
@@ -289,31 +485,39 @@ def create_market_features(stock_df):
     else:
         df["volume_z_20"] = 0
         market_features = BASE_MARKET_FEATURES
-        print(
-            "Volume wird NICHT verwendet, da zu viele Werte fehlen "
-            f"({volume_missing_share:.2%})."
-        )
+        print("Volume wird NICHT verwendet.")
+        print(f"Volume Missing Share: {volume_missing_share:.2%}")
+        print(f"Volume Nonzero Share: {volume_nonzero_share:.2%}")
 
     before = len(df)
 
-    required_market_cols = [
-        "return_1d",
-        "abs_return_1d",
-        "return_z_20",
-        "volatility_20",
-    ]
-
-    df = df.dropna(subset=required_market_cols).copy()
+    required_market_cols = market_features.copy()
 
     for col in required_market_cols:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
         df[col] = df[col].replace([np.inf, -np.inf], np.nan)
 
     df = df.dropna(subset=required_market_cols).copy()
+
+    # Extremwerte winsorisieren, damit DBSCAN nicht nur Datenfehler findet.
+    for col in required_market_cols:
+        lower = df[col].quantile(0.001)
+        upper = df[col].quantile(0.999)
+        df[col] = df[col].clip(lower, upper)
 
     after = len(df)
 
     print(f"Zeilen nach Feature-Erstellung: {after}/{before}")
     print("DBSCAN-Marktfeatures:", market_features)
+
+    if after < 1000:
+        raise ValueError(
+            "Nach Feature-Erstellung bleiben zu wenige Handelstage übrig."
+        )
+
+    feature_check = df[market_features].agg(["mean", "std", "min", "max"]).T
+    feature_check_path = os.path.join(RESULTS_DIR, "market_feature_quality_check.csv")
+    feature_check.to_csv(feature_check_path)
 
     return df, market_features
 
@@ -327,8 +531,10 @@ def map_conflicts_to_next_trading_day(market_df, conflict_df):
     Globaler Schock-Ansatz:
     Jedes Konfliktereignis wird jedem Index dem nächsten Handelstag zugeordnet.
 
-    Das ist methodisch zulässig, wenn in der Hausarbeit klar geschrieben wird:
-    Konflikte werden als potenziell globale geopolitische Risikolage betrachtet.
+    Wichtig:
+    Bei GDE-Daten kann es sehr viele Konfliktereignisse geben. Falls dadurch fast
+    jeder Handelstag ein Konflikttag wird, sind die einfachen Konflikttag-Tests
+    wenig aussagekräftig. Dann sind High-Intensity-Definitionen wichtiger.
     """
     print("\n" + "=" * 80)
     print("KONFLIKTE AUF NÄCHSTEN HANDELSTAG MAPPEN")
@@ -337,17 +543,40 @@ def map_conflicts_to_next_trading_day(market_df, conflict_df):
     market_df = market_df.copy()
     conflict_df = conflict_df.copy()
 
+    market_min = market_df["Date"].min()
+    market_max = market_df["Date"].max()
+
+    conflict_df = conflict_df[
+        (conflict_df["date_start"] >= market_min - pd.Timedelta(days=MAX_MAPPING_GAP_DAYS))
+        & (conflict_df["date_start"] <= market_max)
+    ].copy()
+
+    print("Konflikte im Marktzeitraum:", len(conflict_df))
+
     all_indexes = sorted(market_df["Index"].unique().tolist())
     mapped_rows = []
 
     conflict_cols = [
         "date_start",
+        "date_end",
         "total_deaths",
+        "deaths_high",
+        "deaths_low",
+        "log_deaths",
+        "death_uncertainty",
         "conflict_duration_days",
-        "lethality_ratio",
     ]
 
-    optional_cols = ["region", "country_id", "type_of_violence"]
+    optional_cols = [
+        "region",
+        "country",
+        "country_id",
+        "type_of_violence",
+        "latitude",
+        "longitude",
+        "where_prec",
+        "date_prec",
+    ]
 
     for col in optional_cols:
         if col in conflict_df.columns:
@@ -364,14 +593,13 @@ def map_conflicts_to_next_trading_day(market_df, conflict_df):
             .reset_index(drop=True)
         )
 
-        temp_conflict = conflict_small.copy()
-
         mapped = pd.merge_asof(
-            temp_conflict,
+            conflict_small,
             idx_dates,
             left_on="date_start",
             right_on="Date",
-            direction="forward"
+            direction="forward",
+            tolerance=pd.Timedelta(days=MAX_MAPPING_GAP_DAYS)
         )
 
         mapped["Index"] = index_name
@@ -386,8 +614,10 @@ def map_conflicts_to_next_trading_day(market_df, conflict_df):
         conflict_count=("date_start", "count"),
         total_deaths_sum=("total_deaths", "sum"),
         total_deaths_max=("total_deaths", "max"),
+        total_deaths_mean=("total_deaths", "mean"),
+        log_deaths_sum=("log_deaths", "sum"),
+        death_uncertainty_sum=("death_uncertainty", "sum"),
         conflict_duration_mean=("conflict_duration_days", "mean"),
-        lethality_abs_mean=("lethality_ratio", lambda x: np.mean(np.abs(x))),
     ).reset_index()
 
     panel = market_df.merge(
@@ -400,8 +630,10 @@ def map_conflicts_to_next_trading_day(market_df, conflict_df):
         "conflict_count",
         "total_deaths_sum",
         "total_deaths_max",
+        "total_deaths_mean",
+        "log_deaths_sum",
+        "death_uncertainty_sum",
         "conflict_duration_mean",
-        "lethality_abs_mean",
     ]
 
     for col in fill_cols:
@@ -409,11 +641,26 @@ def map_conflicts_to_next_trading_day(market_df, conflict_df):
 
     panel["is_conflict_day"] = (panel["conflict_count"] > 0).astype(int)
 
+    conflict_share = panel["is_conflict_day"].mean() * 100
+
     print("\nPanel erstellt:")
     print("Zeilen:", len(panel))
     print("Konflikttage:", int(panel["is_conflict_day"].sum()))
     print("Nicht-Konflikttage:", int((panel["is_conflict_day"] == 0).sum()))
-    print("Anteil Konflikttage:", round(panel["is_conflict_day"].mean() * 100, 2), "%")
+    print("Anteil Konflikttage:", round(conflict_share, 2), "%")
+
+    if conflict_share > 80:
+        print(
+            "\n[WARNUNG] Mehr als 80% der Handelstage sind Konflikttage.\n"
+            "Das ist bei globalen GDE-Ereignissen plausibel, macht aber den einfachen\n"
+            "Vergleich Konflikttag vs. Nicht-Konflikttag schwach. Interpretiere dann\n"
+            "vor allem High-Intensity-Konflikttage und Konfliktfenster."
+        )
+
+    if conflict_share < 1:
+        print(
+            "\n[WARNUNG] Sehr wenige Konflikttage. Tests können wenig Power haben."
+        )
 
     return panel
 
@@ -432,16 +679,16 @@ def add_high_intensity_and_windows(panel):
     df = panel.copy()
     df = df.sort_values(["Index", "Date"]).reset_index(drop=True)
 
-    conflict_days = df.loc[df["is_conflict_day"] == 1, "total_deaths_sum"]
+    conflict_values = df.loc[df["is_conflict_day"] == 1, "total_deaths_sum"]
 
-    if len(conflict_days) > 0:
-        threshold = np.percentile(conflict_days, HIGH_INTENSITY_PERCENTILE)
+    if len(conflict_values) > 0:
+        threshold = float(np.percentile(conflict_values, HIGH_INTENSITY_PERCENTILE))
     else:
         threshold = np.inf
 
     df["is_high_intensity_conflict_day"] = (
-        (df["is_conflict_day"] == 1) &
-        (df["total_deaths_sum"] >= threshold)
+        (df["is_conflict_day"] == 1)
+        & (df["total_deaths_sum"] >= threshold)
     ).astype(int)
 
     df["is_conflict_window_3d"] = 0
@@ -489,6 +736,15 @@ def standardize_dbscan_features(panel, market_features):
         X[col] = pd.to_numeric(X[col], errors="coerce")
         X[col] = X[col].replace([np.inf, -np.inf], np.nan)
         X[col] = X[col].fillna(X[col].median())
+
+    if X.shape[0] < 1000:
+        raise ValueError("Zu wenige Beobachtungen für DBSCAN.")
+
+    if (X.std() == 0).any():
+        zero_var_cols = X.columns[X.std() == 0].tolist()
+        raise ValueError(
+            f"Folgende Marktfeatures haben keine Varianz und sind für DBSCAN ungeeignet: {zero_var_cols}"
+        )
 
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
@@ -563,9 +819,9 @@ def run_dbscan_gridsearch(X_scaled):
 
 def choose_best_dbscan_params(grid_df):
     candidates = grid_df[
-        (grid_df["noise_share_pct"] >= MIN_NOISE_SHARE) &
-        (grid_df["noise_share_pct"] <= MAX_NOISE_SHARE) &
-        (grid_df["n_clusters"] >= 1)
+        (grid_df["noise_share_pct"] >= MIN_NOISE_SHARE)
+        & (grid_df["noise_share_pct"] <= MAX_NOISE_SHARE)
+        & (grid_df["n_clusters"] >= 1)
     ].copy()
 
     if candidates.empty:
@@ -650,11 +906,27 @@ def contingency_test(result, conflict_variable):
 
     table = table.reindex(index=[0, 1], columns=[0, 1], fill_value=0)
 
-    chi2, p_chi, dof, expected = chi2_contingency(table)
-    odds_ratio, p_fisher = fisher_exact(table)
+    row0_sum = table.loc[0].sum()
+    row1_sum = table.loc[1].sum()
 
-    anomaly_rate_non_conflict = table.loc[0, 1] / table.loc[0].sum()
-    anomaly_rate_conflict = table.loc[1, 1] / table.loc[1].sum()
+    anomaly_rate_non_conflict = safe_rate(table.loc[0, 1], row0_sum)
+    anomaly_rate_conflict = safe_rate(table.loc[1, 1], row1_sum)
+
+    valid_for_test = (
+        row0_sum > 0
+        and row1_sum > 0
+        and table[0].sum() > 0
+        and table[1].sum() > 0
+    )
+
+    if valid_for_test:
+        chi2, p_chi, dof, expected = chi2_contingency(table)
+        odds_ratio, p_fisher = fisher_exact(table)
+    else:
+        chi2 = np.nan
+        p_chi = np.nan
+        odds_ratio = np.nan
+        p_fisher = np.nan
 
     a = table.loc[1, 1] + 0.5
     b = table.loc[1, 0] + 0.5
@@ -665,8 +937,8 @@ def contingency_test(result, conflict_variable):
 
     summary = {
         "conflict_variable": conflict_variable,
-        "n_non_conflict": int(table.loc[0].sum()),
-        "n_conflict": int(table.loc[1].sum()),
+        "n_non_conflict": int(row0_sum),
+        "n_conflict": int(row1_sum),
         "anomaly_non_conflict": int(table.loc[0, 1]),
         "anomaly_conflict": int(table.loc[1, 1]),
         "anomaly_rate_non_conflict": anomaly_rate_non_conflict,
@@ -677,6 +949,7 @@ def contingency_test(result, conflict_variable):
         "fisher_odds_ratio": odds_ratio,
         "p_value_fisher": p_fisher,
         "corrected_odds_ratio": corrected_or,
+        "test_valid": valid_for_test,
     }
 
     return summary, table
@@ -714,6 +987,8 @@ def run_all_contingency_tests(result):
         table.to_csv(table_path)
 
     summary_df = pd.DataFrame(summaries)
+    summary_df = add_fdr_bh(summary_df, "p_value_chi2", "p_value_chi2_fdr_bh")
+    summary_df = add_fdr_bh(summary_df, "p_value_fisher", "p_value_fisher_fdr_bh")
 
     output_path = os.path.join(RESULTS_DIR, "stat_tests_anomaly_vs_conflict_definitions.csv")
     summary_df.to_csv(output_path, index=False)
@@ -729,7 +1004,7 @@ def logistic_regression_tests(result):
 
     Ziel:
     Prüfen, ob Konfliktvariablen mit höherer Anomaliewahrscheinlichkeit
-    verbunden sind, kontrolliert für Index, Wochentag und Jahr-Monat.
+    verbunden sind, kontrolliert für Index, Wochentag und Jahr.
     """
     print("\n" + "=" * 80)
     print("LOGISTISCHE REGRESSIONEN MIT GECLUSTERTEN STANDARDFEHLERN")
@@ -745,7 +1020,7 @@ def logistic_regression_tests(result):
     df = result.copy()
 
     df["weekday"] = df["Date"].dt.dayofweek.astype(str)
-    df["year_month"] = df["Date"].dt.to_period("M").astype(str)
+    df["year"] = df["Date"].dt.year.astype(str)
 
     conflict_variables = [
         "is_conflict_day",
@@ -763,14 +1038,19 @@ def logistic_regression_tests(result):
             print("[WARNUNG] Variable hat keine Variation. Überspringe:", var)
             continue
 
+        if df["is_market_anomaly"].nunique() < 2:
+            print("[WARNUNG] Zielvariable hat keine Variation. Regression nicht möglich.")
+            break
+
         formula = (
             f"is_market_anomaly ~ {var} "
-            "+ C(Index) + C(weekday) + C(year_month)"
+            "+ C(Index) + C(weekday) + C(year)"
         )
 
         try:
             model = smf.logit(formula=formula, data=df).fit(
                 disp=False,
+                maxiter=200,
                 cov_type="cluster",
                 cov_kwds={"groups": df["Index"]}
             )
@@ -796,6 +1076,9 @@ def logistic_regression_tests(result):
 
     summary_df = pd.DataFrame(rows)
 
+    if not summary_df.empty:
+        summary_df = add_fdr_bh(summary_df, "p_value", "p_value_fdr_bh")
+
     output_path = os.path.join(RESULTS_DIR, "logistic_regression_conflict_anomaly_robust.csv")
     summary_df.to_csv(output_path, index=False)
 
@@ -819,8 +1102,10 @@ def conflict_intensity_tests(result):
         "conflict_count",
         "total_deaths_sum",
         "total_deaths_max",
+        "total_deaths_mean",
+        "log_deaths_sum",
+        "death_uncertainty_sum",
         "conflict_duration_mean",
-        "lethality_abs_mean",
     ]
 
     rows = []
@@ -850,6 +1135,9 @@ def conflict_intensity_tests(result):
         })
 
     tests = pd.DataFrame(rows)
+
+    if not tests.empty:
+        tests = add_fdr_bh(tests, "p_value", "p_value_fdr_bh")
 
     output_path = os.path.join(RESULTS_DIR, "conflict_intensity_tests_within_conflict_days.csv")
     tests.to_csv(output_path, index=False)
@@ -892,26 +1180,24 @@ def robustness_tests_over_dbscan_params(panel, X_scaled, grid_df):
         )
 
         for var in conflict_variables:
-            try:
-                summary, _ = contingency_test(result, var)
+            summary, _ = contingency_test(result, var)
 
-                rows.append({
-                    "min_samples": min_samples,
-                    "eps_percentile": int(row["eps_percentile"]),
-                    "eps": eps,
-                    "n_clusters": int(row["n_clusters"]),
-                    "noise_share_pct": float(row["noise_share_pct"]),
-                    "largest_cluster_share_pct": float(row["largest_cluster_share_pct"]),
-                    "conflict_variable": var,
-                    "anomaly_rate_non_conflict": summary["anomaly_rate_non_conflict"],
-                    "anomaly_rate_conflict": summary["anomaly_rate_conflict"],
-                    "difference_conflict_minus_non_conflict": summary["difference_conflict_minus_non_conflict"],
-                    "corrected_odds_ratio": summary["corrected_odds_ratio"],
-                    "p_value_chi2": summary["p_value_chi2"],
-                    "p_value_fisher": summary["p_value_fisher"],
-                })
-            except Exception as exc:
-                print("[WARNUNG] Robustheitstest fehlgeschlagen:", exc)
+            rows.append({
+                "min_samples": min_samples,
+                "eps_percentile": int(row["eps_percentile"]),
+                "eps": eps,
+                "n_clusters": int(row["n_clusters"]),
+                "noise_share_pct": float(row["noise_share_pct"]),
+                "largest_cluster_share_pct": float(row["largest_cluster_share_pct"]),
+                "conflict_variable": var,
+                "anomaly_rate_non_conflict": summary["anomaly_rate_non_conflict"],
+                "anomaly_rate_conflict": summary["anomaly_rate_conflict"],
+                "difference_conflict_minus_non_conflict": summary["difference_conflict_minus_non_conflict"],
+                "corrected_odds_ratio": summary["corrected_odds_ratio"],
+                "p_value_chi2": summary["p_value_chi2"],
+                "p_value_fisher": summary["p_value_fisher"],
+                "test_valid": summary["test_valid"],
+            })
 
     robustness_df = pd.DataFrame(rows)
 
@@ -927,12 +1213,12 @@ def robustness_tests_over_dbscan_params(panel, X_scaled, grid_df):
 # VISUALISIERUNGEN
 # =============================================================================
 
-def create_plots(result, contingency_summary):
+def create_plots(result, grid_df):
     print("\n" + "=" * 80)
     print("PLOTS ERSTELLEN")
     print("=" * 80)
 
-    # 1. Anomalierate Konfliktdefinitionen
+    # 1. Anomalierate nach Konfliktdefinition
     plot_rows = []
 
     for var in [
@@ -957,8 +1243,8 @@ def create_plots(result, contingency_summary):
         width = 0.35
 
         plt.figure(figsize=(12, 6))
-        plt.bar(x - width / 2, rates_df["normal"], width, label="Keine Konfliktdefinition")
-        plt.bar(x + width / 2, rates_df["conflict"], width, label="Konfliktdefinition erfüllt")
+        plt.bar(x - width / 2, rates_df["normal"], width, label="Definition nicht erfüllt")
+        plt.bar(x + width / 2, rates_df["conflict"], width, label="Definition erfüllt")
         plt.xticks(x, rates_df["conflict_definition"], rotation=30, ha="right")
         plt.ylabel("Anteil DBSCAN-Marktanomalien")
         plt.title("Anomalierate nach Konfliktdefinition")
@@ -969,7 +1255,7 @@ def create_plots(result, contingency_summary):
         plt.savefig(path, dpi=300, bbox_inches="tight")
         plt.close()
 
-    # 2. Return-Verteilung normal vs. Anomalie
+    # 2. Return-Verteilung
     plt.figure(figsize=(9, 6))
     result.boxplot(
         column="return_1d",
@@ -986,7 +1272,7 @@ def create_plots(result, contingency_summary):
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    # 3. Volatilität normal vs. Anomalie
+    # 3. Volatilität
     plt.figure(figsize=(9, 6))
     result.boxplot(
         column="volatility_20",
@@ -1020,6 +1306,29 @@ def create_plots(result, contingency_summary):
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
 
+    # 5. DBSCAN Grid Noise-Anteil
+    plt.figure(figsize=(10, 6))
+
+    for min_samples, group in grid_df.groupby("min_samples"):
+        group = group.sort_values("eps_percentile")
+        plt.plot(
+            group["eps_percentile"],
+            group["noise_share_pct"],
+            marker="o",
+            label=f"min_samples={min_samples}"
+        )
+
+    plt.axhline(TARGET_NOISE_SHARE, linestyle="--", label="Ziel-Anomalieanteil")
+    plt.xlabel("eps-Perzentil")
+    plt.ylabel("Noise-Anteil in %")
+    plt.title("DBSCAN-Grid: Noise-Anteil nach Parameterwahl")
+    plt.legend()
+    plt.grid(alpha=0.3)
+
+    path = os.path.join(PLOT_DIR, "05_dbscan_grid_noise_share.png")
+    plt.savefig(path, dpi=300, bbox_inches="tight")
+    plt.close()
+
     print("[OK] Plots gespeichert in:", PLOT_DIR)
 
 
@@ -1031,6 +1340,7 @@ def generate_report(
     params,
     market_features,
     high_intensity_threshold,
+    usability_report,
     result,
     contingency_summary,
     logistic_summary,
@@ -1056,16 +1366,20 @@ def generate_report(
     else:
         intensity_text = "Keine Intensitätstests berechenbar."
 
-    robustness_short = (
-        robustness_df
-        .groupby("conflict_variable")
-        .agg(
-            median_odds_ratio=("corrected_odds_ratio", "median"),
-            share_significant_chi2=("p_value_chi2", lambda x: np.mean(x < 0.05)),
-            median_difference=("difference_conflict_minus_non_conflict", "median"),
+    if robustness_df is not None and not robustness_df.empty:
+        robustness_short = (
+            robustness_df
+            .groupby("conflict_variable")
+            .agg(
+                median_odds_ratio=("corrected_odds_ratio", "median"),
+                share_significant_chi2=("p_value_chi2", lambda x: np.mean(x < 0.05)),
+                median_difference=("difference_conflict_minus_non_conflict", "median"),
+            )
+            .reset_index()
         )
-        .reset_index()
-    )
+        robustness_text = robustness_short.to_string(index=False)
+    else:
+        robustness_text = "Keine Robustheitsanalyse berechenbar."
 
     report = f"""
 ================================================================================
@@ -1077,14 +1391,24 @@ FRAGESTELLUNG
 Es wird untersucht, ob ungewöhnliche Marktreaktionen häufiger an Handelstagen
 auftreten, denen geopolitische Konfliktereignisse zugeordnet wurden.
 
+VERWENDETE DATEIEN
+================================================================================
+- data/processed/indexData.csv
+- data/processed/GDEEvent_v25_1.csv
+
+DATENPRÜFUNG
+================================================================================
+{usability_report.to_string(index=False)}
+
 METHODISCHE LOGIK
 ================================================================================
-DBSCAN wird ausschließlich auf Marktvariablen angewendet. Konfliktinformationen
-werden nicht für das Clustering verwendet. Beobachtungen mit DBSCAN-Label -1
-werden als Marktanomalien interpretiert.
+DBSCAN wird ausschließlich auf Marktvariablen aus indexData.csv angewendet.
 
-Danach wird geprüft, ob diese Marktanomalien an Konflikttagen oder in kurzen
-Konfliktfenstern häufiger auftreten als an normalen Handelstagen.
+Konfliktinformationen aus GDEEvent_v25_1.csv werden nicht für das Clustering
+verwendet. Sie werden erst nachträglich als Konfliktindikatoren auf Handelstage
+gemappt.
+
+Beobachtungen mit DBSCAN-Label -1 werden als Marktanomalien interpretiert.
 
 WICHTIG:
 Diese Analyse zeigt statistische Zusammenhänge, aber keine Kausalität.
@@ -1119,7 +1443,7 @@ LOGISTISCHE REGRESSIONEN
 Kontrolliert für:
 - Index
 - Wochentag
-- Jahr-Monat
+- Jahr
 
 Standardfehler:
 - nach Index geclustert
@@ -1132,8 +1456,7 @@ INTENSITÄTSTESTS INNERHALB DER KONFLIKTTAGE
 
 ROBUSTHEITSANALYSE ÜBER DBSCAN-PARAMETER
 ================================================================================
-Zusammenfassung:
-{robustness_short.to_string(index=False)}
+{robustness_text}
 
 INTERPRETATION FÜR DIE HAUSARBEIT
 ================================================================================
@@ -1145,21 +1468,35 @@ Wenn die p-Werte nicht signifikant sind, kann nicht gezeigt werden, dass
 ungewöhnliche Marktreaktionen systematisch häufiger mit geopolitischen
 Konfliktereignissen zusammenfallen.
 
+Falls sehr viele Handelstage als Konflikttage markiert werden, ist die einfache
+Variable is_conflict_day nur eingeschränkt aussagekräftig. Dann sollten vor allem
+High-Intensity-Konflikttage betrachtet werden.
+
 Auch bei Signifikanz gilt:
 DBSCAN liefert keine kausale Erklärung. Es handelt sich um eine explorative
 Anomalieanalyse mit statistischem Vergleich gegen eine Kontrollgruppe.
 
 DATEIEN
 ================================================================================
-- results/clean_market_conflict_panel.csv
-- results/dbscan_market_gridsearch.csv
-- results/dbscan_market_anomaly_results.csv
-- results/dbscan_market_anomaly_cases.csv
-- results/stat_tests_anomaly_vs_conflict_definitions.csv
-- results/logistic_regression_conflict_anomaly_robust.csv
-- results/conflict_intensity_tests_within_conflict_days.csv
-- results/robustness_anomaly_conflict_by_dbscan_params.csv
-- results/DBSCAN_clean_statistical_report.txt
+Direkt in results/:
+- data_usability_report.csv
+- market_feature_quality_check.csv
+- clean_market_conflict_panel.csv
+- dbscan_market_gridsearch.csv
+- dbscan_market_anomaly_results.csv
+- dbscan_market_anomaly_cases.csv
+- stat_tests_anomaly_vs_conflict_definitions.csv
+- logistic_regression_conflict_anomaly_robust.csv
+- conflict_intensity_tests_within_conflict_days.csv
+- robustness_anomaly_conflict_by_dbscan_params.csv
+- DBSCAN_clean_statistical_report.txt
+
+In results/plots/:
+- 01_anomaly_rate_by_conflict_definition.png
+- 02_return_boxplot_anomaly.png
+- 03_volatility_boxplot_anomaly.png
+- 04_anomaly_rate_by_index.png
+- 05_dbscan_grid_noise_share.png
 ================================================================================
 """
 
@@ -1178,6 +1515,8 @@ def main():
 
     stock_df = load_stock_data()
     conflict_df = load_conflict_data()
+
+    usability_report = check_input_usability(stock_df, conflict_df)
 
     market_df, market_features = create_market_features(stock_df)
 
@@ -1217,13 +1556,14 @@ def main():
 
     create_plots(
         result=result,
-        contingency_summary=contingency_summary
+        grid_df=grid_df
     )
 
     generate_report(
         params=best_params,
         market_features=market_features,
         high_intensity_threshold=high_intensity_threshold,
+        usability_report=usability_report,
         result=result,
         contingency_summary=contingency_summary,
         logistic_summary=logistic_summary,
