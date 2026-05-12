@@ -223,3 +223,4 @@ latex/*.lof
 latex/*.lot
 latex/*.lol
 latex/*.synctex.gz
+*.pdf

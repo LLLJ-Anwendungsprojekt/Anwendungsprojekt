@@ -178,7 +178,10 @@ GPR & Geopolitical Risk Index \\
 \textbf{Nr.} & \textbf{KI-System} & \textbf{Prompt / Einsatzzweck} \\ \midrule
 1 & Google Gemini & „Hallo Gemini, ich brauche für mein Anwendungsprojekt eine wissenschaftliche Einleitung. Wir untersuchen, wie geopolitische Krisen Aktienkurse beeinflussen. Kannst du einen Text schreiben, der erklärt, warum das wichtig ist (Stichwort Volatilität und Unsicherheit) und warum wir genau Machine Learning dafür benutzen? Das Ganze soll ca. 250 Wörter haben.“ \\
 2 & Google Gemini & „Hilf mir mal bitte beim 'Business Understanding' für meine Hausarbeit. Wir nutzen das CRISP-DM Modell und ich muss erklären, was das Ziel unserer Analyse ist. Kannst du mir da Hypothesen formulieren, wie Märkte auf Konflikte reagieren, und den wirtschaftlichen Nutzen für Investoren herausstellen?“ \\
-3 & Google Gemini & „Ich muss das Kapitel 'Data Understanding' schreiben. Ich habe Aktienmarktdaten von Kaggle und Konflikt-Events von der UCDP. Kannst du beschreiben, was diese Quellen beinhalten und wie wir sie zusammenführen? Integriere bitte auch die Datenschemata-Tabellen, damit man sieht, welche Spalten wir genau nutzen.“ \\ \bottomrule
+3 & Google Gemini & „Ich muss das Kapitel 'Data Understanding' schreiben. Ich habe Aktienmarktdaten von Kaggle und Konflikt-Events von der UCDP. Kannst du beschreiben, was diese Quellen beinhalten und wie wir sie zusammenführen? Integriere bitte auch die Datenschemata-Tabellen, damit man sieht, welche Spalten wir genau nutzen.“ \\ 
+4 & ChatGPT-5.4 & erläutere die data preparation, gehe auch auf die dafür genutzen skripte auf. erläutere, warum dies so gemacht wurde. erläutere dies auf einem wissenschaftlichen level und packe dies in das latex dokument bei 2.3 Data Preparation \\
+
+\bottomrule
 \end{tabular}
 
 
@@ -235,6 +238,7 @@ number\_of\_sources & Quellenanzahl als Robustheitsindikator \\
 best & Zentrale Schätzung der Todesopfer (Intensität) \\
 deaths\_civilians & Zivile Opfer pro Ereignis \\ \bottomrule
 \end{tabular}
+\caption*{\footnotesize Quelle: Eigene Darstellung}
 \end{table}
 
 \begin{table}[h!]
@@ -256,10 +260,76 @@ daily\_return & Abgeleitete Tagesrendite \\
 intraday\_range & Abgeleitete Tagesvolatilität \\
 volume\_change & Abgeleitete Veränderung des Volumens \\ \bottomrule
 \end{tabular}
+\caption*{\footnotesize Quelle: Eigene Darstellung}
 \end{table}
 
 \subsection{Data Preparation}
-Datenbereinigung, Matching zwischen Konflikt- und Aktienmarktdaten sowie Normalisierung.
+Die Data-Preparation-Phase operationalisiert die im Data-Understanding identifizierten
+Qualitaetsanforderungen in eine reproduzierbare Transformationspipeline.
+Ziel ist die Erzeugung einer indexzentrierten Analysebasis mit exakt einer
+Beobachtung pro Index und Handelstag. Diese Entscheidung ist methodisch zentral, da ein
+naiver Ereignis-Join (ein Konfliktereignis auf mehrere Indizes desselben Tages) zu
+Duplikaten, impliziter Uebergewichtung konfliktreicher Tage und damit zu verzerrten
+Distanz- bzw. Regressionsstrukturen fuehren kann.
+
+\subsubsection{Pipeline-Design}
+Die Pipeline besteht aus vier aufeinander aufbauenden Schritten:
+\begin{enumerate}
+  \item \textbf{Aufbereitung der Indexdaten} \newline
+  Die Rohdaten werden chronologisch je
+  Index sortiert und um relative Marktmerkmale erweitert. Die zentrale Renditevariable
+  wird als
+  \[
+  r_{i,t} = \frac{P_{i,t} - P_{i,t-1}}{P_{i,t-1}}
+  \]
+  definiert, wobei $P_{i,t}$ den Schlusskurs von Index $i$ am Handelstag $t$ bezeichnet.
+  Ergaenzend werden \texttt{intraday\_range} als relative Tageshandelsspanne sowie
+  \texttt{volume\_change} als relative Volumenaenderung berechnet.
+
+  \item \textbf{Qualitaetsgesicherte Filterung der Konfliktdaten} \newline
+  Aus \texttt{GEDEvent\_v25\_1.csv} werden nur fuer das Matching und die
+  Konfliktcharakterisierung relevante Felder geladen. Anschliessend erfolgt ein strikter
+  Filter auf \texttt{date\_prec = 1}. Dadurch werden nur Ereignisse mit hoher
+  Datumsgenauigkeit in die Analyse aufgenommen; Messfehler durch unscharf datierte
+  Ereignisse werden reduziert. Zudem werden technische Kodierungen fehlender Werte
+  (z. B. \texttt{number\_of\_sources < 0}) in fehlende Werte ueberfuehrt,
+  um verzerrte Mittelwerte zu vermeiden.
+
+  \item \textbf{Tagesaggregation der Konfliktintensitaet} \newline
+  Die Konfliktereignisse werden auf Tagesebene aggregiert
+  (u. a. \texttt{conflict\_count}, \texttt{fatalities\_best\_sum},
+  \texttt{countries\_affected}, \texttt{regions\_affected},
+  \texttt{type\_of\_violence\_x\_count}). Damit wird aus einem ereignisbasierten in ein
+  handelstagsbasiertes Merkmalsdesign ueberfuehrt. Diese Aggregation ist notwendig, um
+  spaeter robuste Vergleichbarkeit zwischen ruhigen und eskalierenden Markttagen
+  herzustellen.
+
+  \item \textbf{Tagesgenaues Matching und fehlende Konflikte als Nullereignis} \newline
+  Die aggregierten Konfliktmerkmale werden per Kalenderdatum auf die Indextabelle
+  gemerged (Left-Join auf die Indexbasis). Tage ohne Konflikttreffer erhalten fuer
+  Konfliktzaehl- und Intensitaetsvariablen den Wert 0 sowie die Indikatorvariable
+  \texttt{has\_conflict = 0}. Dadurch bleibt die vollstaendige Handelstagsstruktur
+  erhalten, was sowohl fuer Event-Study-Fenster als auch fuer ML-Modelle mit
+  Klassifikationsziel essenziell ist.
+\end{enumerate}
+
+\subsubsection{Methodische Begruendung der Transformationen}
+Die Wahl relativer statt absoluter Preismerkmale reduziert Skaleneffekte zwischen
+heterogenen Indizes und verhindert, dass das Modell primaer nominale Kursniveaus lernt.
+Der Praezisionsfilter in den GED-Daten stellt interne Validitaet sicher, weil nur
+zeitlich hinreichend verortete Ereignisse als Exposition wirken. Die Tagesaggregation
+erhoeht die statistische Stabilitaet, da sie Einzelereignisrauschen in robuste
+Tagesindikatoren ueberfuehrt. Die Nullbelegung nicht betroffener Tage implementiert eine
+konsistente Kontrollgruppe innerhalb derselben Zeitachse.
+
+Die so erzeugte Datenbasis wird in den nachgelagerten Analysephasen unmittelbar
+weiterverwendet, etwa fuer eventbasierte Renditeauswertungen sowie fuer
+klassifikationsorientierte Modellierungsansaetze mit zusaetzlichen
+modellspezifischen Vorbereitungsschritten (u. a. Skalierung,
+Target-Konstruktion und Missing-Handling). Die Korrektheit der zentralen
+Tagesaggregation wird durch formalisierte Plausibilitaets- und
+Konsistenzpruefungen abgesichert, wodurch die Reproduzierbarkeit der
+Data-Preparation nicht nur dokumentiert, sondern auch methodisch validiert wird.
 
 \subsection{Modeling}
 Einordnung der in Kapitel 3 beschriebenen Algorithmen in den Workflow.
