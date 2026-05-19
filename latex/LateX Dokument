@@ -5,7 +5,7 @@
 % ---------------------------------------------------
 \usepackage[ngerman]{babel}
 \usepackage{fontspec}
-\setmainfont{Times New Roman} % Times New Roman
+\setmainfont{Times New Roman}
 
 % ---------------------------------------------------
 % SEITENLAYOUT
@@ -33,9 +33,9 @@
 \usepackage{titlesec}
 \titlespacing*{\section}{0pt}{12pt}{6pt}
 \titlespacing*{\subsection}{0pt}{12pt}{6pt}
+
 \usepackage{etoolbox}
 \pretocmd{\section}{\clearpage}{}{}
-
 
 % ---------------------------------------------------
 % GRAFIKEN, TABELLEN, MATHE
@@ -44,17 +44,27 @@
 \usepackage{booktabs}
 \usepackage{amsmath}
 \usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{tabularx}
+\usepackage{array}
 
 % ---------------------------------------------------
-% CODEVERZEICHNIS
+% CODE
 % ---------------------------------------------------
+\usepackage{xcolor}
 \usepackage{listings}
+
 \renewcommand{\lstlistlistingname}{Codeverzeichnis}
+
 \lstset{
     basicstyle=\ttfamily\small,
     breaklines=true,
     frame=single,
-    captionpos=b
+    captionpos=b,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false
 }
 
 % ---------------------------------------------------
@@ -62,7 +72,7 @@
 % ---------------------------------------------------
 \usepackage{csquotes}
 \usepackage[hidelinks]{hyperref}
-\usepackage[nottoc]{tocbibind} % << WICHTIG: Inhaltsverzeichnis NICHT im ToC
+\usepackage[nottoc]{tocbibind}
 
 % ---------------------------------------------------
 % KOPF-/FUSSZEILEN
@@ -79,6 +89,7 @@
 % LITERATURDATENBANK
 % ---------------------------------------------------
 \begin{filecontents}{literatur.bib}
+
 @inproceedings{wirth2000crisp,
   title={CRISP-DM: Towards a standard process model for data mining},
   author={Wirth, Rüdiger and Hipp, Jochen},
@@ -87,12 +98,14 @@
   year={2000},
   organization={Manchester}
 }
+
 @techreport{chapman2000crisp,
   title={CRISP-DM 1.0: Step-by-step data mining guide},
   author={Chapman, Pete and Clinton, Julian and Kerber, Randy and Khabaza, Thomas and Reinartz, Thomas and Shearer, Colin and Wirth, Rüdiger},
   year={2000},
   institution={NCR Systems Engineering Copenhagen}
 }
+
 @article{caldara2022measuring,
   title={Measuring geopolitical risk},
   author={Caldara, Dario and Iacoviello, Matteo},
@@ -102,6 +115,14 @@
   pages={1194--1225},
   year={2022}
 }
+
+@book{pyle1999data,
+  title={Data preparation for data mining},
+  author={Pyle, Dorian},
+  year={1999},
+  publisher={Morgan Kaufmann}
+}
+
 \end{filecontents}
 
 \usepackage[
@@ -118,6 +139,7 @@ doi=false,
 isbn=false,
 url=true
 ]{biblatex}
+
 \addbibresource{literatur.bib}
 
 % ---------------------------------------------------
@@ -130,7 +152,13 @@ url=true
 % ---------------------------------------------------
 \begin{titlepage}
 \begin{center}
-    \includegraphics[width=4cm]{FOM_Logo01_2012_rgb.jpg} \\[0.5cm]
+
+    \IfFileExists{FOM_Logo01_2012_rgb.jpg}
+    {\includegraphics[width=4cm]{FOM_Logo01_2012_rgb.jpg}}
+    {\includegraphics[width=4cm]{fom_logo.png}}
+
+    \\[0.5cm]
+
     \textbf{FOM Hochschule für Oekonomie \& Management} \\
     Hochschulzentrum Bonn \\[1.0cm]
 
@@ -141,13 +169,14 @@ url=true
 
     Seminararbeit im Modul Anwendungsprojekt zum Thema \\[1.5cm]
 
-    {\Large \textbf{„Analyse der Auswirkung geopolitischer Konflikte auf \\ Aktienindizes“}} \\[1.5cm]
+    {\Large \textbf{Analyse der Auswirkung geopolitischer Konflikte auf Aktienindizes}} \\[1.5cm]
+
 \end{center}
 
 \vfill
 
 \begin{flushleft}
-\begin{tabular}{@{}ll} 
+\begin{tabular}{@{}ll}
 Dozent: & Prof. Dr. Julian Schröter \\
 Name: & Lorenz Chylka, Leonard Reglin, \\
       & Lukas Nießen, Johannes Solbach \\
@@ -160,10 +189,11 @@ Wörter Code: & XXX \\
 \end{titlepage}
 
 % ---------------------------------------------------
-% VERZEICHNISSE (RÖMISCH)
+% VERZEICHNISSE
 % ---------------------------------------------------
 \pagenumbering{Roman}
 \setcounter{page}{2}
+
 \tableofcontents
 \newpage
 
@@ -178,34 +208,15 @@ Wörter Code: & XXX \\
 
 \section*{Abkürzungsverzeichnis}
 \addcontentsline{toc}{section}{Abkürzungsverzeichnis}
+
 \begin{tabular}{@{}ll}
 CRISP-DM & Cross Industry Standard Process for Data Mining \\
-DBSCAN & Density-Based Spatial Clustering of Applications with Noise \\
+GPR & Geopolitical Risk Index \\
 KNN & K-Nearest Neighbor Algorithmus \\
 ML & Machine Learning \\
-GPR & Geopolitical Risk Index \\
+RF & Random Forest \\
+ROC-AUC & Receiver Operating Characteristic -- Area Under the Curve \\
 \end{tabular}
-\newpage
-% ---------------------------------------------------
-% LITERATUR-VERZEICHNIS
-% ---------------------------------------------------
-\newpage
-\printbibliography[heading=bibintoc, title={Literaturverzeichnis}]
-% ---------------------------------------------------
-% KI-VERZEICHNIS
-% ---------------------------------------------------
-\newpage
-\section*{KI-Hilfsmittelverzeichnis}
-\addcontentsline{toc}{section}{KI-Hilfsmittelverzeichnis}
-
-\begin{tabular}{@{} l l p{9.5cm} @{}}
-\toprule
-\textbf{Nr.} & \textbf{KI-System} & \textbf{Prompt / Einsatzzweck} \\ \midrule
-1 & Google Gemini & „Hallo Gemini, ich brauche für mein Anwendungsprojekt eine wissenschaftliche Einleitung. Wir untersuchen, wie geopolitische Krisen Aktienkurse beeinflussen. Kannst du einen Text schreiben, der erklärt, warum das wichtig ist (Stichwort Volatilität und Unsicherheit) und warum wir genau Machine Learning dafür benutzen? Das Ganze soll ca. 250 Wörter haben.“ \\
-2 & Google Gemini & „Hilf mir mal bitte beim 'Business Understanding' für meine Hausarbeit. Wir nutzen das CRISP-DM Modell und ich muss erklären, was das Ziel unserer Analyse ist. Kannst du mir da Hypothesen formulieren, wie Märkte auf Konflikte reagieren, und den wirtschaftlichen Nutzen für Investoren herausstellen?“ \\
-3 & Google Gemini & „Ich muss das Kapitel 'Data Understanding' schreiben. Ich habe Aktienmarktdaten von Kaggle und Konflikt-Events von der UCDP. Kannst du beschreiben, was diese Quellen beinhalten und wie wir sie zusammenführen? Integriere bitte auch die Datenschemata-Tabellen, damit man sieht, welche Spalten wir genau nutzen.“ \\ \bottomrule
-\end{tabular}
-
 
 % ---------------------------------------------------
 % TEXTTEIL
@@ -215,80 +226,589 @@ GPR & Geopolitical Risk Index \\
 \setcounter{page}{1}
 
 \section{Einleitung}
-Die globale Finanzwelt wird in zunehmendem Maße von unvorhersehbaren geopolitischen Ereignissen geprägt, die oft als „Black Swan“-Ereignisse die Stabilität internationaler Märkte nachhaltig erschüttern können. Geopolitische Risiken, sei es in Form von eskalierenden bewaffneten Konflikten, grenzüberschreitenden terroristischen Anschlägen oder tiefgreifenden diplomatischen Spannungen, induzieren eine signifikante Unsicherheit unter den globalen Marktteilnehmern. Diese Unsicherheit spiegelt sich unmittelbar in einer erhöhten Marktvolatilität, massiven Kapitalumschichtungen und oft abrupten Kurskorrekturen in führenden Leitindizes wider \parencite{caldara2022measuring}. In einer Zeit, in der Informationen in Echtzeit verarbeitet werden, ist die Fähigkeit, solche Schocks quantitativ zu erfassen, für institutionelle Investoren von existenzieller Bedeutung.
 
-Klassische ökonometrische Modelle stoßen bei der Analyse dieser komplexen Zusammenhänge jedoch häufig an ihre methodischen Grenzen. An dieser Stelle bietet das Machine Learning (ML) innovative Lösungsansätze, um verborgene Strukturen und Korrelationen in hochdimensionalen Datenräumen zu identifizieren, die für herkömmliche statistische Tests unsichtbar bleiben. Im Zentrum dieses Anwendungsprojekts steht daher die Entwicklung eines ML-gestützten Frameworks zur Analyse geopolitischer Marktreaktionen.
+Die globale Finanzwelt wird in zunehmendem Maße von unvorhersehbaren geopolitischen Ereignissen geprägt. 
+Geopolitische Risiken, etwa in Form bewaffneter Konflikte, terroristischer Anschläge oder diplomatischer Spannungen, erhöhen die Unsicherheit an internationalen Finanzmärkten. 
+Diese Unsicherheit kann sich in erhöhter Volatilität, Kapitalumschichtungen und Kurskorrekturen widerspiegeln \parencite[vgl.][]{caldara2022measuring}.
 
-Dabei kommen vier komplementäre Algorithmen zum Einsatz: Die lineare Regression dient der Bestimmung grundlegender Sensitivitäten, während K-Means und DBSCAN genutzt werden, um Marktphasen zu clustern und extreme Anomalien präzise zu isolieren. Ergänzend ermöglicht der k-Nearest-Neighbor-Algorithmus (KNN) einen fundierten historischen Vergleich, indem er aktuelle Marktszenarien mit ähnlichen Mustern aus der Vergangenheit in Beziehung setzt. Das Ziel der Arbeit ist die Schaffung einer transparenten Datenpipeline, die die Resilienz globaler Indizes gegenüber geopolitischen Schocks objektiv bewertbar macht und somit einen Beitrag zum modernen Risikomanagement leistet. (in Anlehnung an Google Gemini)
+Klassische ökonometrische Modelle stoßen bei der Analyse komplexer und nicht-linearer Marktreaktionen häufig an Grenzen. 
+Machine-Learning-Verfahren können ergänzend eingesetzt werden, um Muster in historischen Finanz- und Risikodaten zu erkennen. 
+Im Mittelpunkt dieser Arbeit steht daher die Untersuchung, ob ein Random-Forest-Modell Zusammenhänge zwischen geopolitischem Risiko und internationalen Aktienindizes sichtbar machen kann.
 
-% ===================================================
 \section{Projektbeschreibung nach CRISP-DM}
 
 \subsection{Business Understanding}
-Die Phase des Business Understanding bildet das Fundament des Projekts nach dem CRISP-DM-Standardmodell \parencite{wirth2000crisp}. In diesem ersten Schritt werden die Projektziele aus einer fachlichen Perspektive definiert. Das primäre Ziel besteht darin, die Sensitivität globaler Finanzmärkte gegenüber geopolitischen Schocks quantitativ zu bewerten. 
 
-Die zentrale Forschungsfrage lautet: Inwiefern lassen sich durch die Kombination historischer Konfliktdaten (UCDP) und Marktdaten signifikante Muster der Marktreaktion identifizieren?
-Daraus leiten sich folgende Hypothesen ab:
+Die Phase des Business Understanding bildet das Fundament des Projekts nach dem CRISP-DM-Standardmodell \parencite[vgl.][]{wirth2000crisp}. 
+Ziel dieser Arbeit ist es, die Beziehung zwischen geopolitischen Risiken und internationalen Aktienmärkten quantitativ zu untersuchen.
+
+Die zentrale Forschungsfrage lautet:
+
+\textit{Inwiefern lassen sich mithilfe eines Random-Forest-Modells Muster zwischen geopolitischem Risiko und Aktienmarktbewegungen identifizieren?}
+
+Dabei werden zwei Richtungen betrachtet:
+
 \begin{itemize}
-    \item H1: Geopolitische Krisen führen zu signifikanten, aber kurzfristigen Kursrückgängen in Leitindizes wie dem S\&P 500 oder DAX.
-    \item H2: Die Resistenz gegenüber Konflikten variiert stark zwischen verschiedenen regionalen Indizes (Geopolitische Resilienz).
-    \item H3: Mithilfe von Clustering-Verfahren lassen sich Marktphasen identifizieren, die eindeutig mit Eskalationsstufen von Konflikten korrelieren.
+    \item \textbf{Richtung A: GPR $\rightarrow$ Aktien} \\
+    Es wird untersucht, ob GPR-bezogene Variablen vorhersagen können, ob ein Aktienindex im jeweiligen Monat fällt.
+
+    \item \textbf{Richtung B: Aktien $\rightarrow$ GPR} \\
+    Es wird untersucht, ob aktuelle und verzögerte Aktienrenditen vorhersagen können, ob der GPR im Folgemonat steigt.
 \end{itemize}
-Der wirtschaftliche Mehrwert liegt in einer verbesserten Risikobewertung für Investoren, um krisenbedingte Marktanomalien frühzeitig zu erkennen. (in Anlehnung an Google Gemini)
 
 \subsection{Data Understanding}
-Die Phase des Data Understanding befasst sich mit der Erhebung und ersten Exploration der Daten \parencite{chapman2000crisp}. Für dieses Projekt werden zwei heterogene Datenquellen fusioniert: Finanzmarktdaten und ereignisbasierte Konfliktdaten.
 
-\subsubsection{Datenquellen und Umfang}
-Der primäre Datensatz für die Finanzmarktanalyse stammt von Kaggle (Stock Exchange Dataset). Dieser umfasst historische Kursdaten globaler Indizes über mehrere Jahrzehnte. Als zweite Säule dient das UCDP GED (Global Event Dataset). Das Uppsala Conflict Data Program stellt hierbei den weltweit detailliertesten Datensatz für organisierte Gewalt bereit.
+Die Phase des Data Understanding befasst sich mit der Erhebung und ersten Exploration der Daten \parencite[vgl.][]{chapman2000crisp}. 
+Für die Analyse werden internationale Aktienmarktdaten mit dem Geopolitical Risk Index nach Caldara und Iacoviello kombiniert \parencite[vgl.][]{caldara2022measuring}.
 
-\begin{table}[h!]
+Der finale Datensatz liegt auf Monatsbasis vor und umfasst zwölf internationale Aktienindizes im Zeitraum Januar 2001 bis Mai 2021.
+
+\begin{table}[H]
 \centering
-\caption{Datenschema Konfliktdaten (UCDP GED)}
+\caption{Datengrundlage der Random-Forest-Analyse}
+\label{tab:data_basis}
 \begin{tabular}{@{}ll@{}}
 \toprule
-Spalte & Beschreibung \\ \midrule
-conflict\_id & Eindeutige Identifikation eines Konfliktherdes \\
-region & Geographische Region des Geschehens \\
-start\_date & Startdatum des Ereignisses \\
-deaths\_best & Schätzung der Todesopfer als Intensitätsmaß \\ \bottomrule
-\end{tabular}
-\end{table}
-
-\begin{table}[h!]
-\centering
-\caption{Datenschema Aktienindizes (Kaggle)}
-\begin{tabular}{@{}ll@{}}
-\toprule
-Spalte & Beschreibung \\ \midrule
-Indexname & Name des betrachteten Leitindex \\
-Date & Handelstag (Matching-Key) \\
-Close & Schlusskurs \\
-Differenz & Die berechnete tägliche Rendite in Prozent \\ \bottomrule
+Merkmal & Beschreibung \\
+\midrule
+Zeitraum & Januar 2001 bis Mai 2021 \\
+Frequenz & Monatlich \\
+Beobachtungen & 2.940 \\
+Aktienindizes & 12 \\
+Ziel Richtung A & Aktienindex fällt im aktuellen Monat \\
+Ziel Richtung B & GPR steigt im Folgemonat \\
+\bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Data Preparation}
-Datenbereinigung, Matching zwischen Konflikt- und Aktienmarktdaten sowie Normalisierung.
+
+Die Datenaufbereitung umfasst die Umwandlung der täglichen Rohdaten in einen monatlichen Paneldatensatz. 
+Für jeden Aktienindex wird der letzte Schlusskurs eines Monats verwendet. Daraus wird die monatliche Rendite berechnet. 
+Die täglichen GPR-Werte werden zu Monatsdurchschnitten aggregiert. Zusätzlich werden verzögerte Variablen, Rolling-Volatilitäten und binäre Zielvariablen gebildet.
+
+\begin{table}[H]
+\centering
+\caption{Wichtige Variablen des Random-Forest-Datensatzes}
+\label{tab:variables}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+Variable & Beschreibung \\
+\midrule
+\texttt{Stock\_monthly\_pct} & Monatliche Aktienrendite in Prozent \\
+\texttt{GPRD\_monthly\_pct} & Monatliche prozentuale Veränderung des GPR \\
+\texttt{gpr\_lag1--3} & Verzögerte GPR-Veränderungen \\
+\texttt{stock\_lag1--3} & Verzögerte Aktienrenditen \\
+\texttt{stock\_vol6} & Realisierte 6-Monats-Volatilität der Aktienrendite \\
+\texttt{gprd\_zscore} & Standardisiertes GPR-Niveau \\
+\texttt{gpr\_spike} & Binäre Kennzeichnung eines starken GPR-Ausschlags \\
+\texttt{target\_stock\_down} & Zielvariable Richtung A \\
+\texttt{target\_gpr\_up\_lead1} & Zielvariable Richtung B \\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 \subsection{Modeling}
-Einordnung der in Kapitel 3 beschriebenen Algorithmen in den Workflow.
+
+In der Modeling-Phase wird ein Random-Forest-Klassifikator eingesetzt. Random Forest ist ein Ensemble-Verfahren, das viele Entscheidungsbäume kombiniert. 
+Dadurch kann das Modell nicht-lineare Zusammenhänge und Interaktionen zwischen Variablen abbilden. 
+Gleichzeitig erlaubt die Feature Importance eine Interpretation der relativen Bedeutung einzelner Merkmale.
 
 \subsection{Evaluation}
-Methodik der Modellgüteprüfung (Train-Test-Split, Metriken etc.).
+
+Die Modellgüte wird anhand von Accuracy, Precision, Recall, F1-Score und ROC-AUC bewertet. 
+Die ROC-AUC ist dabei besonders relevant, weil sie die Trennschärfe des Klassifikators unabhängig von einem festen Schwellenwert beschreibt.
 
 \subsection{Deployment}
-Beschreibung des Projekt-Repositorys und der Reproduzierbarkeit.
+
+Die Ergebnisse werden in Form von Tabellen, Grafiken und gespeicherten Modellobjekten dokumentiert. 
+Dadurch ist die Analyse reproduzierbar und kann im Projektkontext nachvollzogen werden.
 
 \section{Implementierung der Algorithmen}
-\subsection{Lineare Regression}
-\subsection{K-Means}
-\subsection{DBSCAN}
-\subsection{KNN}
+
+\subsection{Random-Forest}
+\label{subsec:random_forest}
+
+Der Random-Forest-Algorithmus wird in dieser Arbeit als nicht-lineares Klassifikationsmodell eingesetzt. 
+Ziel ist es, zu untersuchen, ob geopolitische Risikoinformationen beziehungsweise Aktienmarktinformationen zur Vorhersage binärer Bewegungsrichtungen beitragen können. 
+Im Gegensatz zu linearen Modellen kann ein Random Forest nicht-lineare Zusammenhänge und Interaktionen zwischen Variablen erfassen. 
+Gleichzeitig ermöglicht die Feature Importance eine Interpretation der relativen Bedeutung einzelner Merkmale.
+
+Die Analyse wird bidirektional durchgeführt. In Richtung A wird geprüft, ob GPR-bezogene Variablen vorhersagen können, ob ein Aktienindex im jeweiligen Monat fällt. 
+In Richtung B wird untersucht, ob aktuelle und verzögerte Aktienrenditen vorhersagen können, ob der GPR im Folgemonat steigt.
+
+\subsubsection{Business Understanding}
+
+Die Random-Forest-Analyse beantwortet zwei Teilfragen:
+
+\begin{enumerate}
+    \item \textbf{Richtung A: GPR $\rightarrow$ Aktien} \\
+    Können aktuelle und verzögerte GPR-Informationen vorhersagen, ob ein Aktienindex im jeweiligen Monat fällt?
+
+    \item \textbf{Richtung B: Aktien $\rightarrow$ GPR} \\
+    Können aktuelle und verzögerte Aktienrenditen vorhersagen, ob der GPR im Folgemonat steigt?
+\end{enumerate}
+
+Die Zielvariable für Richtung A ist definiert als:
+
+\begin{equation}
+    y_A =
+    \begin{cases}
+        1, & \text{wenn } Stock\_monthly\_pct < 0 \\
+        0, & \text{sonst}
+    \end{cases}
+\end{equation}
+
+Die Zielvariable für Richtung B ist definiert als:
+
+\begin{equation}
+    y_B =
+    \begin{cases}
+        1, & \text{wenn } GPRD\_monthly\_pct(t+1) > 0 \\
+        0, & \text{sonst}
+    \end{cases}
+\end{equation}
+
+Damit beantwortet der Random Forest keine kausale Frage, sondern eine prognostische Frage. 
+Er prüft, ob die gewählten Merkmale eine Trennung zwischen den Klassen ermöglichen.
+
+\subsubsection{Data Understanding}
+
+Als Datengrundlage dient der aufbereitete Datensatz \texttt{rf\_dataset\_2001\_2021.csv}. 
+Der Datensatz umfasst den Zeitraum Januar 2001 bis Mai 2021 und liegt als monatliches Panel mit zwölf internationalen Aktienindizes vor.
+
+\begin{table}[H]
+\centering
+\caption{Struktur des Random-Forest-Datensatzes}
+\label{tab:rf_dataset_structure}
+\begin{tabular}{lr}
+\toprule
+Eigenschaft & Wert \\
+\midrule
+Zeitraum & 2001-01 bis 2021-05 \\
+Frequenz & Monatlich \\
+Aktienindizes & 12 \\
+Beobachtungen im Ausgangsdatensatz & 2.940 \\
+Auswertung & Full Period 2001--2021 \\
+Modelltyp & Random-Forest-Klassifikation \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Der folgende Python-Code zeigt das Laden und die erste Prüfung des Datensatzes:
+
+\begin{lstlisting}[language=Python, caption={Laden und Prüfen des Random-Forest-Datensatzes}, label={lst:rf_load}]
+import pandas as pd
+from pathlib import Path
+
+RF_DATASET_PATH = Path("data/processed/rf_dataset_2001_2021.csv")
+
+rf_data = pd.read_csv(RF_DATASET_PATH)
+rf_data["YearMonth"] = pd.PeriodIndex(rf_data["YearMonth"], freq="M")
+rf_data = rf_data.sort_values(["YearMonth", "Index"]).reset_index(drop=True)
+
+print(rf_data.shape)
+print(rf_data.head())
+print(rf_data.info())
+
+print("Start:", rf_data["YearMonth"].min())
+print("Ende:", rf_data["YearMonth"].max())
+print("Anzahl Monate:", rf_data["YearMonth"].nunique())
+print("Anzahl Indizes:", rf_data["Index"].nunique())
+print("Fehlende Werte:")
+print(rf_data.isna().sum())
+
+print("Klassenverteilung Richtung A:")
+print(rf_data["target_stock_down"].value_counts())
+
+print("Klassenverteilung Richtung B:")
+print(rf_data["target_gpr_up_lead1"].value_counts())
+\end{lstlisting}
+
+\subsubsection{Data Preparation}
+
+Für die Full-Period-Auswertung werden die Modelle auf dem gesamten Zeitraum 2001 bis 2021 trainiert und auf demselben Zeitraum ausgewertet. 
+Diese Auswertung ist daher als \textit{in-sample} zu interpretieren. 
+Sie dient nicht als unabhängiger Prognosetest, sondern zur Beschreibung der Modellstruktur und der Feature Importance über den gesamten Untersuchungszeitraum.
+
+Für Richtung A werden GPR-bezogene Variablen verwendet. 
+Für Richtung B werden Aktienmarktvariablen und deren Verzögerungen verwendet.
+
+\begin{table}[H]
+\centering
+\caption{Feature-Sets des Random-Forest-Modells}
+\label{tab:rf_feature_sets}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+Richtung & Features \\
+\midrule
+A: GPR $\rightarrow$ Aktien 
+& \texttt{gprd\_ret}, \texttt{gpr\_lag1}, \texttt{gpr\_lag2}, \texttt{gpr\_lag3}, 
+\texttt{gprd\_act\_ret}, \texttt{gprd\_threat\_ret}, \texttt{GPR\_zscore}, 
+\texttt{GPR\_spike}, \texttt{Crisis\_dummy}, \texttt{Region\_encoded} \\
+
+B: Aktien $\rightarrow$ GPR 
+& \texttt{stock\_ret}, \texttt{stock\_ret\_lag1}, \texttt{stock\_ret\_lag2}, 
+\texttt{stock\_ret\_lag3}, \texttt{stock\_vol6}, \texttt{GPR\_spike}, 
+\texttt{Crisis\_dummy}, \texttt{Region\_encoded} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{lstlisting}[language=Python, caption={Definition der Feature- und Zielvariablen für die Full-Period-Auswertung}, label={lst:rf_features_full}]
+FEATURES_A = [
+    "gprd_ret",
+    "gpr_lag1",
+    "gpr_lag2",
+    "gpr_lag3",
+    "gprd_act_ret",
+    "gprd_threat_ret",
+    "GPR_zscore",
+    "GPR_spike",
+    "Crisis_dummy",
+    "Region_encoded",
+]
+
+FEATURES_B = [
+    "stock_ret",
+    "stock_ret_lag1",
+    "stock_ret_lag2",
+    "stock_ret_lag3",
+    "stock_vol6",
+    "GPR_spike",
+    "Crisis_dummy",
+    "Region_encoded",
+]
+
+TARGET_A = "target_stock_down"
+TARGET_B = "target_gpr_up_lead1"
+
+X_A_full = rf_data[FEATURES_A]
+y_A_full = rf_data[TARGET_A]
+
+X_B_full = rf_data[FEATURES_B]
+y_B_full = rf_data[TARGET_B]
+\end{lstlisting}
+
+\subsubsection{Modeling}
+
+Für beide Richtungen wird ein Random-Forest-Klassifikator mit identischer Parametrisierung verwendet. 
+Das Modell besteht aus 500 Entscheidungsbäumen. 
+Die Baumtiefe wird auf fünf begrenzt, um eine zu starke Anpassung einzelner Bäume zu vermeiden. 
+Zusätzlich wird eine Mindestblattgröße von 20 Beobachtungen verwendet. 
+Die Option \texttt{class\_weight='balanced'} berücksichtigt unterschiedliche Klassenhäufigkeiten.
+
+\begin{lstlisting}[language=Python, caption={Training der Random-Forest-Modelle auf dem Gesamtzeitraum}, label={lst:rf_training_full}]
+from sklearn.ensemble import RandomForestClassifier
+
+rf_A_full = RandomForestClassifier(
+    n_estimators=500,
+    max_depth=5,
+    min_samples_leaf=20,
+    max_features="sqrt",
+    class_weight="balanced",
+    random_state=42,
+    n_jobs=-1
+)
+
+rf_B_full = RandomForestClassifier(
+    n_estimators=500,
+    max_depth=5,
+    min_samples_leaf=20,
+    max_features="sqrt",
+    class_weight="balanced",
+    random_state=42,
+    n_jobs=-1
+)
+
+rf_A_full.fit(X_A_full, y_A_full)
+rf_B_full.fit(X_B_full, y_B_full)
+\end{lstlisting}
+
+\subsubsection{Evaluation}
+
+Für die Bewertung des Random-Forest-Modells werden Accuracy, Precision, Recall, F1-Score und ROC-AUC verwendet. 
+Die ROC-AUC ist dabei besonders aussagekräftig, da sie zeigt, wie gut das Modell die beiden Klassen voneinander trennen kann. 
+Im Unterschied zur Accuracy hängt sie nicht nur von einem festen Schwellenwert ab.
+
+Die hier dargestellten Ergebnisse beziehen sich auf den gesamten Zeitraum von 2001 bis 2021. 
+Das Modell wurde also auf dem gesamten Datensatz trainiert und anschließend auch auf diesem Zeitraum bewertet. 
+Diese Ergebnisse sind daher als \textit{in-sample}-Ergebnisse zu verstehen. 
+Sie zeigen, welche Muster der Random Forest im gesamten Datensatz erkennt, stellen aber keine unabhängige Prognoseleistung auf unbekannten Zukunftsdaten dar.
+
+\begin{table}[H]
+\centering
+\caption{Full-Period-Evaluationsmetriken des Random-Forest-Modells}
+\label{tab:rf_metrics_full_period}
+\begin{tabular}{llrrrrr}
+\toprule
+Richtung & Zielvariable & Accuracy & Precision & Recall & F1 & ROC-AUC \\
+\midrule
+A: GPR $\rightarrow$ Aktien 
+& \texttt{target\_stock\_down} 
+& 0{,}763 & 0{,}711 & 0{,}731 & 0{,}721 & 0{,}824 \\
+
+B: Aktien $\rightarrow$ GPR 
+& \texttt{target\_gpr\_up\_lead1} 
+& 0{,}660 & 0{,}634 & 0{,}684 & 0{,}658 & 0{,}717 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Die Ergebnisse zeigen, dass der Random Forest im Gesamtzeitraum erkennbare Muster findet. 
+In Richtung A erreicht das Modell eine ROC-AUC von 0{,}824. 
+Damit kann es fallende und nicht fallende Aktienmonate auf Basis der GPR-Variablen vergleichsweise gut unterscheiden. 
+Auch die Accuracy von 0{,}763 deutet darauf hin, dass das Modell innerhalb des Gesamtzeitraums eine deutliche Struktur in den Daten erkennt.
+
+In Richtung B fällt die Modellleistung schwächer aus. 
+Die ROC-AUC liegt bei 0{,}717 und die Accuracy bei 0{,}660. 
+Auch hier erkennt der Random Forest Muster, allerdings weniger stark als in Richtung A. 
+Im direkten Vergleich spricht dies dafür, dass die Richtung GPR $\rightarrow$ Aktien im betrachteten Datensatz stärker ausgeprägt ist als die Gegenrichtung Aktien $\rightarrow$ GPR.
+
+Die Confusion Matrices verdeutlichen diese Unterschiede. 
+In Richtung A klassifiziert das Modell 1.311 nicht fallende Aktienmonate korrekt als Klasse 0 und 880 fallende Aktienmonate korrekt als Klasse 1. 
+Gleichzeitig werden 357 nicht fallende Monate fälschlich als fallend eingestuft, während 324 fallende Monate nicht erkannt werden.
+
+In Richtung B werden 950 Monate ohne GPR-Anstieg korrekt als Klasse 0 erkannt und 930 Monate mit GPR-Anstieg korrekt als Klasse 1 klassifiziert. 
+Allerdings entstehen auch hier Fehlklassifikationen: 538 Monate ohne GPR-Anstieg werden fälschlich als Anstieg vorhergesagt, während 430 tatsächliche GPR-Anstiege nicht erkannt werden.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{rf_confusion_matrix_direction_A_full_period.pdf}
+    \caption{Richtung A: GPR $\rightarrow$ Aktien}
+    \label{fig:rf_confusion_A_full}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{rf_confusion_matrix_direction_B_full_period.pdf}
+    \caption{Richtung B: Aktien $\rightarrow$ GPR}
+    \label{fig:rf_confusion_B_full}
+\end{subfigure}
+\caption{Confusion Matrices der Random-Forest-Modelle im Gesamtzeitraum 2001--2021}
+\label{fig:rf_confusion_matrices_full}
+\end{figure}
+
+Auch die ROC-Kurven bestätigen das Bild. 
+Die Kurve für Richtung A liegt deutlich oberhalb der Zufallsdiagonalen und erreicht eine ROC-AUC von 0{,}824. 
+Die Kurve für Richtung B liegt ebenfalls oberhalb der Diagonalen, fällt mit einer ROC-AUC von 0{,}717 jedoch schwächer aus. 
+Damit zeigt sich im Gesamtzeitraum eine stärkere Trennschärfe für die klassische Richtung GPR $\rightarrow$ Aktien.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{rf_roc_curve_direction_A_full_period.pdf}
+    \caption{Richtung A: ROC-AUC = 0{,}824}
+    \label{fig:rf_roc_A_full}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{rf_roc_curve_direction_B_full_period.pdf}
+    \caption{Richtung B: ROC-AUC = 0{,}717}
+    \label{fig:rf_roc_B_full}
+\end{subfigure}
+\caption{ROC-Kurven der Random-Forest-Modelle im Gesamtzeitraum 2001--2021}
+\label{fig:rf_roc_curves_full}
+\end{figure}
+
+\subsubsection{Feature Importance}
+
+Neben der reinen Modellgüte ist vor allem die Feature Importance relevant. 
+Sie zeigt, welche Variablen der Random Forest besonders häufig und besonders wirksam zur Trennung der Klassen nutzt. 
+Dabei ist wichtig: Die Feature Importance zeigt keine Kausalität, sondern nur die relative Bedeutung der Variablen innerhalb des trainierten Modells.
+
+In Richtung A dominieren eindeutig GPR-bezogene Merkmale. 
+Am wichtigsten ist der \texttt{GPR\_zscore}, also das standardisierte geopolitische Risikoniveau. 
+Danach folgen die aktuelle GPR-Veränderung \texttt{gprd\_ret} und die Veränderung der Bedrohungskomponente \texttt{gprd\_threat\_ret}. 
+Das spricht dafür, dass nicht nur tatsächliche geopolitische Ereignisse, sondern auch wahrgenommene Bedrohungslagen eine wichtige Rolle für die Klassifikation fallender Aktienmonate spielen.
+
+In Richtung B stehen dagegen Aktienmarktvariablen im Vordergrund. 
+Besonders wichtig sind \texttt{stock\_ret\_lag3} und \texttt{stock\_ret\_lag2}. 
+Das bedeutet, dass der Random Forest vor allem Aktienrenditen aus den zwei bis drei Vormonaten nutzt, um einen späteren GPR-Anstieg zu klassifizieren.
+
+\begin{table}[H]
+\centering
+\caption{Wichtigste Features in Richtung A: GPR $\rightarrow$ Aktien}
+\label{tab:rf_importance_A_full}
+\begin{tabular}{ll}
+\toprule
+Feature & Interpretation \\
+\midrule
+\texttt{GPR\_zscore} & Standardisiertes GPR-Niveau \\
+\texttt{gprd\_ret} & Aktuelle monatliche GPR-Veränderung \\
+\texttt{gprd\_threat\_ret} & Veränderung der Bedrohungskomponente \\
+\texttt{gpr\_lag1} & GPR-Veränderung des Vormonats \\
+\texttt{gpr\_lag3} & GPR-Veränderung vor drei Monaten \\
+\texttt{gpr\_lag2} & GPR-Veränderung vor zwei Monaten \\
+\texttt{gprd\_act\_ret} & Veränderung der Ereigniskomponente \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Wichtigste Features in Richtung B: Aktien $\rightarrow$ GPR}
+\label{tab:rf_importance_B_full}
+\begin{tabular}{ll}
+\toprule
+Feature & Interpretation \\
+\midrule
+\texttt{stock\_ret\_lag3} & Aktienrendite vor drei Monaten \\
+\texttt{stock\_ret\_lag2} & Aktienrendite vor zwei Monaten \\
+\texttt{stock\_ret\_lag1} & Aktienrendite des Vormonats \\
+\texttt{stock\_ret} & Aktuelle Aktienrendite \\
+\texttt{stock\_vol6} & Realisierte 6-Monats-Volatilität \\
+\texttt{Region\_encoded} & Regionale Indexzuordnung \\
+\texttt{GPR\_spike} & Starker GPR-Ausschlag \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{rf_feature_importance_direction_A_full_period.pdf}
+    \caption{Richtung A: GPR-Features}
+    \label{fig:rf_importance_A_full}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{rf_feature_importance_direction_B_full_period.pdf}
+    \caption{Richtung B: Aktien-Features}
+    \label{fig:rf_importance_B_full}
+\end{subfigure}
+\caption{Feature Importance der Random-Forest-Modelle im Gesamtzeitraum 2001--2021}
+\label{fig:rf_feature_importance_full}
+\end{figure}
+
+\subsubsection{Interpretation nach CRISP-DM}
+
+Zusammenfassend zeigt der Random Forest im Gesamtzeitraum 2001 bis 2021 ein klares, aber vorsichtig zu interpretierendes Muster. 
+Die stärkere Modellleistung in Richtung A deutet darauf hin, dass geopolitische Risikoinformationen im Datensatz besser zur Klassifikation fallender Aktienmonate beitragen als Aktienrenditen zur Klassifikation späterer GPR-Anstiege. 
+Besonders die ROC-AUC von 0{,}824 in Richtung A spricht dafür, dass der Random Forest innerhalb des Gesamtzeitraums eine deutliche Trennstruktur erkennt.
+
+Inhaltlich passt dies zur Feature Importance. 
+In Richtung A stehen fast ausschließlich GPR-bezogene Variablen an der Spitze. 
+Vor allem das allgemeine geopolitische Risikoniveau, die aktuelle GPR-Veränderung und die Bedrohungskomponente sind wichtig. 
+Damit liefert das Modell Hinweise darauf, dass geopolitische Risiko- und Bedrohungsindikatoren eng mit fallenden Aktienmonaten verbunden sind.
+
+Die Gegenrichtung Aktien $\rightarrow$ GPR zeigt ebenfalls erkennbare Muster, fällt aber schwächer aus. 
+Hier dominieren verzögerte Aktienrenditen, insbesondere die Renditen vor zwei und drei Monaten. 
+Das kann als Hinweis darauf verstanden werden, dass Aktienmärkte bestimmte geopolitische Risikoentwicklungen teilweise vorwegnehmen. 
+Die geringere ROC-AUC zeigt jedoch, dass dieser Zusammenhang weniger stark ausgeprägt ist als in Richtung A.
+
+Wichtig ist jedoch die methodische Einordnung: 
+Da die Full-Period-Ergebnisse auf demselben Zeitraum trainiert und bewertet wurden, handelt es sich um In-Sample-Ergebnisse. 
+Sie sind deshalb nicht als Beweis für eine robuste Prognosefähigkeit auf zukünftigen Daten zu verstehen. 
+Die Ergebnisse zeigen vielmehr, welche Strukturen der Random Forest im historischen Gesamtzeitraum erkennt und welche Variablen dabei besonders wichtig sind.
+
+Für die Forschungsfrage bedeutet dies: 
+Der Random Forest liefert Hinweise auf einen Zusammenhang zwischen geopolitischem Risiko und Aktienmarktbewegungen. 
+Besonders stark zeigt sich dieser Zusammenhang in der Richtung GPR $\rightarrow$ Aktien. 
+Eine kausale Aussage kann daraus jedoch nicht abgeleitet werden.
+
+\subsubsection{Deployment und Reproduzierbarkeit}
+
+Die Full-Period-Ergebnisse werden als Tabellen, Grafiken und Modellobjekte gespeichert. 
+Dadurch sind die Resultate nachvollziehbar und können für die weitere Ergebnisdarstellung verwendet werden.
+
+\begin{lstlisting}[language=Python, caption={Speichern der Full-Period-Ergebnisse}, label={lst:rf_export_full}]
+from pathlib import Path
+import joblib
+import pandas as pd
+
+TABLES_DIR = Path("results/tables")
+PLOTS_DIR = Path("results/plots")
+MODELS_DIR = Path("results/models")
+
+TABLES_DIR.mkdir(parents=True, exist_ok=True)
+PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+MODELS_DIR.mkdir(parents=True, exist_ok=True)
+
+full_period_metrics = pd.DataFrame([
+    {
+        "Sample": "Full Period 2001-2021 (in-sample)",
+        "Direction": "direction_A",
+        "Target": TARGET_A,
+        **metrics_A_full
+    },
+    {
+        "Sample": "Full Period 2001-2021 (in-sample)",
+        "Direction": "direction_B",
+        "Target": TARGET_B,
+        **metrics_B_full
+    }
+])
+
+full_period_metrics.to_csv(
+    TABLES_DIR / "rf_metrics_full_period_2001_2021.csv",
+    index=False
+)
+
+joblib.dump(
+    rf_A_full,
+    MODELS_DIR / "random_forest_direction_A_full_period.pkl"
+)
+
+joblib.dump(
+    rf_B_full,
+    MODELS_DIR / "random_forest_direction_B_full_period.pkl"
+)
+\end{lstlisting}
 
 \section{Ergebnisse und Visualisierungen}
+
+Die Ergebnisse zeigen, dass der Random Forest im Gesamtzeitraum deutliche Muster zwischen geopolitischem Risiko und Aktienmarktbewegungen erkennt. 
+Besonders ausgeprägt ist die Modellleistung in Richtung GPR $\rightarrow$ Aktien. 
+Gleichzeitig ist zu beachten, dass die dargestellten Full-Period-Ergebnisse als In-Sample-Auswertung zu verstehen sind und keine unabhängige Prognosevalidierung ersetzen.
+
 \section{Limitationen}
+
+Die Analyse weist mehrere Einschränkungen auf. 
+Erstens handelt es sich um Monatsdaten, wodurch kurzfristige Marktreaktionen innerhalb eines Monats nicht sichtbar sind. 
+Zweitens basiert die Full-Period-Auswertung auf demselben Zeitraum für Training und Bewertung. 
+Die Ergebnisse zeigen daher historische Modellstrukturen, aber keine unabhängige Prognoseleistung auf unbekannten Daten. 
+Drittens zeigt die Feature Importance keine Kausalität, sondern lediglich die relative Bedeutung von Variablen innerhalb des trainierten Modells. 
+Viertens können außergewöhnliche Krisenmonate, etwa während globaler Schocks, die Modellstruktur beeinflussen.
+
 \section{Fazit}
 
-\end{document}
+Der Random Forest wurde eingesetzt, um die bidirektionale Beziehung zwischen geopolitischem Risiko und Aktienmarktbewegungen zu untersuchen. 
+Die Ergebnisse zeigen, dass in Richtung A vor allem GPR-bezogene Variablen und in Richtung B vor allem Aktien-Lags relevant sind. 
+Im Gesamtzeitraum 2001 bis 2021 erreicht Richtung A mit einer ROC-AUC von 0{,}824 eine stärkere Trennschärfe als Richtung B mit einer ROC-AUC von 0{,}717. 
+Damit sprechen die Ergebnisse innerhalb des historischen Datensatzes eher für eine stärkere Modellstruktur in der Richtung GPR $\rightarrow$ Aktien. 
+Eine kausale Aussage oder eine gesicherte Prognosefähigkeit für zukünftige Daten kann daraus jedoch nicht abgeleitet werden.
 
+% ---------------------------------------------------
+% KI-VERZEICHNIS
+% ---------------------------------------------------
+\newpage
+\section*{KI-Hilfsmittelverzeichnis}
+\addcontentsline{toc}{section}{KI-Hilfsmittelverzeichnis}
+
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
+\toprule
+\textbf{Nr.} & \textbf{KI-System} & \textbf{Prompt / Einsatzzweck} \\
+\midrule
+1 & Google Gemini & Erstellung eines Entwurfs für die Einleitung zur Relevanz geopolitischer Risiken und Machine Learning. \\
+2 & Google Gemini & Unterstützung bei der Formulierung des Business Understanding nach CRISP-DM. \\
+3 & Google Gemini & Unterstützung bei der Beschreibung der Datenquellen und Datenschemata. \\
+4 & Google Gemini & Unterstützung bei der Beschreibung der Data-Preparation-Phase. \\
+5 & Google Gemini & Unterstützung bei der Beschreibung der Modeling-Phase nach CRISP-DM. \\
+6 & ChatGPT & Unterstützung bei der Strukturierung, Interpretation und LaTeX-Formulierung des Random-Forest-Abschnitts. \\
+\bottomrule
+\end{tabularx}
+
+% ---------------------------------------------------
+% LITERATURVERZEICHNIS
+% ---------------------------------------------------
+\newpage
+\printbibliography[heading=bibintoc, title={Literaturverzeichnis}]
+
+\end{document}
