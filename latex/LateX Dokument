@@ -84,40 +84,62 @@
 % Tabellen- und Abbildungsüberschriften oben
 \captionsetup[table]{position=top}
 \captionsetup[figure]{position=top}
+\captionsetup[subfigure]{position=top}
+
+% Quellenangabe unter Abbildungen
+\newcommand{\figsource}[1]{%
+  \vspace{0.3cm}%
+  {\raggedright\small Quelle: #1\par}%
+}
 
 % ---------------------------------------------------
 % CODE
 % ---------------------------------------------------
 \usepackage{xcolor}
 \usepackage{listings}
+\usepackage{upquote}
 
-\definecolor{codebackground}{RGB}{248,248,248}
-\definecolor{codekeyword}{RGB}{0,76,153}
-\definecolor{codecomment}{RGB}{0,128,0}
-\definecolor{codestring}{RGB}{163,21,21}
-\definecolor{codenumber}{RGB}{110,110,110}
+% Code-Optik angelehnt an den hellen Easy-Code-Formatter-Stil in Word:
+% weißer Codeblock, dünner grauer Rahmen, Zeilennummern und Syntaxfarben
+\definecolor{codebackground}{RGB}{255,255,255}
+\definecolor{codeframe}{RGB}{155,155,155}
+\definecolor{codekeyword}{RGB}{0,0,150}
+\definecolor{codecomment}{RGB}{128,0,0}
+\definecolor{codestring}{RGB}{0,128,0}
+\definecolor{codenumber}{RGB}{90,90,90}
+\definecolor{codeidentifier}{RGB}{0,0,0}
 
 \renewcommand{\lstlistingname}{Code}
 \renewcommand{\lstlistlistingname}{Codeverzeichnis}
 
 \lstdefinestyle{fomcode}{
     language=Python,
-    basicstyle=\ttfamily\small,
+    basicstyle=\ttfamily\footnotesize\color{codeidentifier},
     keywordstyle=\bfseries\color{codekeyword},
-    commentstyle=\itshape\color{codecomment},
+    commentstyle=\color{codecomment},
     stringstyle=\color{codestring},
-    numberstyle=\tiny\color{codenumber},
+    numberstyle=\scriptsize\ttfamily\color{codenumber},
     numbers=left,
     numbersep=8pt,
+    numberblanklines=true,
+    stepnumber=1,
     breaklines=true,
+    breakatwhitespace=true,
     frame=single,
-    rulecolor=\color{black},
+    framesep=5pt,
+    framexleftmargin=2.4em,
+    xleftmargin=0pt,
+    rulecolor=\color{codeframe},
     backgroundcolor=\color{codebackground},
     captionpos=t,
     columns=fullflexible,
     keepspaces=true,
     showstringspaces=false,
+    showtabs=false,
     tabsize=4,
+    upquote=true,
+    aboveskip=10pt,
+    belowskip=10pt,
     literate=
       {ä}{{\"a}}1 {ö}{{\"o}}1 {ü}{{\"u}}1
       {Ä}{{\"A}}1 {Ö}{{\"O}}1 {Ü}{{\"U}}1
@@ -1213,6 +1235,7 @@ Allerdings entstehen auch hier Fehlklassifikationen: 538 Monate ohne GPR-Anstieg
     \label{fig:rf_confusion_B_full}
     \includegraphics[width=\textwidth]{rf_confusion_matrix_direction_B_full_period.pdf}
 \end{subfigure}
+\figsource{Eigene Darstellung}
 \end{figure}
 
 Auch die ROC-Kurven bestätigen das Bild. 
@@ -1237,6 +1260,7 @@ Damit zeigt sich im Gesamtzeitraum eine stärkere Trennschärfe für die klassis
     \label{fig:rf_roc_B_full}
     \includegraphics[width=\textwidth]{rf_roc_curve_direction_B_full_period.pdf}
 \end{subfigure}
+\figsource{Eigene Darstellung}
 \end{figure}
 
 \subsubsection{Feature Importance}
@@ -1309,6 +1333,7 @@ Feature & Interpretation \\
     \label{fig:rf_importance_B_full}
     \includegraphics[width=\textwidth]{rf_feature_importance_direction_B_full_period.pdf}
 \end{subfigure}
+\figsource{Eigene Darstellung}
 \end{figure}
 
 \subsubsection{Interpretation nach CRISP-DM}
