@@ -1,0 +1,235 @@
+"""
+ANALYSE-BERICHT: Implementierung und Vergleich
+GPR vs. Aktienmarkt
+"""
+
+# ═════════════════════════════════════════════════════════════════════════════
+# 1. ÜBERPRÜFUNG DER IMPLEMENTIERUNG
+# ═════════════════════════════════════════════════════════════════════════════
+
+IMPLEMENTIERUNG STATUS:
+├─ algo1_linear_regression.py
+│  ├─ ✅ Multivariate OLS mit HAC-robusten SE
+│  ├─ ✅ Zwei Richtungen (A: GPR→Aktien, B: Aktien→GPR)
+│  ├─ ✅ Univariate Grafiken mit Regressionsgerade + 95%-Band
+│  ├─ ✅ Winsorisierung (1./99. Perzentil)
+│  └─ ✅ Fakten-Output strukturiert
+│
+├─ algo2_linechart_gpr_vs_stock.py
+│  ├─ ✅ Daten auf Basis 100 normiert
+│  ├─ ✅ Aktienindex invertiert (200 - Stock_100)
+│  ├─ ❌ ABER: Zeigt NICHT prozentuale Veränderungen!
+│  ├─    → Zeigt indexierte Absolutwerte statt monatliche % Änderungen
+│  └─    → Skalierungen sind zu unterschiedlich (GPR schwankt 400-800%, Aktien nur ±30%)
+│
+└─ algo2b_visualization_improved.py [NEU]
+   ├─ ✅ Zeigt monatliche prozentuale VERÄNDERUNGEN
+   ├─ ✅ Drei Visualisierungsmethoden:
+   │  ├─ Dual-Axis Liniendiagramm (separate Y-Skalen)
+   │  ├─ Scatter Plot mit Regressionslinie
+   │  └─ Rolling Correlation (12-Monat-Fenster)
+   └─ ✅ Quantitative Korrelationsanalyse
+
+# ═════════════════════════════════════════════════════════════════════════════
+# 2. PROZENTUALE VERÄNDERUNGEN: JA, ABER...
+# ═════════════════════════════════════════════════════════════════════════════
+
+DATENQUELLE: stocks_gpr_monthly.csv
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Verfügbare Spalten:                                                         │
+│  • Stock_monthly_pct      ← Monatliche Aktienrendite in %                   │
+│  • GPRD_monthly_pct       ← Monatliche GPR-Veränderung in %                 │
+│  • GPRD_ACT_monthly_pct   ← Monatliche ACT-Komponente in %                  │
+│  • GPRD_THREAT_monthly_pct ← Monatliche THREAT-Komponente in %              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+PROBLEM MIT algo2 (ursprüngliches Liniendiagramm):
+────────────────────────────────────────────────────
+Der Code nutzt NICHT die monatlichen % Veränderungen, sondern:
+  1. Skaliert Absolutwerte (Close, GPRD_mean) auf Basis 100
+  2. Dies erzeugt indexierte Werte, keine % Veränderungen
+  3. Die zwei Linien sind visuell entkoppelt wegen extremer Skalierungsunterschiede:
+     - GPR_100 schießt auf +788.93% hoch (2001 Post-9/11-Spike)
+     - Stock_100 schwankt nur zwischen +73% und +264%
+  4. Ergebnis: Korrelation nicht visuell sichtbar
+
+# ═════════════════════════════════════════════════════════════════════════════
+# 3. KORRELATIONEN: STATISTIK
+# ═════════════════════════════════════════════════════════════════════════════
+
+GESAMTKORRELATION (2000-2021):
+──────────────────────────────
+  Korr(GPR % Veränderung, Aktien % Veränderung) = -0.1293
+  
+  Interpretation:
+    • Schwach negative Korrelation
+    • Statistisch signifikant (p = 0.0386) ← Es IST ein echter Effekt!
+    • R² = 0.0167 ← aber mit kleiner Effektgröße (nur 1.67% Varianzaufklärung)
+  
+  Regression:
+    Aktien_pct = 0.508 - 0.01283 × GPR_pct
+    → Für jeden 100%-igen GPR-Anstieg fällt der Aktienkurs durchschnittlich um 1.28%
+
+ROLLING CORRELATION (12-Monat-Fenster):
+─────────────────────────────────────────
+  Minimum:  -0.7314  (2003-2004, starke inverse Beziehung)
+  Maximum:  +0.6786  (2008-2009, paradox positive Korrelation!)
+  Mittel:   -0.0613  (leicht negativ durchschnittlich)
+  Aktuell:  -0.5562  (Ende 2021, negative Beziehung)
+  
+  Key Finding:
+    ⚠️  Die Korrelation ist NICHT konstant!
+    • 2001-2003: Stark negativ (Risiko ↑ → Aktien ↓)
+    • 2008-2009: Manchmal positiv! (Krisen-Phase: alles fällt)
+    • 2015-2019: Wechselhaft
+    • 2020-2021: Wieder stark negativ (COVID-Zeit)
+
+# ═════════════════════════════════════════════════════════════════════════════
+# 4. VERGLEICH: DREI VISUALISIERUNGSMETHODEN
+# ═════════════════════════════════════════════════════════════════════════════
+
+┌─ METHODE 1: Dual-Axis Liniendiagramm (Monatliche Veränderungen) ─────────────┐
+│                                                                               │
+│  ✅ VORTEIL:                                                                 │
+│     • Zeigt tatsächliche monatliche % Veränderungen                          │
+│     • Getrennte Y-Achsen ermöglichen unterschiedliche Skalierungen           │
+│     • Zeitliche Entwicklung visuell sichtbar                                 │
+│     • Zeigt zeitliche Verschiebungen (Leads/Lags)                            │
+│                                                                               │
+│  ⚠️  NACHTEILE:                                                              │
+│     • Dual-Achsen können visuell täuschen                                    │
+│     • Schwer zu interpretieren, weil zwei unterschiedliche Skalen            │
+│     • Trend der Korrelation nicht direkt erkennbar                           │
+│                                                                               │
+│  📊 Best For: Zeitliche Muster, saisonale Effekte                            │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+┌─ METHODE 2: Scatter Plot mit Regressionslinie ──────────────────────────────┐
+│                                                                               │
+│  ✅ VORTEIL:                                                                 │
+│     • Zeigt Korrelation UNMITTELBAR visuell                                  │
+│     • Regressionsgerade macht Effekt quantifizierbar                         │
+│     • R² und p-Wert werden direkt angezeigt                                  │
+│     • Ermöglicht Identifikation von Ausreißern                               │
+│                                                                               │
+│  ⚠️  NACHTEILE:                                                              │
+│     • Zeitinformation geht verloren                                          │
+│     • Zeigt nicht, WANN die Beziehung stark/schwach ist                      │
+│     • Kann von extremen Ausreißern (z.B. 2001) verzerrt werden               │
+│                                                                               │
+│  📊 Best For: OVERALL-Korrelation quantifizieren                             │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+┌─ METHODE 3: Rolling Correlation (12-Monat-Fenster) ──────────────────────────┐
+│                                                                               │
+│  ✅ VORTEIL:                                                                 │
+│     • Zeigt ZEITVARIABLE Korrelation                                         │
+│     • Identifiziert Phasen mit starker vs. schwacher Beziehung               │
+│     • Offenbart strukturelle Bruchstellen                                    │
+│     • Zeigt, ob Beziehung stabil ist oder sich ändert                        │
+│                                                                               │
+│  ⚠️  NACHTEILE:                                                              │
+│     • Interpretation erfordert Domain-Wissen                                 │
+│     • 12-Monat-Fenster ist Schätzung (könnte 6, 24 sein)                     │
+│     • Am Anfang/Ende weniger Datenpunkte                                     │
+│                                                                               │
+│  📊 Best For: Marktstruktur-Analyse, Regime-Wechsel                          │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+# ═════════════════════════════════════════════════════════════════════════════
+# 5. KEY FINDINGS & INTERPRETATIONEN
+# ═════════════════════════════════════════════════════════════════════════════
+
+GLOBALE BEOBACHTUNG:
+────────────────────
+  ❌ "Es gibt kaum Korrelation" FALSCH!
+  ✅ "Die Korrelation ist schwach aber real" KORREKT!
+  
+  Beweis aus algo1 (Lineare Regression):
+    • Richtung A (GPR→Aktien): Slope = -0.0225 (p = 2.33e-05) ← Hochsignifikant
+    • Richtung B (Aktien→GPR): Slope = -0.4416 (p = 0.0168) ← Schwach signifikant
+    • Aber: R² ≈ 0.007 ← Lineare Erklärung ist winzig (Brücke zu KNN/Random Forest!)
+
+ZEITLICHE DYNAMIK:
+──────────────────
+  Rolling Correlation zeigt: -0.73 bis +0.68 (über 21 Jahre)
+  
+  Phasen:
+    1. 2000-2002: Stark negativ (-0.73)
+       → 9/11, Dot-Com-Crash, Geopolitische Spannungen
+       → Klassische "Flucht zu Sicherheit" Dynamik
+    
+    2. 2003-2007: Wechselhaft (-0.3 bis +0.3)
+       → Stabilität und Wachstum
+       → Geopolitisches Risiko weniger relevant
+    
+    3. 2008-2009: Positiv (+0.68)
+       → Finanzkriese: ALLES FÄLLT (auch wenn Risiko steigt)
+       → "Risk-Off": Korrelationen zusammenbrechen
+    
+    4. 2010-2015: Überwiegend negativ (-0.5)
+       → Normalisierung nach Krisis
+       → Risiko wirkt wieder dämpfend auf Kurse
+    
+    5. 2016-2019: Schwankend (0 bis +0.5)
+       → "Trump-Volatility"
+       → Geopolitische Instabilität macht Märkte weniger sensibel
+    
+    6. 2020-2021: Stark negativ (-0.55)
+       → COVID-Pandemie und geopolitische Tendenzen
+       → Rückkehr zur klassischen Inverse Beziehung
+
+WARUM IST DIE KORRELATION SO SCHWACH?
+──────────────────────────────────────
+  1. Nicht-Linearität (→ Motivation für ML-Modelle!)
+     • Kleine GPR-Änderungen haben kaum Effekt
+     • Extreme GPR-Spikes haben überproportionalen Effekt
+  
+  2. Zeitliche Verschiebung (Lead-Lag Effekt)
+     • Märkte antizipieren oft bereits vor Spike
+     • Oder verzögert nach Spike
+  
+  3. Regime-Abhängigkeit
+     • In Krisen: Alle fallen zusammen (Korrelation +)
+     • In Stabilität: Risiko dampft Renditen (Korrelation -)
+  
+  4. Andere Faktoren dominieren
+     • Zinsraten, Inflation, Unternehmensgewinne wichtiger als GPR
+     • GPR ist EIN Factor von vielen
+
+# ═════════════════════════════════════════════════════════════════════════════
+# 6. EMPFEHLUNGEN
+# ═════════════════════════════════════════════════════════════════════════════
+
+FÜR DIE HAUSARBEIT:
+──────────────────
+  1. ✅ algo1 VERWENDEN
+     → Zeigt, dass linear es "unmöglich" ist (baseline)
+     → Motivation für KNN/Random Forest
+  
+  2. ✅ algo2b VERWENDEN (verbesserte Visualisierung)
+     → Scatter Plot zeigt echte Korrelation
+     → Rolling Correlation zeigt zeitliche Dynamik
+  
+  3. ❌ algo2 (original) ERSETZEN
+     → Zu verwirrend wegen Skalierungsunterschiede
+     → Index-Basis-100 verschleiert die aktuelle Beziehung
+  
+  4. 📊 STRUKTUR DER ANALYSE:
+     ├─ Lineare Regression (schwach, aber signifikant)
+     ├─ Scatter Plot (zeigt visuelle Korrelation)
+     ├─ Rolling Correlation (zeigt zeitliche Änderung)
+     └─ KNN/Random Forest (zeigt nicht-linearen Effekt)
+
+QUANTITATIVE EVIDENCE:
+──────────────────────
+  • Korrelation: -0.1293 (schwach negativ)
+  • p-Wert: 0.0386 (statistisch signifikant auf 5%-Level)
+  • Gesamteffekt: -0.0128% Aktienrendite pro 1% GPR-Anstieg
+  • Aber: Nur 1.67% der Varianz erklärt (R² = 0.0167)
+
+SCHLUSS:
+────────
+  "Die lineare Beziehung ist statistisch real, aber praktisch winzig.
+   Dies ist genau der Punkt, um nicht-lineare Modelle zu rechtfertigen."
+
