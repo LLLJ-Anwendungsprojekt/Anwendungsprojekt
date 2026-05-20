@@ -15,7 +15,8 @@
     left=4cm,
     right=2cm,
     top=4cm,
-    bottom=2cm
+    bottom=2cm,
+    headsep=20pt
 }
 
 % ---------------------------------------------------
@@ -23,17 +24,40 @@
 % ---------------------------------------------------
 \usepackage{setspace}
 \onehalfspacing
+
 \setlength{\parskip}{6pt}
 \setlength{\parindent}{0pt}
 
 \usepackage{ragged2e}
 \justifying
-\hyphenation{}
 
+% automatische Silbentrennung aktiv lassen
+\pretolerance=100
+\tolerance=2000
+\emergencystretch=1em
+
+% ---------------------------------------------------
+% ÜBERSCHRIFTEN
+% ---------------------------------------------------
 \usepackage{titlesec}
+
+\titleformat{\section}
+  {\normalfont\bfseries\fontsize{12}{14}\selectfont}
+  {\thesection}{1em}{}
+
+\titleformat{\subsection}
+  {\normalfont\bfseries\fontsize{12}{14}\selectfont}
+  {\thesubsection}{1em}{}
+
+\titleformat{\subsubsection}
+  {\normalfont\bfseries\fontsize{12}{14}\selectfont}
+  {\thesubsubsection}{1em}{}
+
 \titlespacing*{\section}{0pt}{12pt}{6pt}
 \titlespacing*{\subsection}{0pt}{12pt}{6pt}
+\titlespacing*{\subsubsection}{0pt}{12pt}{6pt}
 
+% Jedes Hauptkapitel auf neuer Seite
 \usepackage{etoolbox}
 \pretocmd{\section}{\clearpage}{}{}
 
@@ -46,8 +70,20 @@
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{float}
+\usepackage{longtable}
 \usepackage{tabularx}
 \usepackage{array}
+\captionsetup{
+    font=normalsize,
+    labelfont=bf,
+    justification=raggedright,
+    singlelinecheck=false,
+    skip=6pt
+}
+
+% Tabellen- und Abbildungsüberschriften oben
+\captionsetup[table]{position=top}
+\captionsetup[figure]{position=top}
 
 % ---------------------------------------------------
 % CODE
@@ -55,39 +91,76 @@
 \usepackage{xcolor}
 \usepackage{listings}
 
+\definecolor{codebackground}{RGB}{248,248,248}
+\definecolor{codekeyword}{RGB}{0,76,153}
+\definecolor{codecomment}{RGB}{0,128,0}
+\definecolor{codestring}{RGB}{163,21,21}
+\definecolor{codenumber}{RGB}{110,110,110}
+
+\renewcommand{\lstlistingname}{Code}
 \renewcommand{\lstlistlistingname}{Codeverzeichnis}
 
-\lstset{
+\lstdefinestyle{fomcode}{
+    language=Python,
     basicstyle=\ttfamily\small,
+    keywordstyle=\bfseries\color{codekeyword},
+    commentstyle=\itshape\color{codecomment},
+    stringstyle=\color{codestring},
+    numberstyle=\tiny\color{codenumber},
+    numbers=left,
+    numbersep=8pt,
     breaklines=true,
     frame=single,
-    captionpos=b,
+    rulecolor=\color{black},
+    backgroundcolor=\color{codebackground},
+    captionpos=t,
     columns=fullflexible,
     keepspaces=true,
-    showstringspaces=false
+    showstringspaces=false,
+    tabsize=4,
+    literate=
+      {ä}{{\"a}}1 {ö}{{\"o}}1 {ü}{{\"u}}1
+      {Ä}{{\"A}}1 {Ö}{{\"O}}1 {Ü}{{\"U}}1
+      {ß}{{\ss}}1
 }
+
+\lstset{style=fomcode}
 
 % ---------------------------------------------------
 % ZITATE, LINKS, VERZEICHNISSE
 % ---------------------------------------------------
 \usepackage{csquotes}
-\usepackage[hidelinks]{hyperref}
 \usepackage[nottoc]{tocbibind}
+\usepackage{tocloft}
+\usepackage[bottom]{footmisc}
+\usepackage[hidelinks]{hyperref}
 
 % ---------------------------------------------------
-% KOPF-/FUSSZEILEN
+% FUSSNOTEN IM FOM-/CHICAGO-STIL
 % ---------------------------------------------------
-\usepackage{fancyhdr}
-\pagestyle{fancy}
-\fancyhf{}
-\renewcommand{\headrulewidth}{0pt}
-\fancyhead[C]{\thepage}
-\setlength{\headheight}{15pt}
-\setlength{\headsep}{20pt}
+
+% Fußnoten: 10 pt, einzeilig, linksbündig
+\renewcommand{\footnotelayout}{\fontsize{10}{12}\selectfont\setstretch{1}}
+
+% Schwarze Trennlinie über den Fußnoten
+\renewcommand{\footnoterule}{%
+  \kern -3pt
+  \hrule width 4cm height 0.6pt
+  \kern 6pt
+}
+
+% Fußnotennummer in der Fußnote linksbündig und nicht eingerückt
+\makeatletter
+\renewcommand\@makefntext[1]{%
+  \noindent
+  \makebox[1.8em][l]{\textsuperscript{\normalfont\fontsize{7.5}{8}\selectfont\@thefnmark}}#1%
+}
+\makeatother
 
 % ---------------------------------------------------
 % LITERATURDATENBANK
 % ---------------------------------------------------
+
 \begin{filecontents}{literatur.bib}
 
 @inproceedings{wirth2000crisp,
@@ -125,6 +198,9 @@
 
 \end{filecontents}
 
+% ---------------------------------------------------
+% BIBLATEX
+% ---------------------------------------------------
 \usepackage[
 backend=biber,
 style=authoryear,
@@ -132,7 +208,7 @@ citestyle=authoryear,
 sorting=nyt,
 maxcitenames=2,
 maxbibnames=99,
-giveninits=true,
+giveninits=false,
 uniquename=false,
 uniquelist=false,
 doi=false,
@@ -142,9 +218,385 @@ url=true
 
 \addbibresource{literatur.bib}
 
+\DefineBibliographyStrings{ngerman}{
+  andothers = {et al.},
+  page = {S.},
+  pages = {S.}
+}
+
+\renewcommand*{\postnotedelim}{\addcomma\space}
+
+% Keine Punkte am Ende der Literaturangaben
+\renewcommand*{\finentrypunct}{}
+
+% Literaturverzeichnis: hängender Einzug wie im FOM-Beispiel
+\setlength{\bibhang}{1cm}
+\setlength{\bibitemsep}{1.3\baselineskip}
+\renewcommand*{\bibfont}{\normalfont}
+
+% Namen im Literaturverzeichnis: Nachname, Vorname
+\DeclareNameAlias{default}{family-given}
+\DeclareNameAlias{sortname}{family-given}
+
+% Mehrere Namen im Literaturverzeichnis mit Komma trennen
+\DeclareDelimFormat[bib]{multinamedelim}{\addcomma\space}
+\DeclareDelimFormat[bib]{finalnamedelim}{\addcomma\space}
+
+% Titel nicht kursiv und nicht in Anführungszeichen
+\DeclareFieldFormat{title}{#1}
+\DeclareFieldFormat[article]{title}{#1}
+\DeclareFieldFormat[inproceedings]{title}{#1}
+\DeclareFieldFormat[report]{title}{#1}
+\DeclareFieldFormat[online]{title}{#1}
+\DeclareFieldFormat{journaltitle}{#1}
+\DeclareFieldFormat{booktitle}{#1}
+\DeclareFieldFormat{pages}{#1}
+
+% URL in spitzen Klammern wie im Leitfaden-Beispiel
+\DeclareFieldFormat{url}{\textless\url{#1}\textgreater}
+
 % ---------------------------------------------------
-% DOKUMENTBEGINN
+% FOM-ähnliche Darstellung im Literaturverzeichnis
+% Format:
+% Autor, Vorname (Stichwort, Jahr): Titel, Ort: Verlag, Jahr
+% Internet:
+% Autor, Vorname (Stichwort, Jahr): Titel, <URL> (Datum) [Zugriff ...]
 % ---------------------------------------------------
+
+\newbibmacro*{fom:bibauthor}{%
+  \ifnameundef{author}
+    {\ifnameundef{editor}
+      {}
+      {\printtext{\mkbibemph{\printnames{editor}}}}}
+    {\printtext{\mkbibemph{\printnames{author}}}}%
+}
+
+\newbibmacro*{fom:stichwortjahr}{%
+  \printtext[parens]{%
+    \iffieldundef{shorttitle}
+      {\printfield{title}}
+      {\printfield{shorttitle}}%
+    \setunit{\addcomma\space}%
+    \printfield{year}}%
+}
+
+\newbibmacro*{fom:urldate}{%
+  \iffieldundef{urlyear}
+    {}
+    {%
+      \space[Zugriff\space
+      \thefield{urlyear}%
+      \iffieldundef{urlmonth}{}{-\thefield{urlmonth}}%
+      \iffieldundef{urlday}{}{-\thefield{urlday}}%
+      ]%
+    }%
+}
+
+% Monographien
+\DeclareBibliographyDriver{book}{%
+  \usebibmacro{fom:bibauthor}%
+  \setunit{\space}%
+  \usebibmacro{fom:stichwortjahr}%
+  \setunit{\addcolon\space}%
+  \printfield{title}%
+  \iffieldundef{edition}
+    {}
+    {\setunit{\addcomma\space}\printfield{edition}\addperiod\space Aufl.}%
+  \setunit{\addcomma\space}%
+  \printlist{location}%
+  \setunit{\addcolon\space}%
+  \printlist{publisher}%
+  \setunit{\addcomma\space}%
+  \printfield{year}%
+  \finentry
+}
+
+% Zeitschriftenaufsätze
+\DeclareBibliographyDriver{article}{%
+  \usebibmacro{fom:bibauthor}%
+  \setunit{\space}%
+  \usebibmacro{fom:stichwortjahr}%
+  \setunit{\addcolon\space}%
+  \printfield{title}%
+  \setunit{\addcomma\space}%
+  \printtext{in:\space}%
+  \printfield{journaltitle}%
+  \iffieldundef{volume}
+    {}
+    {\setunit{\addcomma\space}\printfield{volume}}%
+  \setunit{\space}%
+  \printtext[parens]{\printfield{year}}%
+  \iffieldundef{number}
+    {}
+    {\setunit{\addcomma\space Nr.\space}\printfield{number}}%
+  \iffieldundef{pages}
+    {}
+    {\setunit{\addcomma\space S.\space}\printfield{pages}}%
+  \finentry
+}
+
+% Sammelband-/Konferenzbeiträge
+\DeclareBibliographyDriver{inproceedings}{%
+  \usebibmacro{fom:bibauthor}%
+  \setunit{\space}%
+  \usebibmacro{fom:stichwortjahr}%
+  \setunit{\addcolon\space}%
+  \printfield{title}%
+  \setunit{\addcomma\space}%
+  \printtext{in:\space}%
+  \printfield{booktitle}%
+  \iffieldundef{pages}
+    {}
+    {\setunit{\addcomma\space S.\space}\printfield{pages}}%
+  \iffieldundef{organization}
+    {}
+    {\setunit{\addcomma\space}\printlist{organization}}%
+  \setunit{\addcomma\space}%
+  \printfield{year}%
+  \finentry
+}
+
+% Forschungsberichte / Technical Reports
+\DeclareBibliographyDriver{report}{%
+  \usebibmacro{fom:bibauthor}%
+  \setunit{\space}%
+  \usebibmacro{fom:stichwortjahr}%
+  \setunit{\addcolon\space}%
+  \printfield{title}%
+  \iffieldundef{institution}
+    {}
+    {\setunit{\addcomma\space}\printlist{institution}}%
+  \setunit{\addcomma\space}%
+  \printfield{year}%
+  \finentry
+}
+
+% Internetquellen
+\DeclareBibliographyDriver{online}{%
+  \usebibmacro{fom:bibauthor}%
+  \setunit{\space}%
+  \usebibmacro{fom:stichwortjahr}%
+  \setunit{\addcolon\space}%
+  \printfield{title}%
+  \setunit{\addcomma\space}%
+  \printfield{url}%
+  \setunit{\space}%
+  \iffieldundef{year}
+    {}
+    {\printtext[parens]{\printdate}}%
+  \usebibmacro{fom:urldate}%
+  \finentry
+}
+
+% Fallback für sonstige Quellen
+\DeclareBibliographyDriver{misc}{%
+  \usebibmacro{fom:bibauthor}%
+  \setunit{\space}%
+  \usebibmacro{fom:stichwortjahr}%
+  \setunit{\addcolon\space}%
+  \printfield{title}%
+  \iffieldundef{howpublished}
+    {}
+    {\setunit{\addcomma\space}\printfield{howpublished}}%
+  \setunit{\addcomma\space}%
+  \printfield{year}%
+  \finentry
+}
+
+% Überschrift "Internetquellen" wie im Leitfaden-Beispiel:
+% im Literaturverzeichnis integriert, aber nicht separat im Inhaltsverzeichnis
+\defbibheading{subbibliography}[\refname]{%
+  \vspace{1.5\baselineskip}%
+  \noindent\textbf{#1}\par\vspace{0.7\baselineskip}%
+}
+
+% ---------------------------------------------------
+% FOM-/Chicago-Fußnoten
+% ---------------------------------------------------
+
+% Namen in Fußnoten: Nachname, Initialen
+\DeclareNameFormat{fomfoot}{%
+  \nameparts{#1}%
+  \usebibmacro{name:family-given}
+    {\namepartfamily}
+    {\namepartgiveni}
+    {\namepartprefix}
+    {\namepartsuffix}%
+  \usebibmacro{name:andothers}%
+}
+
+\DeclareFieldFormat{citetitle}{#1}
+\DeclareFieldFormat{postnote}{#1}
+
+% Kurzbeleg:
+% Autor, Initialen, Stichwort, Jahr, S. ...
+\DeclareCiteCommand{\fomshortcite}
+  {}
+  {%
+    \printnames[fomfoot]{labelname}%
+    \setunit{\addcomma\space}%
+    \iffieldundef{shorttitle}
+      {\printfield[citetitle]{title}}
+      {\printfield[citetitle]{shorttitle}}%
+    \setunit{\addcomma\space}%
+    \printfield{year}%
+  }
+  {\multicitedelim}
+  {%
+    \setunit{\addcomma\space}%
+    \printfield{postnote}%
+  }
+
+% Indirektes Zitat mit Vgl.
+\newcommand{\fomfootcite}[2][]{%
+  \footnote{Vgl. \ifstrempty{#1}{\fomshortcite{#2}}{\fomshortcite[#1]{#2}}.}%
+}
+
+% Direktes Zitat ohne Vgl.
+\newcommand{\fomfootcitedirect}[2][]{%
+  \footnote{\ifstrempty{#1}{\fomshortcite{#2}}{\fomshortcite[#1]{#2}}.}%
+}
+
+% Manuelle Chicago-Fußnote
+\newcommand{\fommanualfootcite}[1]{%
+  \footnote{#1}%
+}
+
+% ---------------------------------------------------
+% INHALTSVERZEICHNIS
+% ---------------------------------------------------
+
+% Inhaltsverzeichnis nur bis Ebene 2 anzeigen
+\setcounter{tocdepth}{2}
+
+% Bezeichnung
+\renewcommand{\contentsname}{Inhaltsverzeichnis}
+
+% Überschrift des Inhaltsverzeichnisses
+\renewcommand{\cfttoctitlefont}{\normalfont\bfseries\fontsize{12}{14}\selectfont}
+\renewcommand{\cftaftertoctitle}{\par\vspace{12pt}}
+\setlength{\cftbeforetoctitleskip}{0pt}
+\setlength{\cftaftertoctitleskip}{12pt}
+
+% Überschriften von Abbildungs- und Tabellenverzeichnis
+\renewcommand{\cftloftitlefont}{\normalfont\bfseries\fontsize{12}{14}\selectfont}
+\renewcommand{\cftlottitlefont}{\normalfont\bfseries\fontsize{12}{14}\selectfont}
+\setlength{\cftbeforeloftitleskip}{0pt}
+\setlength{\cftbeforelottitleskip}{0pt}
+\setlength{\cftafterloftitleskip}{12pt}
+\setlength{\cftafterlottitleskip}{12pt}
+
+% Schrift der Einträge im Inhaltsverzeichnis
+\renewcommand{\cftsecfont}{\normalfont}
+\renewcommand{\cftsecpagefont}{\normalfont}
+
+\renewcommand{\cftsubsecfont}{\normalfont}
+\renewcommand{\cftsubsecpagefont}{\normalfont}
+
+\renewcommand{\cftsubsubsecfont}{\normalfont}
+\renewcommand{\cftsubsubsecpagefont}{\normalfont}
+
+% ---------------------------------------------------
+% PUNKTLINIEN DIREKT OHNE LEERZEICHEN
+% ---------------------------------------------------
+\makeatletter
+
+\newcommand{\tocdirectdots}{%
+  \nobreak
+  \leaders\hbox{.}\hfill
+  \nobreak
+}
+
+% Inhaltsverzeichnis
+\renewcommand{\cftsecleader}{\tocdirectdots}
+\renewcommand{\cftsubsecleader}{\tocdirectdots}
+\renewcommand{\cftsubsubsecleader}{\tocdirectdots}
+
+% Abbildungs- und Tabellenverzeichnis
+\renewcommand{\cftfigleader}{\tocdirectdots}
+\renewcommand{\cfttableader}{\tocdirectdots}
+
+% Codeverzeichnis mit denselben Punktlinien und Bezeichnung "Code"
+\newcommand{\lstnumberlinefom}[1]{Code~#1:\space}
+\renewcommand*{\l@lstlisting}[2]{%
+  \par\noindent
+  \begingroup
+    \let\numberline\lstnumberlinefom
+    \normalfont #1%
+  \endgroup
+  \tocdirectdots
+  {\normalfont #2}\par
+}
+
+% Seitenzahlen ohne feste Box direkt hinter den Punkten
+\renewcommand{\cftsecfillnum}[1]{%
+  {\cftsecleader}{\cftsecpagefont #1}\cftsecafterpnum\par
+}
+
+\renewcommand{\cftsubsecfillnum}[1]{%
+  {\cftsubsecleader}{\cftsubsecpagefont #1}\cftsubsecafterpnum\par
+}
+
+\renewcommand{\cftsubsubsecfillnum}[1]{%
+  {\cftsubsubsecleader}{\cftsubsubsecpagefont #1}\cftsubsubsecafterpnum\par
+}
+
+\renewcommand{\cftfigfillnum}[1]{%
+  {\cftfigleader}{\cftfigpagefont #1}\cftfigafterpnum\par
+}
+
+\renewcommand{\cfttabfillnum}[1]{%
+  {\cfttableader}{\cfttabpagefont #1}\cfttabafterpnum\par
+}
+
+\makeatother
+
+% rechter Rand für Seitenzahlen
+\cftsetpnumwidth{0pt}
+\cftsetrmarg{0pt}
+
+% Einzüge wie im FOM-Beispiel
+\setlength{\cftsecindent}{0pt}
+\setlength{\cftsubsecindent}{1.5em}
+\setlength{\cftsubsubsecindent}{3.0em}
+
+% Breite der Nummernspalten
+\setlength{\cftsecnumwidth}{2.2em}
+\setlength{\cftsubsecnumwidth}{2.8em}
+\setlength{\cftsubsubsecnumwidth}{3.4em}
+
+% Tabellen- und Abbildungsverzeichnis mit "Tabelle 1:" bzw. "Abbildung 1:"
+\renewcommand{\cftfigpresnum}{Abbildung~}
+\renewcommand{\cftfigaftersnum}{:}
+\setlength{\cftfignumwidth}{6.8em}
+
+\renewcommand{\cfttabpresnum}{Tabelle~}
+\renewcommand{\cfttabaftersnum}{:}
+\setlength{\cfttabnumwidth}{5.7em}
+
+% Abstand zwischen den Einträgen im Inhaltsverzeichnis
+\setlength{\cftbeforesecskip}{6pt}
+\setlength{\cftbeforesubsecskip}{3pt}
+\setlength{\cftbeforesubsubsecskip}{3pt}
+\setlength{\cftparskip}{0pt}
+
+% ---------------------------------------------------
+% KOPF-/FUSSZEILEN
+% ---------------------------------------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyhead[C]{\thepage}
+\setlength{\headheight}{15pt}
+
+% Seitenzahlen auch auf Verzeichnisseiten oben
+\renewcommand{\headrulewidth}{0pt}
+\fancypagestyle{plain}{%
+  \fancyhf{}
+  \fancyhead[C]{\thepage}
+}
+
 \begin{document}
 
 % ---------------------------------------------------
@@ -229,102 +681,274 @@ ROC-AUC & Receiver Operating Characteristic -- Area Under the Curve \\
 
 Die globale Finanzwelt wird in zunehmendem Maße von unvorhersehbaren geopolitischen Ereignissen geprägt. 
 Geopolitische Risiken, etwa in Form bewaffneter Konflikte, terroristischer Anschläge oder diplomatischer Spannungen, erhöhen die Unsicherheit an internationalen Finanzmärkten. 
-Diese Unsicherheit kann sich in erhöhter Volatilität, Kapitalumschichtungen und Kurskorrekturen widerspiegeln \parencite[vgl.][]{caldara2022measuring}.
+Diese Unsicherheit kann sich in erhöhter Volatilität, Kapitalumschichtungen und Kurskorrekturen widerspiegeln \fomfootcite{caldara2022measuring}.
 
 Klassische ökonometrische Modelle stoßen bei der Analyse komplexer und nicht-linearer Marktreaktionen häufig an Grenzen. 
 Machine-Learning-Verfahren können ergänzend eingesetzt werden, um Muster in historischen Finanz- und Risikodaten zu erkennen. 
 Im Mittelpunkt dieser Arbeit steht daher die Untersuchung, ob ein Random-Forest-Modell Zusammenhänge zwischen geopolitischem Risiko und internationalen Aktienindizes sichtbar machen kann.
 
+
 \section{Projektbeschreibung nach CRISP-DM}
+\label{sec:crisp_dm}
+
+Das Analyseprojekt folgt dem CRISP-DM-Vorgehensmodell, da dieses einen strukturierten Rahmen für datengetriebene Analyseprojekte bietet. CRISP-DM gliedert ein Data-Mining-Projekt in die Phasen Business Understanding, Data Understanding, Data Preparation, Modeling, Evaluation und Deployment.\fomfootcite{wirth2000crisp}\fomfootcite{chapman2000crisp} Für die vorliegende Arbeit ist dieses Vorgehen geeignet, weil die Untersuchung nicht nur aus der Anwendung einzelner Algorithmen besteht, sondern aus einem zusammenhängenden Prozess von der fachlichen Fragestellung über die Datenaufbereitung bis zur Interpretation der Ergebnisse.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 1.}
 
 \subsection{Business Understanding}
 
-Die Phase des Business Understanding bildet das Fundament des Projekts nach dem CRISP-DM-Standardmodell \parencite[vgl.][]{wirth2000crisp}. 
-Ziel dieser Arbeit ist es, die Beziehung zwischen geopolitischen Risiken und internationalen Aktienmärkten quantitativ zu untersuchen.
+Ausgangspunkt der Untersuchung ist die Annahme, dass geopolitische Risiken und internationale Aktienmärkte miteinander verbunden sein können. Geopolitische Risiken können Unsicherheit erzeugen, Investitionsentscheidungen beeinflussen und kurzfristige Kursbewegungen an Finanzmärkten auslösen.\fomfootcite{caldara2022measuring} Gleichzeitig ist auch denkbar, dass Aktienmärkte bestimmte Risikoentwicklungen frühzeitig einpreisen oder durch starke Kursbewegungen Hinweise auf eine veränderte geopolitische Wahrnehmung liefern. Die Analyse betrachtet deshalb nicht nur eine einseitige Wirkungsrichtung, sondern prüft beide Richtungen des möglichen Zusammenhangs.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 2.}
 
-Die zentrale Forschungsfrage lautet:
+Die zentrale Forschungsfrage lautet daher: \textit{In welchem Ausmaß lassen sich Zusammenhänge zwischen steigenden geopolitischen Risiken, gemessen über den GPR-Index, und Bewegungen internationaler Aktienindizes erkennen, und zeigen sich diese Zusammenhänge sowohl in der Richtung GPR $\rightarrow$ Aktienkurse als auch in der Gegenrichtung Aktienkurse $\rightarrow$ GPR?} Diese Forschungsfrage wird nicht kausal verstanden, sondern als empirische und prognostische Fragestellung. Ziel ist es zu untersuchen, ob die vorhandenen Daten Muster enthalten, die mit statistischen und Machine-Learning-Verfahren sichtbar gemacht werden können.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 3.}
 
-\textit{Inwiefern lassen sich mithilfe eines Random-Forest-Modells Muster zwischen geopolitischem Risiko und Aktienmarktbewegungen identifizieren?}
-
-Dabei werden zwei Richtungen betrachtet:
-
-\begin{itemize}
-    \item \textbf{Richtung A: GPR $\rightarrow$ Aktien} \\
-    Es wird untersucht, ob GPR-bezogene Variablen vorhersagen können, ob ein Aktienindex im jeweiligen Monat fällt.
-
-    \item \textbf{Richtung B: Aktien $\rightarrow$ GPR} \\
-    Es wird untersucht, ob aktuelle und verzögerte Aktienrenditen vorhersagen können, ob der GPR im Folgemonat steigt.
-\end{itemize}
+Zur Beantwortung der Forschungsfrage werden vier algorithmische Ansätze eingesetzt. Die lineare Regression dient dazu, lineare Zusammenhänge zwischen GPR-Veränderungen und Aktienrenditen beziehungsweise zwischen Aktienrenditen und späteren GPR Veränderungen zu untersuchen. K-Means wird verwendet, um Beobachtungen anhand ähnlicher Risiko- und Marktstrukturen zu gruppieren. KNN dient als distanzbasiertes Klassifikationsverfahren zur Einordnung von Markt- oder Risikobewegungen. Der Random Forest wird als nicht-lineares Klassifikationsmodell genutzt, um komplexere Muster und Feature Importances sichtbar zu machen.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 4.}
 
 \subsection{Data Understanding}
 
-Die Phase des Data Understanding befasst sich mit der Erhebung und ersten Exploration der Daten \parencite[vgl.][]{chapman2000crisp}. 
-Für die Analyse werden internationale Aktienmarktdaten mit dem Geopolitical Risk Index nach Caldara und Iacoviello kombiniert \parencite[vgl.][]{caldara2022measuring}.
+Die Datengrundlage besteht aus drei aufeinander aufbauenden Datensätzen. Der Tagesdatensatz \texttt{stocks\_gpr\_daily.csv} enthält tägliche Kursinformationen internationaler Aktienindizes sowie tägliche Werte des geopolitischen Risikoindex und seiner Komponenten. Der Monatsdatensatz \texttt{stocks\_gpr\_monthly.csv} aggregiert diese Informationen auf Monatsebene. Der Feature-Datensatz \texttt{stocks\_gpr\_features.csv} enthält zusätzlich vorbereitete Merkmale wie Lag-Variablen, Volatilitätskennzahlen, standardisierte GPR-Werte und binäre Zielvariablen. Damit bildet er die zentrale Grundlage für die anschließende Modellierung mit linearer Regression, K-Means, KNN und Random Forest.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 5.}
 
-Der finale Datensatz liegt auf Monatsbasis vor und umfasst zwölf internationale Aktienindizes im Zeitraum Januar 2001 bis Mai 2021.
+Der Tagesdatensatz umfasst 63.840 Beobachtungen im Zeitraum vom 03.01.2000 bis zum 31.05.2021. Die Daten enthalten zwölf internationale Aktienindizes. Der Monatsdatensatz umfasst 3.072 Beobachtungen von Februar 2000 bis Mai 2021. Der Feature-Datensatz umfasst nach Bildung der Lag- und Volatilitätsvariablen 3.012 Beobachtungen von Juli 2000 bis Mai 2021. Die Verringerung der Beobachtungszahl entsteht dadurch, dass für verzögerte Variablen zunächst mehrere Vormonate verfügbar sein müssen. In den bereitgestellten Datensätzen liegen keine fehlenden Werte vor.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 6.}
 
-\begin{table}[H]
-\centering
-\caption{Datengrundlage der Random-Forest-Analyse}
-\label{tab:data_basis}
-\begin{tabular}{@{}ll@{}}
-\toprule
-Merkmal & Beschreibung \\
-\midrule
-Zeitraum & Januar 2001 bis Mai 2021 \\
-Frequenz & Monatlich \\
-Beobachtungen & 2.940 \\
-Aktienindizes & 12 \\
-Ziel Richtung A & Aktienindex fällt im aktuellen Monat \\
-Ziel Richtung B & GPR steigt im Folgemonat \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Data Preparation}
-
-Die Datenaufbereitung umfasst die Umwandlung der täglichen Rohdaten in einen monatlichen Paneldatensatz. 
-Für jeden Aktienindex wird der letzte Schlusskurs eines Monats verwendet. Daraus wird die monatliche Rendite berechnet. 
-Die täglichen GPR-Werte werden zu Monatsdurchschnitten aggregiert. Zusätzlich werden verzögerte Variablen, Rolling-Volatilitäten und binäre Zielvariablen gebildet.
+\newpage
 
 \begin{table}[H]
 \centering
-\caption{Wichtige Variablen des Random-Forest-Datensatzes}
-\label{tab:variables}
-\begin{tabularx}{\textwidth}{@{}lX@{}}
+\small
+\renewcommand{\arraystretch}{1.25}
+\caption{Übersicht der verwendeten Datensätze}
+\label{tab:data_overview}
+\begin{tabularx}{\textwidth}{@{}
+>{\RaggedRight\arraybackslash}p{0.25\textwidth}
+>{\centering\arraybackslash}p{0.16\textwidth}
+>{\centering\arraybackslash}p{0.13\textwidth}
+>{\RaggedRight\arraybackslash}X
+@{}}
 \toprule
-Variable & Beschreibung \\
+\textbf{Datensatz} & \textbf{Beobachtungen} & \textbf{Indizes} & \textbf{Inhalt} \\
 \midrule
-\texttt{Stock\_monthly\_pct} & Monatliche Aktienrendite in Prozent \\
-\texttt{GPRD\_monthly\_pct} & Monatliche prozentuale Veränderung des GPR \\
-\texttt{gpr\_lag1--3} & Verzögerte GPR-Veränderungen \\
-\texttt{stock\_lag1--3} & Verzögerte Aktienrenditen \\
-\texttt{stock\_vol6} & Realisierte 6-Monats-Volatilität der Aktienrendite \\
-\texttt{gprd\_zscore} & Standardisiertes GPR-Niveau \\
-\texttt{gpr\_spike} & Binäre Kennzeichnung eines starken GPR-Ausschlags \\
-\texttt{target\_stock\_down} & Zielvariable Richtung A \\
-\texttt{target\_gpr\_up\_lead1} & Zielvariable Richtung B \\
+
+\texttt{stocks\_gpr\_daily.csv}
+& 63.840
+& 12
+& Tägliche Schlusskurse internationaler Aktienindizes sowie tägliche Werte des geopolitischen Risikoindex und seiner Komponenten. Der Datensatz bildet die Ausgangsbasis der Analyse. \\
+
+\addlinespace
+
+\texttt{stocks\_gpr\_monthly.csv}
+& 3.072
+& 12
+& Monatlich aggregierte Aktienkurs- und GPR-Daten einschließlich monatlicher prozentualer Veränderungen. Dieser Datensatz reduziert kurzfristige Tagesschwankungen. \\
+
+\addlinespace
+
+\texttt{stocks\_gpr\_features.csv}
+& 3.012
+& 12
+& Modellierungsdatensatz mit Lag-Variablen, Volatilitätskennzahlen, standardisierten GPR-Werten und binären Zielvariablen für die Algorithmen. \\
+
 \bottomrule
 \end{tabularx}
 \end{table}
 
+Die Tabelle \ref{tab:data_overview} verdeutlicht, dass die drei Datensätze unterschiedliche Aufgaben im Analyseprozess erfüllen. Während der Tagesdatensatz die ursprüngliche Datenbasis darstellt, dient der Monatsdatensatz der zeitlichen Vereinheitlichung der Aktien- und GPR-Daten. Der Feature-Datensatz ist schließlich der eigentliche Modellierungsdatensatz, da er bereits die für die Algorithmen benötigten erklärenden Variablen und Zielvariablen enthält.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 7.}
+
+Die folgende Tabelle beschreibt die wichtigsten Variablen des Feature-Datensatzes. Sie zeigt, welche Informationen die einzelnen Merkmale enthalten und für welche Analyseperspektive sie verwendet werden. Dabei wird zwischen Aktienmarktvariablen, geopolitischen Risikovariablen, verzögerten Variablen und Zielvariablen unterschieden. Diese Trennung ist wichtig, da die Arbeit eine bidirektionale Betrachtung verfolgt: Einerseits wird untersucht, ob geopolitische Risiken Aktienmarktbewegungen erklären können, andererseits wird geprüft, ob Aktienmarktbewegungen Hinweise auf spätere Veränderungen des GPR-Index liefern.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 8.}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.25}
+\caption{Bedeutung zentraler Variablen im Feature-Datensatz}
+\label{tab:variables_explanation}
+\begin{tabularx}{\textwidth}{@{}
+>{\RaggedRight\arraybackslash}p{0.30\textwidth}
+>{\RaggedRight\arraybackslash}X
+@{}}
+\toprule
+\textbf{Variable} & \textbf{Bedeutung und Verwendung} \\
+\midrule
+
+Index
+& Kürzel des jeweiligen Aktienindex, zum Beispiel NYA, GDAXI, N225 oder HSI. Die Variable dient der Zuordnung der Beobachtungen zu einem bestimmten Aktienmarkt. \\
+
+\addlinespace
+YearMonth
+& Monat der jeweiligen Beobachtung im Format Jahr-Monat. Die Variable bildet den zeitlichen Bezug der Analyse und ermöglicht die Sortierung der Beobachtungen. \\
+
+\addlinespace
+
+Close\_last
+& Letzter verfügbarer Schlusskurs des jeweiligen Aktienindex im Monat. Daraus wird die monatliche Kursveränderung des Aktienindex berechnet. \\
+
+\addlinespace
+
+Stock\_monthly\_pct
+& Monatliche prozentuale Veränderung des Aktienindex. Positive Werte zeigen steigende Kurse, negative Werte fallende Kurse. Die Variable wird sowohl als Zielvariable als auch als erklärende Variable genutzt. \\
+
+\addlinespace
+
+GPRD\_mean
+& Durchschnittlicher monatlicher Wert des täglichen geopolitischen Risikoindex. Die Variable beschreibt das allgemeine geopolitische Risikoniveau eines Monats. \\
+
+\addlinespace
+
+GPRD\_ACT\_mean
+& Durchschnittlicher monatlicher Wert der Komponente tatsächlicher geopolitischer Ereignisse. Sie bildet real eingetretene geopolitische Ereignisse ab. \\
+
+\addlinespace
+
+GPRD\_THREAT\_mean
+& Durchschnittlicher monatlicher Wert der Komponente geopolitischer Bedrohungen. Sie beschreibt wahrgenommene oder erwartete geopolitische Spannungen. \\
+
+\addlinespace
+
+GPRD\_monthly\_pct
+& Monatliche prozentuale Veränderung des GPR-Index. Die Variable zeigt, ob das geopolitische Risiko gegenüber dem Vormonat gestiegen oder gefallen ist. \\
+
+\addlinespace
+
+GPRD\_ACT\_monthly\_pct
+& Monatliche prozentuale Veränderung der Ereigniskomponente des GPR-Index. Sie zeigt Veränderungen tatsächlicher geopolitischer Ereignisse. \\
+
+\addlinespace
+
+GPRD\_THREAT\_monthly\_pct
+& Monatliche prozentuale Veränderung der Bedrohungskomponente des GPR-Index. Sie zeigt Veränderungen geopolitischer Bedrohungslagen. \\
+
+\addlinespace
+
+gpr\_lag1, gpr\_lag2, gpr\_lag3
+& Verzögerte GPR-Veränderungen der vorherigen ein bis drei Monate. Diese Merkmale werden genutzt, um zeitverzögerte Zusammenhänge zwischen geopolitischem Risiko und Aktienmärkten zu untersuchen. \\
+
+\addlinespace
+
+stock\_lag1, stock\_lag2, stock\_lag3
+& Verzögerte Aktienrenditen der vorherigen ein bis drei Monate. Sie ermöglichen die Prüfung, ob frühere Aktienmarktbewegungen Hinweise auf spätere GPR-Veränderungen liefern. \\
+
+\addlinespace
+
+stock\_vol6
+& Realisierte Volatilität der Aktienrenditen über sechs Monate. Die Variable beschreibt die Schwankungsintensität des jeweiligen Aktienindex. \\
+
+\addlinespace
+
+gprd\_zscore
+& Standardisierter GPR-Wert. Er zeigt, ob das geopolitische Risikoniveau im Vergleich zum Gesamtzeitraum ungewöhnlich hoch oder niedrig ist. \\
+
+\addlinespace
+
+gpr\_spike
+& Binäre Variable für starke Ausschläge des GPR-Index. Sie markiert Monate mit außergewöhnlich hohen geopolitischen Risikoanstiegen. \\
+
+\addlinespace
+
+stock\_down
+& Binäre Zielvariable für die Richtung GPR $\rightarrow$ Aktien. Der Wert 1 zeigt, dass der jeweilige Aktienindex im betrachteten Monat gefallen ist. \\
+
+\addlinespace
+
+gpr\_up\_next
+& Binäre Zielvariable für die Richtung Aktien $\rightarrow$ GPR. Der Wert 1 zeigt, dass der GPR-Index im Folgemonat steigt. \\
+
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Die Analyse nutzt vor allem die monatliche Perspektive, da geopolitische Risiken und Aktienmarktreaktionen dadurch vergleichbar zusammengeführt werden können. Tagesdaten bieten zwar eine höhere zeitliche Auflösung, können jedoch durch kurzfristige Schwankungen, unterschiedliche Handelstage und einzelne Ausreißer stärker verzerrt sein. Die Aggregation auf Monatswerte reduziert diese kurzfristigen Störeinflüsse und ermöglicht eine konsistente Betrachtung über mehrere internationale Aktienindizes hinweg. Gleichzeitig bleiben zentrale Bewegungen durch Variablen wie Stock\_monthly\_pct, GPRD\_mo- nthly\_pct, GPRD\_ACT\_monthly\_pct und GPRD\_THREAT\_monthly\_pct erhalten.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 9.}
+
+Zur ersten Einordnung der Daten werden deskriptive Kennzahlen betrachtet. Die monatliche Aktienrendite liegt im Feature-Datensatz im Durchschnitt bei 0,476 Prozent. Dies zeigt, dass die betrachteten Aktienindizes über den Gesamtzeitraum hinweg im Mittel leicht positive Monatsrenditen aufweisen. Gleichzeitig beträgt die Standardabweichung 5,561 Prozentpunkte, was auf deutliche Schwankungen zwischen einzelnen Monaten und Indizes hinweist. Der niedrigste beobachtete Monatswert beträgt -16,199 Prozent, der höchste 15,379 Prozent.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 10.}
+
+Auch die geopolitischen Risikovariablen weisen deutliche Schwankungen auf. Die durchschnittliche monatliche Veränderung des GPR-Index beträgt im Feature-Datensatz 1,526 Prozent. Die Ereigniskomponente \texttt{GPRD\_ACT\_monthly\_pct} steigt durchschnittlich um 2,430 Prozent, die Bedrohungskomponente \texttt{GPRD\_THREAT\_monthly\_pct} um 2,548 Prozent. Die hohen Standardabweichungen zeigen jedoch, dass diese Mittelwerte stark von einzelnen geopolitischen Ausschlägen geprägt sein können. Dies ist für die Analyse relevant, da gerade außergewöhnliche Risikoanstiege einen möglichen Einfluss auf Aktienmärkte haben können.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 11.}
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\caption{Deskriptive Statistik zentraler metrischer Variablen im Feature-Datensatz}
+\label{tab:descriptive_statistics_features}
+\begin{tabularx}{\textwidth}{@{}
+>{\RaggedRight\arraybackslash}X
+rrrr
+@{}}
+\toprule
+\textbf{Variable} & \textbf{Mittelwert} & \textbf{Standardabw.} & \textbf{Minimum} & \textbf{Maximum} \\
+\midrule
+
+\texttt{Stock\_monthly\_pct} 
+& 0{,}476 & 5{,}561 & -16{,}199 & 15{,}379 \\
+
+\texttt{GPRD\_monthly\_pct} 
+& 1{,}526 & 20{,}572 & -39{,}288 & 93{,}425 \\
+
+\texttt{GPRD\_ACT\_monthly\_pct} 
+& 2{,}430 & 26{,}457 & -43{,}817 & 104{,}557 \\
+
+\texttt{GPRD\_THREAT\_monthly\_pct} 
+& 2{,}548 & 24{,}368 & -44{,}528 & 104{,}188 \\
+
+\texttt{stock\_vol6} 
+& 4{,}991 & 2{,}705 & 0{,}685 & 16{,}736 \\
+
+\texttt{gprd\_zscore} 
+& 0{,}016 & 1{,}003 & -1{,}134 & 8{,}022 \\
+
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Die in Tabelle \ref{tab:descriptive_statistics_features} dargestellten Kennzahlen zeigen, dass die Aktienrenditen im Vergleich zu den GPR-Veränderungen deutlich geringere Schwankungen aufweisen. Während die monatliche Aktienrendite eine Standardabweichung von 5,561 Prozentpunkten besitzt, liegen die Standardabweichungen der GPR-Veränderungen deutlich höher. Besonders die Komponenten \texttt{GPRD\_ACT\_monthly\_pct} und \texttt{GPRD\_THREAT\_monthly\_pct} weisen große Spannweiten zwischen Minimum und Maximum auf. Dies spricht dafür, dass geopolitische Risikoindikatoren in einzelnen Monaten sehr stark ausschlagen können.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 12.}
+
+Die binären Zielvariablen zeigen, dass fallende Aktienmonate im Datensatz regelmäßig auftreten. Die Variable \texttt{stock\_down} nimmt in 1.274 von 3.012 Beobachtungen den Wert 1 an. Damit sind rund 42,3 Prozent der Index-Monats-Beobachtungen fallende Aktienmonate. Die Variable \texttt{gpr\_up\_next} nimmt in 1.476 Beobachtungen den Wert 1 an, was einem Anteil von rund 49,0 Prozent entspricht. Die Zielvariable für steigende GPR-Werte im Folgemonat ist damit nahezu ausgeglichen. Starke GPR-Ausschläge, abgebildet durch \texttt{gpr\_spike}, treten dagegen nur in 120 Beobachtungen beziehungsweise rund 4,0 Prozent der Fälle auf.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 13.}
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\caption{Verteilung zentraler binärer Variablen im Feature-Datensatz}
+\label{tab:binary_variables_features}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Variable} & \textbf{Wert 0} & \textbf{Wert 1} & \textbf{Anteil Wert 1} \\
+\midrule
+
+\texttt{stock\_down} 
+& 1.738 & 1.274 & 42{,}3\% \\
+
+\texttt{gpr\_up\_next} 
+& 1.536 & 1.476 & 49{,}0\% \\
+
+\texttt{gpr\_spike} 
+& 2.892 & 120 & 4{,}0\% \\
+
+\bottomrule
+\end{tabular}
+\end{table}
+
+Insgesamt zeigt das Data Understanding, dass die Daten für die geplante Analyse geeignet sind. Die Aktienvariablen bilden sowohl Kursniveaus als auch monatliche Renditen und Volatilitäten ab. Die GPR-Variablen erfassen sowohl das allgemeine geopolitische Risikoniveau als auch Veränderungen der Ereignis- und Bedrohungskomponenten. Durch die vorhandenen Lag-Variablen können zeitverzögerte Effekte untersucht werden. Damit lassen sich die beiden Analyseperspektiven GPR $\rightarrow$ Aktien und Aktien $\rightarrow$ GPR konsistent in den anschließenden Modellierungsphasen abbilden.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 14.}
+
+\subsection{Data Preparation}
+
+Die Datenaufbereitung hat das Ziel, eine einheitliche Datengrundlage für alle vier Algorithmen zu schaffen. Zunächst werden die Tagesdaten nach Index und Monat gruppiert. Für die Aktienindizes wird der letzte verfügbare Schlusskurs eines Monats verwendet, um daraus die monatliche prozentuale Kursveränderung zu berechnen. Für den GPR-Index und seine Komponenten werden Monatsmittelwerte gebildet und anschließend ebenfalls prozentuale Veränderungen berechnet. Dadurch entstehen vergleichbare Monatsvariablen für Aktienmärkte und geopolitische Risiken.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 15.}
+
+Für die bidirektionale Analyse werden zusätzliche Merkmale erzeugt. Zur Abbildung zeitlicher Verzögerungen werden Lag-Variablen für GPR-Veränderungen und Aktienrenditen gebildet, zum Beispiel \texttt{gpr\_lag1}, \texttt{gpr\_lag2}, \texttt{gpr\_lag3} sowie \texttt{stock\_lag1}, \texttt{stock\_lag2} und \texttt{stock\_lag3}. Ergänzend wird mit \texttt{stock\_vol6} eine sechsmonatige Volatilitätskennzahl genutzt. Der standardisierte Wert \texttt{gprd\_zscore} dient dazu, außergewöhnlich hohe geopolitische Risikoniveaus besser vergleichbar zu machen. Die Variable \texttt{gpr\_spike} markiert starke Ausschläge des GPR-Index.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 16.}
+
+Die Zielvariablen werden so definiert, dass sie sowohl Regressions- als auch Klassifikationsverfahren unterstützen. Für die Richtung GPR $\rightarrow$ Aktien kann die monatliche Aktienrendite als metrische Zielvariable für die lineare Regression genutzt werden. Für Klassifikationsverfahren wird zusätzlich die binäre Variable \texttt{stock\_down} verwendet, die angibt, ob ein Aktienindex im jeweiligen Monat gefallen ist. Für die Gegenrichtung Aktien $\rightarrow$ GPR kann die spätere GPR-Veränderung metrisch betrachtet werden; ergänzend zeigt \texttt{gpr\_up\_next}, ob der GPR im Folgemonat steigt. Damit entsteht eine flexible Datengrundlage für lineare Regression, K-Means, KNN und Random Forest.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 17.}
+
+Für die Modellierung müssen fehlende Werte, insbesondere durch Lag-Bildung am Anfang der Zeitreihen, entfernt oder kontrolliert behandelt werden. Zudem werden numerische Merkmale für distanzbasierte Verfahren wie K-Means und KNN standardisiert, damit Variablen mit großen Wertebereichen die Distanzberechnung nicht dominieren.\fomfootcite{pyle1999data} Für Random Forest ist eine Skalierung weniger kritisch, da baumbasierte Verfahren nicht auf euklidischen Distanzen beruhen. Dennoch wird eine konsistente Feature-Auswahl verwendet, um die Ergebnisse der Algorithmen vergleichbar interpretieren zu können.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 18.}
+
 \subsection{Modeling}
 
-In der Modeling-Phase wird ein Random-Forest-Klassifikator eingesetzt. Random Forest ist ein Ensemble-Verfahren, das viele Entscheidungsbäume kombiniert. 
-Dadurch kann das Modell nicht-lineare Zusammenhänge und Interaktionen zwischen Variablen abbilden. 
-Gleichzeitig erlaubt die Feature Importance eine Interpretation der relativen Bedeutung einzelner Merkmale.
+In der Modeling-Phase werden die vier Algorithmen auf die vorbereiteten Daten angewendet. Die lineare Regression bildet den einfachsten Modellansatz und dient als Referenzmodell für lineare Zusammenhänge. K-Means untersucht, ob sich Monate beziehungsweise Index-Monats-Kombinationen anhand von GPR- und Aktienmarktmerkmalen in ähnliche Gruppen einteilen lassen. KNN klassifiziert Beobachtungen anhand ähnlicher historischer Fälle. Der Random Forest erweitert die Analyse um ein nicht-lineares Ensemble-Verfahren, das auch Interaktionen zwischen Variablen erfassen kann.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 19.}
+
+Die Modelle werden jeweils so eingesetzt, dass beide Analyseperspektiven berücksichtigt werden. In Richtung A wird untersucht, ob GPR-Variablen und deren Verzögerungen Aktienmarktbewegungen erklären oder klassifizieren können. In Richtung B wird geprüft, ob aktuelle und verzögerte Aktienrenditen Hinweise auf spätere Veränderungen des GPR-Index liefern. Diese symmetrische Struktur ermöglicht einen direkten Vergleich der beiden Wirkungsrichtungen. Dadurch kann beurteilt werden, ob die Daten stärkere Muster in der klassischen Richtung geopolitisches Risiko zu Aktienmarkt oder in der Gegenrichtung Aktienmarkt zu geopolitischem Risiko zeigen.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 20.}
 
 \subsection{Evaluation}
 
-Die Modellgüte wird anhand von Accuracy, Precision, Recall, F1-Score und ROC-AUC bewertet. 
-Die ROC-AUC ist dabei besonders relevant, weil sie die Trennschärfe des Klassifikators unabhängig von einem festen Schwellenwert beschreibt.
+Die Evaluation orientiert sich an der jeweiligen Modellart. Für die lineare Regression werden Gütemaße wie der Erklärungsgehalt und die Fehlergrößen betrachtet. Für KNN und Random Forest werden Klassifikationsmetriken wie Accuracy, Precision, Recall, F1-Score und ROC-AUC verwendet. Bei K-Means steht keine Zielvariable im Vordergrund; deshalb werden Clusterstruktur, Interpretierbarkeit und Unterschiede zwischen den Gruppen betrachtet. Wichtig ist, dass die Ergebnisse nicht als kausaler Nachweis interpretiert werden. Sie zeigen vielmehr, ob die Daten statistische oder prognostische Muster enthalten.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 21.}
 
 \subsection{Deployment}
 
-Die Ergebnisse werden in Form von Tabellen, Grafiken und gespeicherten Modellobjekten dokumentiert. 
-Dadurch ist die Analyse reproduzierbar und kann im Projektkontext nachvollzogen werden.
+Im Sinne des CRISP-DM-Modells bedeutet Deployment in dieser Arbeit nicht die produktive Einführung eines Handelssystems, sondern die nachvollziehbare Bereitstellung der Analyseergebnisse. Dazu gehören gespeicherte Tabellen, Visualisierungen, Modellkennzahlen und interpretierbare Ergebnisdarstellungen. Die Resultate sollen reproduzierbar dokumentiert werden, sodass die einzelnen Schritte von der Datenaufbereitung bis zur Bewertung der Algorithmen überprüfbar bleiben. Damit bildet das Deployment die Grundlage für die spätere Ergebnisinterpretation und für mögliche Erweiterungen der Analyse.\footnote{In Anlehnung an ChatGPT, KI-Verzeichnis Prompt 22.}
 
-\section{Implementierung der Algorithmen}
+\section {Implementierung der Algorithmen}
 
 \subsection{Random-Forest}
 \label{subsec:random_forest}
@@ -574,21 +1198,21 @@ Allerdings entstehen auch hier Fehlklassifikationen: 538 Monate ohne GPR-Anstieg
 
 \begin{figure}[H]
 \centering
+\caption{Confusion Matrices der Random-Forest-Modelle im Gesamtzeitraum 2001--2021}
+\label{fig:rf_confusion_matrices_full}
 \begin{subfigure}{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{rf_confusion_matrix_direction_A_full_period.pdf}
     \caption{Richtung A: GPR $\rightarrow$ Aktien}
     \label{fig:rf_confusion_A_full}
+    \includegraphics[width=\textwidth]{rf_confusion_matrix_direction_A_full_period.pdf}
 \end{subfigure}
 \hfill
 \begin{subfigure}{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{rf_confusion_matrix_direction_B_full_period.pdf}
     \caption{Richtung B: Aktien $\rightarrow$ GPR}
     \label{fig:rf_confusion_B_full}
+    \includegraphics[width=\textwidth]{rf_confusion_matrix_direction_B_full_period.pdf}
 \end{subfigure}
-\caption{Confusion Matrices der Random-Forest-Modelle im Gesamtzeitraum 2001--2021}
-\label{fig:rf_confusion_matrices_full}
 \end{figure}
 
 Auch die ROC-Kurven bestätigen das Bild. 
@@ -598,21 +1222,21 @@ Damit zeigt sich im Gesamtzeitraum eine stärkere Trennschärfe für die klassis
 
 \begin{figure}[H]
 \centering
+\caption{ROC-Kurven der Random-Forest-Modelle im Gesamtzeitraum 2001--2021}
+\label{fig:rf_roc_curves_full}
 \begin{subfigure}{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{rf_roc_curve_direction_A_full_period.pdf}
     \caption{Richtung A: ROC-AUC = 0{,}824}
     \label{fig:rf_roc_A_full}
+    \includegraphics[width=\textwidth]{rf_roc_curve_direction_A_full_period.pdf}
 \end{subfigure}
 \hfill
 \begin{subfigure}{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{rf_roc_curve_direction_B_full_period.pdf}
     \caption{Richtung B: ROC-AUC = 0{,}717}
     \label{fig:rf_roc_B_full}
+    \includegraphics[width=\textwidth]{rf_roc_curve_direction_B_full_period.pdf}
 \end{subfigure}
-\caption{ROC-Kurven der Random-Forest-Modelle im Gesamtzeitraum 2001--2021}
-\label{fig:rf_roc_curves_full}
 \end{figure}
 
 \subsubsection{Feature Importance}
@@ -670,21 +1294,21 @@ Feature & Interpretation \\
 
 \begin{figure}[H]
 \centering
+\caption{Feature Importance der Random-Forest-Modelle im Gesamtzeitraum 2001--2021}
+\label{fig:rf_feature_importance_full}
 \begin{subfigure}{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{rf_feature_importance_direction_A_full_period.pdf}
     \caption{Richtung A: GPR-Features}
     \label{fig:rf_importance_A_full}
+    \includegraphics[width=\textwidth]{rf_feature_importance_direction_A_full_period.pdf}
 \end{subfigure}
 \hfill
 \begin{subfigure}{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{rf_feature_importance_direction_B_full_period.pdf}
     \caption{Richtung B: Aktien-Features}
     \label{fig:rf_importance_B_full}
+    \includegraphics[width=\textwidth]{rf_feature_importance_direction_B_full_period.pdf}
 \end{subfigure}
-\caption{Feature Importance der Random-Forest-Modelle im Gesamtzeitraum 2001--2021}
-\label{fig:rf_feature_importance_full}
 \end{figure}
 
 \subsubsection{Interpretation nach CRISP-DM}
@@ -762,6 +1386,10 @@ joblib.dump(
 )
 \end{lstlisting}
 
+\subsection{K-nearest neighbour (KNN) }
+XXX
+
+
 \section{Ergebnisse und Visualisierungen}
 
 Die Ergebnisse zeigen, dass der Random Forest im Gesamtzeitraum deutliche Muster zwischen geopolitischem Risiko und Aktienmarktbewegungen erkennt. 
@@ -796,12 +1424,51 @@ Eine kausale Aussage oder eine gesicherte Prognosefähigkeit für zukünftige Da
 \toprule
 \textbf{Nr.} & \textbf{KI-System} & \textbf{Prompt / Einsatzzweck} \\
 \midrule
-1 & Google Gemini & Erstellung eines Entwurfs für die Einleitung zur Relevanz geopolitischer Risiken und Machine Learning. \\
-2 & Google Gemini & Unterstützung bei der Formulierung des Business Understanding nach CRISP-DM. \\
-3 & Google Gemini & Unterstützung bei der Beschreibung der Datenquellen und Datenschemata. \\
-4 & Google Gemini & Unterstützung bei der Beschreibung der Data-Preparation-Phase. \\
-5 & Google Gemini & Unterstützung bei der Beschreibung der Modeling-Phase nach CRISP-DM. \\
-6 & ChatGPT & Unterstützung bei der Strukturierung, Interpretation und LaTeX-Formulierung des Random-Forest-Abschnitts. \\
+
+1 & ChatGPT & Schreibe mir einen wissenschaftlich formulierten Einstieg für Kapitel 2, in dem erklärt wird, warum CRISP-DM als Vorgehensmodell für unser Datenanalyseprojekt geeignet ist. \\
+
+2 & ChatGPT & Formuliere einen Absatz zum fachlichen Hintergrund unserer Arbeit: Es geht um geopolitische Risiken, den GPR-Index und mögliche Auswirkungen auf internationale Aktienmärkte. \\
+
+3 & ChatGPT & Formuliere eine passende Forschungsfrage für unsere Seminararbeit. Sie soll untersuchen, ob steigende geopolitische Risiken Aktienkurse beeinflussen und ob auch die Gegenrichtung betrachtet werden kann. \\
+
+4 & ChatGPT & Beschreibe kurz und wissenschaftlich, warum wir in der Arbeit lineare Regression, K-Means, KNN und Random Forest einsetzen und welchen Zweck die Verfahren jeweils erfüllen. \\
+
+5 & ChatGPT & Beschreibe im Abschnitt Data Understanding die drei CSV-Dateien daily, monthly und features und erkläre, welche Rolle sie im Analyseprojekt haben. \\
+
+6 & ChatGPT & Fasse anhand der Datensätze zusammen, wie viele Beobachtungen und Indizes enthalten sind, welchen Zeitraum die Daten abdecken und ob fehlende Werte vorliegen. \\
+
+7 & ChatGPT & Erstelle eine übersichtliche LaTeX-Tabelle, die unsere drei Datensätze mit Beobachtungen, Indexanzahl und Inhalt darstellt. \\
+
+8 & ChatGPT & Erstelle eine verständliche Variablenübersicht für den Feature-Datensatz und erkläre kurz, was die wichtigsten Variablen bedeuten und wofür sie in der Analyse genutzt werden. \\
+
+9 & ChatGPT & Erkläre, warum wir für die Analyse hauptsächlich Monatsdaten verwenden und nicht die täglichen Daten direkt modellieren. \\
+
+10 & ChatGPT & Interpretiere die deskriptiven Kennzahlen der monatlichen Aktienrenditen aus unserem Feature-Datensatz in einem wissenschaftlichen Absatz. \\
+
+11 & ChatGPT & Interpretiere die deskriptiven Kennzahlen der GPR-Variablen und der Komponenten GPRD ACT und GPRD THREAT in einem wissenschaftlichen Absatz. \\
+
+12 & ChatGPT & Formuliere eine kurze Auswertung zur Tabelle mit Mittelwert, Standardabweichung, Minimum und Maximum der wichtigsten metrischen Variablen. \\
+
+13 & ChatGPT & Beschreibe die Verteilung der binären Variablen stock\_down, gpr\_up\_next und gpr\_spike und erkläre, was das für die spätere Modellierung bedeutet. \\
+
+14 & ChatGPT & Formuliere eine zusammenfassende Einschätzung, ob die Daten für unsere bidirektionale Analyse zwischen GPR-Index und Aktienindizes geeignet sind. \\
+
+15 & ChatGPT & Schreibe einen Absatz zur Data Preparation und erkläre, wie Tagesdaten zu Monatsdaten aggregiert werden und warum das für unsere Analyse sinnvoll ist. \\
+
+16 & ChatGPT & Beschreibe die Erstellung der wichtigsten Features für unsere Modelle, insbesondere Lag-Variablen, stock\_vol6, gprd\_zscore und gpr\_spike. \\
+
+17 & ChatGPT & Erkläre, wie die Zielvariablen für unsere beiden Analyse-Richtungen GPR zu Aktien und Aktien zu GPR definiert werden können. \\
+
+18 & ChatGPT & Formuliere einen Absatz dazu, wie fehlende Werte, Skalierung und Feature-Auswahl in der Vorbereitung für lineare Regression, K-Means, KNN und Random Forest behandelt werden sollten. \\
+
+19 & ChatGPT & Beschreibe die Modeling-Phase nach CRISP-DM und erkläre die Rolle der vier Algorithmen in unserer Untersuchung. \\
+
+20 & ChatGPT & Erkläre die bidirektionale Modellierungslogik unserer Arbeit: einmal GPR als Einflussgröße für Aktienbewegungen und einmal Aktienbewegungen als Einflussgröße für spätere GPR-Veränderungen. \\
+
+21 & ChatGPT & Formuliere einen Abschnitt zur Evaluation und nenne passende Metriken für lineare Regression, K-Means, KNN und Random Forest. \\
+
+22 & ChatGPT & Schreibe einen kurzen Deployment-Abschnitt für eine wissenschaftliche Seminararbeit, bei der die Ergebnisse nicht produktiv eingesetzt, sondern reproduzierbar dokumentiert werden. \\
+
 \bottomrule
 \end{tabularx}
 
