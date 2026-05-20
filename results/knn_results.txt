@@ -1,0 +1,106 @@
+====================================================================
+  KNN (v2): GPR <-> AKTIENMARKT — FEATURE ENGINEERING + MI + PCA
+  Daten   : data/processed/stocks_gpr_features.csv
+  Zeitraum: 2000-01 bis 2021-05  |  12 Indizes
+====================================================================
+
+────────────────────────────────────────────────────────────────────
+RICHTUNG A: Fallen Aktien wenn GPR-Features hoch?
+  Zielvariable  : stock_down
+  Features total: 15
+────────────────────────────────────────────────────────────────────
+BESTE HYPERPARAMETER (GridSearch, Scoring: ROC-AUC):
+  select__k       : 5
+  n_pca_components: 4  (aus PCA(variance=0.95))
+  n_neighbors     : 10
+  weights         : distance
+  metric          : chebyshev
+
+AUSGEWAEHLTE FEATURES (SelectKBest):
+  [+] GPRD_monthly_pct              MI=0.2559
+  [+] gpr_lag1                      MI=0.2515
+  [+] gpr_lag2                      MI=0.2509
+  [+] gpr_momentum2                 MI=0.2518
+  [+] gpr_act_x_zscore              MI=0.2523
+
+VERWORFENE FEATURES (MI zu gering):
+  [-] gpr_lag3                      MI=0.2508
+  [-] GPRD_ACT_monthly_pct          MI=0.2270
+  [-] GPRD_THREAT_monthly_pct       MI=0.2460
+  [-] gprd_zscore                   MI=0.2439
+  [-] gpr_momentum                  MI=0.2482
+  [-] gpr_accel                     MI=0.2482
+  [-] gpr_cumchange_3               MI=0.2354
+  [-] act_vs_threat                 MI=0.2488
+  [-] gpr_threat_x_zscore           MI=0.2406
+  [-] vol_x_zscore                  MI=0.0074
+
+METRIKEN:
+  CV-AUC   (TimeSeriesSplit n=5, gap=1) : 0.5896
+  Test-AUC (temporaler Holdout 20%)     : 0.5953
+  F1-Score (Holdout)                    : 0.3521
+  Accuracy (Holdout)                    : 0.5415
+  Majority-Baseline Accuracy            : 0.58
+  AUC ueber Zufall-Baseline?            : JA (Delta=+0.0953)
+
+KONFUSIONSMATRIX (Holdout-Testmenge):
+                        Pred 0  Pred 1
+  True 0                   251     129
+  True 1                   147      75
+
+────────────────────────────────────────────────────────────────────
+RICHTUNG B: Steigt GPR naechsten Monat wenn Aktien fallen?
+  Zielvariable  : gpr_up_next
+  Features total: 15
+────────────────────────────────────────────────────────────────────
+BESTE HYPERPARAMETER (GridSearch, Scoring: ROC-AUC):
+  select__k       : 5
+  n_pca_components: 5  (aus PCA(variance=0.95))
+  n_neighbors     : 30
+  weights         : distance
+  metric          : euclidean
+
+AUSGEWAEHLTE FEATURES (SelectKBest):
+  [+] stock_cumchange_3             MI=0.0192
+  [+] stock_x_vol                   MI=0.0225
+  [+] stock_down_lag1               MI=0.0282
+  [+] gpr_x_stock                   MI=0.0186
+  [+] vol_x_zscore                  MI=0.0690
+
+VERWORFENE FEATURES (MI zu gering):
+  [-] Stock_monthly_pct             MI=0.0099
+  [-] stock_lag1                    MI=0.0095
+  [-] stock_lag2                    MI=0.0120
+  [-] stock_lag3                    MI=0.0061
+  [-] stock_vol6                    MI=0.0035
+  [-] stock_momentum                MI=0.0000
+  [-] stock_momentum2               MI=0.0000
+  [-] stock_accel                   MI=0.0000
+  [-] stock_down_lag2               MI=0.0000
+  [-] stock_bear_3m                 MI=0.0128
+
+METRIKEN:
+  CV-AUC   (TimeSeriesSplit n=5, gap=1) : 0.5764
+  Test-AUC (temporaler Holdout 20%)     : 0.6335
+  F1-Score (Holdout)                    : 0.5952
+  Accuracy (Holdout)                    : 0.6047
+  Majority-Baseline Accuracy            : 0.58
+  AUC ueber Zufall-Baseline?            : JA (Delta=+0.1335)
+
+KONFUSIONSMATRIX (Holdout-Testmenge):
+                        Pred 0  Pred 1
+  True 0                   189     123
+  True 1                   115     175
+
+====================================================================
+ASYMMETRIE-ANALYSE
+────────────────────────────────────────────────────────────────────
+  Delta AUC (A - B) = 0.5953 - 0.6335 = -0.0382
+
+  Interpretation: Aktien -> GPR besser klassifizierbar.
+  Konsistent mit algo1-3: Aktienmärkte fuehren den GPR.
+
+PIPELINE:
+  StandardScaler -> SelectKBest(MI) -> PCA(0.95) -> KNN
+  TimeSeriesSplit(n=5, gap=1) | Temporaler Holdout (20%)
+====================================================================
