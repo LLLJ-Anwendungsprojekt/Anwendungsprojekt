@@ -1,0 +1,19 @@
+Cluster summary (n per cluster):
+- Cluster 0: n=193
+- Cluster 1: n=2819
+
+Top features per cluster (z-score vs global mean):
+
+Cluster 0 (n=193):
+  gpr_spike: +2.657
+  gprd_zscore: +2.459
+  GPRD_mean: +2.459
+  GPRD_THREAT_mean: +2.337
+  GPRD_ACT_mean: +2.175
+
+Cluster 1 (n=2819):
+  gpr_spike: -0.182
+  gprd_zscore: -0.168
+  GPRD_mean: -0.168
+  GPRD_THREAT_mean: -0.160
+  GPRD_ACT_mean: -0.149

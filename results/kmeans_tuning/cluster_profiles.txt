@@ -1,0 +1,36 @@
+Cluster summary (n per cluster):
+- Cluster 0: n=48
+- Cluster 1: n=12
+- Cluster 2: n=2952
+
+Top features per cluster (z-score vs global mean):
+
+Cluster 0 (n=48):
+  GPRD_ACT_mean: +6.154
+  GPRD_mean: +6.022
+  gprd_zscore: +6.022
+  GPRD_THREAT_mean: +4.068
+  gpr_lag1: +3.636
+  gpr_lag2: +3.509
+  gpr_spike: +2.352
+  GPRD_ACT_monthly_pct: +1.475
+
+Cluster 1 (n=12):
+  gpr_lag3: +14.094
+  GPRD_ACT_mean: +3.136
+  GPRD_mean: +2.552
+  gprd_zscore: +2.552
+  stock_lag3: -1.970
+  stock_lag1: +1.318
+  stock_vol6: +1.232
+  GPRD_monthly_pct: -1.140
+
+Cluster 2 (n=2952):
+  GPRD_ACT_mean: -0.113
+  gprd_zscore: -0.108
+  GPRD_mean: -0.108
+  GPRD_THREAT_mean: -0.069
+  gpr_lag3: -0.058
+  gpr_lag2: -0.057
+  gpr_lag1: -0.055
+  gpr_spike: -0.037

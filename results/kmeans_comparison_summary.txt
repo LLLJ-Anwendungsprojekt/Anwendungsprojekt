@@ -1,0 +1,41 @@
+K-Means Vergleich: Normal | Tuning | Markt-only
+=============================================
+
+1) Normal (initial run)
+- Quelle: results/kmeans_test/kmeans_summary.txt
+- best_k: 2
+- silhouette: 0.5668
+- inertia: 43159.10
+- samples: 3012, features: 17
+- Kurzinterpretation: Klare Trennung — die Standardanalyse findet 2 Cluster mit guter Silhouette. Die Trennung wird stark von GPR‑Variablen beeinflusst (siehe Featureliste).
+
+2) Tuning (Grid search over scalers, k, n_init, seeds)
+- Quelle: results/kmeans_tuning/grid_search_results.csv and results/kmeans_tuning/cluster_profiles.txt
+- Best config: scaler=robust, k=3, n_init=10 (stabil über Seeds)
+- best sil_mean: 0.81405 (robust, k=3)
+- CH (Calinski‑Harabasz) mean: 883.44
+- Cluster sizes (from cluster_profiles.txt): 48, 12, 2952
+- Top drivers: GPR‑derived features (e.g., `GPRD_ACT_mean`, `GPRD_mean`, `gprd_zscore`) — tuning amplified separation along conflict/GPR signals.
+- Kurzinterpretation: Mit RobustScaler und abgestimmten Parametern trennt K‑Means deutlicher nach Konflikt/GPR‑Spitzen; hoher Silhouette zeigt starke, stabile Cluster (aber sehr unbalanciert Größenverteilung).
+
+3) Markt‑only (nur Markt‑Features)
+- Quelle: results/kmeans_market/summary.txt und results/kmeans_market/cluster_means.csv
+- Best k: 2
+- silhouette: 0.2378
+- Cluster‑Mittelwerte (aus cluster_means.csv):
+  - Cluster 0: Stock_monthly_pct ≈ +1.12, stock_vol6 ≈ 4.32 (positive months, moderate vol)
+  - Cluster 1: Stock_monthly_pct ≈ −1.46, stock_vol6 ≈ 7.00 (negative months, higher vol)
+- Kurzinterpretation: Markt‑Regime sind erkennbar (positive vs. negative Rendite + Volatilität), aber deutlich schwächer separiert als GPR‑getriebene Cluster (niedrige Silhouette).
+
+Zusammenfassende Bewertung
+- Wenn das Ziel ist, Konflikt/Ereignis‑Regimes zu finden, liefert die getunte Lösung (robust, k=3) die klarste Trennung (Silhouette ≈ 0.81) und explizit GPR‑getriebene Cluster.
+- Wenn das Ziel Markt‑Regimes (Rendite/Volatilität) ist, dann zeigt Markt‑Only KMeans die erwartete Aufteilung, jedoch mit geringerer Trennschärfe (Silhouette ≈ 0.24). Weitere Feature‑Engineering oder alternative Clustering‑Methoden könnten die Markt‑Trennung verbessern.
+
+Dateien zur Detailprüfung
+- results/kmeans_test/kmeans_summary.txt
+- results/kmeans_tuning/grid_search_results.csv
+- results/kmeans_tuning/cluster_profiles.txt
+- results/kmeans_market/summary.txt
+- results/kmeans_market/cluster_means.csv
+
+--- Ende ---
