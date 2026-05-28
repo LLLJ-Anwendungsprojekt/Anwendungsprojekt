@@ -59,7 +59,7 @@ def plot_individual(merged, features, out_dir: Path):
         plt.figure(figsize=(6, 4))
         sns.boxplot(x="cluster", y=feat, data=merged, palette="tab10")
         plt.title(feat)
-        p = out_dir / f"boxplot_{feat}.png"
+        p = out_dir / f"boxplot_{feat}.pdf"
         plt.tight_layout()
         plt.savefig(p, dpi=180)
         plt.close()
@@ -81,7 +81,7 @@ def main():
             features = [c for c in merged.select_dtypes(include=[np.number]).columns if c != "cluster"][:6]
 
     print("Selected features:", features)
-    grid_path = OUT_DIR / "boxplots_grid.png"
+    grid_path = OUT_DIR / "boxplots_grid.pdf"
     plot_grid(merged, features, grid_path)
     plot_individual(merged, features, OUT_DIR)
     print("Saved boxplots to", grid_path)

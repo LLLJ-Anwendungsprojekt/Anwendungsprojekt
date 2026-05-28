@@ -4,7 +4,7 @@ The script works on ``data/processed/stocks_gpr_features.csv`` by default and
 creates three outputs in the chosen results directory:
 
     - ``kmeans_cluster_assignments.csv``
-    - ``kmeans_clusters_pca.png``
+    - ``kmeans_clusters_pca.pdf``
     - ``kmeans_summary.txt``
 
 The implementation follows the historical project version, but it is adapted
@@ -246,7 +246,7 @@ class KMeansAnalyzer:
         result_df.to_csv(assignments_path, index=False)
         logger.info("Cluster-Zuordnungen gespeichert: %s", assignments_path)
 
-        plot_path = os.path.join(output_dir, "kmeans_clusters_pca.png")
+        plot_path = os.path.join(output_dir, "kmeans_clusters_pca.pdf")
         self.plot_clusters(x, labels, plot_path)
 
         summary_path = os.path.join(output_dir, "kmeans_summary.txt")

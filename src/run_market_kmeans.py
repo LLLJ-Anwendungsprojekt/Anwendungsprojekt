@@ -78,7 +78,7 @@ def main():
     sns.scatterplot(data=plot_df, x="pca1", y="pca2", hue="cluster", palette="tab10", s=20)
     plt.title("Market-only KMeans PCA (RobustScaler)")
     plt.tight_layout()
-    plt.savefig(OUT / "kmeans_market_pca.png", dpi=180)
+    plt.savefig(OUT / "kmeans_market_pca.pdf", dpi=180)
     plt.close()
 
     # profiles
@@ -95,7 +95,7 @@ def main():
         sns.boxplot(x="cluster", y=feat, data=df_out)
         plt.title(feat)
     plt.tight_layout()
-    plt.savefig(OUT / "boxplots_market_grid.png", dpi=180)
+    plt.savefig(OUT / "boxplots_market_grid.pdf", dpi=180)
     plt.close()
 
     # individual
@@ -104,7 +104,7 @@ def main():
         sns.boxplot(x="cluster", y=feat, data=df_out)
         plt.title(feat)
         plt.tight_layout()
-        plt.savefig(OUT / f"boxplot_{feat}.png", dpi=180)
+        plt.savefig(OUT / f"boxplot_{feat}.pdf", dpi=180)
         plt.close()
 
     print("Market-only clustering saved to", OUT)

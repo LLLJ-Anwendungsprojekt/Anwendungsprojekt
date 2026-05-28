@@ -144,7 +144,7 @@ def run_grid():
     sns.scatterplot(data=plot_df, x="pca1", y="pca2", hue="cluster", palette="tab10", s=20)
     plt.title("Best KMeans PCA")
     plt.tight_layout()
-    ppath = OUT_DIR / "best_kmeans_pca.png"
+    ppath = OUT_DIR / "best_kmeans_pca.pdf"
     plt.savefig(ppath, dpi=180)
     plt.close()
     print("Saved PCA plot to", ppath)

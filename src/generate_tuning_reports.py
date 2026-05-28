@@ -4,8 +4,8 @@ Reads `results/kmeans_tuning/best_kmeans_assignments.csv` and writes:
 - `results/kmeans_tuning/cluster_means.csv`
 - `results/kmeans_tuning/cluster_mean_diffs_z.csv`
 - `results/kmeans_tuning/cluster_profiles.txt`
-- `results/kmeans_tuning/boxplots_grid.png`
-- `results/kmeans_tuning/boxplot_<feature>.png` (individual)
+- `results/kmeans_tuning/boxplots_grid.pdf`
+- `results/kmeans_tuning/boxplot_<feature>.pdf` (individual)
 """
 
 from pathlib import Path
@@ -73,7 +73,7 @@ def main():
         sns.boxplot(x="cluster", y=feat, data=merged)
         plt.title(feat)
     plt.tight_layout()
-    plt.savefig(OUT_DIR / "boxplots_grid.png", dpi=180)
+    plt.savefig(OUT_DIR / "boxplots_grid.pdf", dpi=180)
     plt.close()
 
     # Individual
@@ -82,7 +82,7 @@ def main():
         sns.boxplot(x="cluster", y=feat, data=merged)
         plt.title(feat)
         plt.tight_layout()
-        plt.savefig(OUT_DIR / f"boxplot_{feat}.png", dpi=180)
+        plt.savefig(OUT_DIR / f"boxplot_{feat}.pdf", dpi=180)
         plt.close()
 
     print("Wrote profiles and boxplots to", OUT_DIR)
