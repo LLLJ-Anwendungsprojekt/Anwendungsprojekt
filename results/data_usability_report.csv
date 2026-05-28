@@ -1,3 +1,0 @@
-dataset,usable_for_dbscan_market_anomaly,n_rows,n_unique_indexes,date_min,date_max,main_check,comment
-indexData,True,110253,14.0,1965-01-05,2021-06-03,Muss vollständige Handelstage und numerische Preise enthalten.,Geeignet für DBSCAN auf Marktvariablen.
-GDEEvent_v25_1,False,385918,,1989-01-01,2024-12-31,"Wird nicht für DBSCAN genutzt, sondern als Konfliktlabel nach DBSCAN.",Geeignet als Konfliktlabel und Intensitätsquelle.
