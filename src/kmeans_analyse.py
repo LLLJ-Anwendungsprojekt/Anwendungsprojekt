@@ -1,14 +1,24 @@
+"""K-Means clustering for the processed stock/GPR feature dataset.
+
+The script works on ``data/processed/stocks_gpr_features.csv`` by default and
+creates three outputs in the chosen results directory:
+
+    - ``kmeans_cluster_assignments.csv``
+    - ``kmeans_clusters_pca.pdf``
+    - ``kmeans_summary.txt``
+
+The implementation follows the historical project version, but it is adapted
+to the current feature dataset and offers a more explicit feature-selection
+workflow for the monthly regime analysis use case.
 """
-K-Means Clustering fuer Konflikt- und Boersendaten
-==================================================
-Fuehrt unsupervised Clustering auf numerischen Features aus.
-Unterstuetzt CSV sowie ZIP-Dateien mit einer CSV im Archiv.
-"""
+
+from __future__ import annotations
 
 import argparse
 import logging
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
 
 import matplotlib.pyplot as plt
@@ -29,11 +39,39 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler("kmeans_analysis.log"),
+        logging.FileHandler("kmeans_analysis.log", encoding="utf-8"),
         logging.StreamHandler(),
     ],
 )
 logger = logging.getLogger(__name__)
+
+
+DEFAULT_INCLUDE_COLUMNS = [
+    "Close_last",
+    "Stock_monthly_pct",
+    "GPRD_mean",
+    "GPRD_ACT_mean",
+    "GPRD_THREAT_mean",
+    "GPRD_monthly_pct",
+    "GPRD_ACT_monthly_pct",
+    "GPRD_THREAT_monthly_pct",
+    "gpr_lag1",
+    "stock_lag1",
+    "gpr_lag2",
+    "stock_lag2",
+    "gpr_lag3",
+    "stock_lag3",
+    "stock_vol6",
+    "gprd_zscore",
+    "gpr_spike",
+]
+
+DEFAULT_EXCLUDE_COLUMNS = [
+    "Index",
+    "YearMonth",
+    "stock_down",
+    "gpr_up_next",
+]
 
 
 @dataclass
@@ -47,7 +85,7 @@ class KMeansResults:
 
 
 class KMeansAnalyzer:
-    """Kapselt Datenvorbereitung, Modelltraining und Visualisierung fuer K-Means."""
+    """Encapsulates data loading, preprocessing, model fitting, and plotting."""
 
     def __init__(self, random_state: int = 42):
         self.random_state = random_state
@@ -57,40 +95,20 @@ class KMeansAnalyzer:
         self.numeric_columns: List[str] = []
 
     def load_data(self, path: str) -> pd.DataFrame:
-        """Laedt CSV oder ZIP (mit genau einer CSV) in ein DataFrame."""
-        # Resolve relative paths robustly so the script works from different CWDs.
-        candidates = [path]
-        if not os.path.isabs(path):
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            project_root = os.path.dirname(script_dir)
-            candidates.extend([
-                os.path.join(project_root, path),
-                os.path.join(script_dir, path),
-            ])
-
-        resolved_path = next((p for p in candidates if os.path.exists(p)), None)
-        if resolved_path is None:
+        """Load a CSV file into a DataFrame."""
+        if not os.path.exists(path):
             raise FileNotFoundError(f"Datei nicht gefunden: {path}")
 
-        lower_path = resolved_path.lower()
-        read_kwargs = {"compression": "zip"} if lower_path.endswith(".zip") else {}
-
-        try:
-            df = pd.read_csv(resolved_path, **read_kwargs)
-        except UnicodeDecodeError:
-            # Some provided datasets are ANSI/Latin encoded.
-            df = pd.read_csv(resolved_path, encoding="latin1", **read_kwargs)
-
-        logger.info("Daten geladen: %s (%s Zeilen, %s Spalten)", resolved_path, df.shape[0], df.shape[1])
+        df = pd.read_csv(path)
+        logger.info("Daten geladen: %s (%s Zeilen, %s Spalten)", path, df.shape[0], df.shape[1])
         return df
 
-    def prepare_features(
+    def _select_numeric_features(
         self,
         df: pd.DataFrame,
         include_columns: Optional[Sequence[str]] = None,
         exclude_columns: Optional[Sequence[str]] = None,
-    ) -> np.ndarray:
-        """Waehlt numerische Spalten, imputiert Missing Values und skaliert."""
+    ) -> pd.DataFrame:
         numeric_df = df.select_dtypes(include=[np.number]).copy()
 
         if include_columns:
@@ -106,16 +124,34 @@ class KMeansAnalyzer:
         if numeric_df.empty:
             raise ValueError("Keine numerischen Features nach Filterung verfuegbar.")
 
-        self.numeric_columns = list(numeric_df.columns)
+        return numeric_df
 
+    def prepare_features(
+        self,
+        df: pd.DataFrame,
+        include_columns: Optional[Sequence[str]] = None,
+        exclude_columns: Optional[Sequence[str]] = None,
+    ) -> np.ndarray:
+        """Select numeric features, impute missing values, and scale them."""
+        numeric_df = self._select_numeric_features(
+            df,
+            include_columns=include_columns,
+            exclude_columns=exclude_columns,
+        )
+
+        self.numeric_columns = list(numeric_df.columns)
         x_imputed = self.imputer.fit_transform(numeric_df)
         x_scaled = self.scaler.fit_transform(x_imputed)
 
-        logger.info("Feature-Matrix vorbereitet: %s Samples, %s Features", x_scaled.shape[0], x_scaled.shape[1])
+        logger.info(
+            "Feature-Matrix vorbereitet: %s Samples, %s Features",
+            x_scaled.shape[0],
+            x_scaled.shape[1],
+        )
         return x_scaled
 
     def find_best_k(self, x: np.ndarray, k_min: int = 2, k_max: int = 10) -> Tuple[int, float, float]:
-        """Bestimmt das beste k mittels Silhouette-Score."""
+        """Choose k via the silhouette score."""
         if k_min < 2:
             raise ValueError("k_min muss mindestens 2 sein.")
         if k_max <= k_min:
@@ -133,13 +169,7 @@ class KMeansAnalyzer:
         for k in range(k_min, k_max_allowed + 1):
             model = KMeans(n_clusters=k, random_state=self.random_state, n_init=20)
             labels = model.fit_predict(x)
-            sil_sample_size = min(20000, x.shape[0])
-            sil = silhouette_score(
-                x,
-                labels,
-                sample_size=sil_sample_size,
-                random_state=self.random_state,
-            )
+            sil = silhouette_score(x, labels)
             logger.info("k=%s | silhouette=%.4f | inertia=%.2f", k, sil, model.inertia_)
 
             if sil > best_silhouette:
@@ -150,21 +180,22 @@ class KMeansAnalyzer:
         return best_k, best_inertia, best_silhouette
 
     def fit(self, x: np.ndarray, n_clusters: int) -> np.ndarray:
-        """Trainiert K-Means und liefert Cluster-Labels zurueck."""
+        """Fit K-Means and return cluster labels."""
         self.model = KMeans(n_clusters=n_clusters, random_state=self.random_state, n_init=20)
-        labels = self.model.fit_predict(x)
-        return labels
+        return self.model.fit_predict(x)
 
     def plot_clusters(self, x: np.ndarray, labels: np.ndarray, output_path: str) -> None:
-        """Visualisiert Cluster in 2D via PCA."""
+        """Plot clusters in 2D using PCA."""
         pca = PCA(n_components=2, random_state=self.random_state)
         x_2d = pca.fit_transform(x)
 
-        plot_df = pd.DataFrame({
-            "pca_1": x_2d[:, 0],
-            "pca_2": x_2d[:, 1],
-            "cluster": labels,
-        })
+        plot_df = pd.DataFrame(
+            {
+                "pca_1": x_2d[:, 0],
+                "pca_2": x_2d[:, 1],
+                "cluster": labels,
+            }
+        )
 
         plt.figure(figsize=(12, 7))
         sns.scatterplot(
@@ -196,9 +227,13 @@ class KMeansAnalyzer:
         k_min: int = 2,
         k_max: int = 10,
     ) -> KMeansResults:
-        """Fuehrt die komplette K-Means-Pipeline aus und speichert Ergebnisse."""
+        """Run the full K-Means pipeline and persist the outputs."""
         df = self.load_data(data_path)
-        x = self.prepare_features(df, include_columns=include_columns, exclude_columns=exclude_columns)
+        x = self.prepare_features(
+            df,
+            include_columns=include_columns,
+            exclude_columns=exclude_columns,
+        )
 
         best_k, best_inertia, best_silhouette = self.find_best_k(x, k_min=k_min, k_max=k_max)
         labels = self.fit(x, n_clusters=best_k)
@@ -211,7 +246,7 @@ class KMeansAnalyzer:
         result_df.to_csv(assignments_path, index=False)
         logger.info("Cluster-Zuordnungen gespeichert: %s", assignments_path)
 
-        plot_path = os.path.join(output_dir, "kmeans_clusters_pca.png")
+        plot_path = os.path.join(output_dir, "kmeans_clusters_pca.pdf")
         self.plot_clusters(x, labels, plot_path)
 
         summary_path = os.path.join(output_dir, "kmeans_summary.txt")
@@ -237,11 +272,11 @@ class KMeansAnalyzer:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="K-Means Clustering auf Konflikt/Marktdaten")
+    parser = argparse.ArgumentParser(description="K-Means Clustering auf den Monats-Features")
     parser.add_argument(
         "--data-path",
-        default="data/processed/ConfilicsIndex2010.zip",
-        help="Pfad zur CSV oder ZIP-Datei",
+        default="data/processed/stocks_gpr_features.csv",
+        help="Pfad zur CSV-Datei mit den Monatsfeatures",
     )
     parser.add_argument(
         "--output-dir",
@@ -251,17 +286,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--include-columns",
         nargs="*",
-        default=None,
+        default=DEFAULT_INCLUDE_COLUMNS,
         help="Nur diese numerischen Spalten nutzen",
     )
     parser.add_argument(
         "--exclude-columns",
         nargs="*",
-        default=["id", "conflict_new_id", "dyad_new_id", "country_id", "latitude", "longitude"],
+        default=DEFAULT_EXCLUDE_COLUMNS,
         help="Diese numerischen Spalten ausschliessen",
     )
     parser.add_argument("--k-min", type=int, default=2, help="Minimaler k-Wert")
-    parser.add_argument("--k-max", type=int, default=10, help="Maximaler k-Wert")
+    parser.add_argument("--k-max", type=int, default=8, help="Maximaler k-Wert")
     return parser.parse_args()
 
 
