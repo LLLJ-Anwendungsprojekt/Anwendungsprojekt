@@ -280,7 +280,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output-dir",
-        default="results",
+        default="results/k_means",
         help="Verzeichnis fuer Outputs",
     )
     parser.add_argument(

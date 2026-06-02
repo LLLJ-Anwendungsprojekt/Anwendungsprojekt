@@ -42,7 +42,7 @@ if hasattr(sys.stdout, "reconfigure"):
 # ─── 0. KONFIGURATION ────────────────────────────────────────────────────────
 
 DATA       = "data/processed/stocks_gpr_features.csv"
-OUTPUT_DIR = "results"
+OUTPUT_DIR = "results/knn"
 START, END = '2000-01', '2021-05'
 KEEP = ['000001.SS', '399001.SZ', 'GDAXI', 'GSPTSE', 'HSI', 'IXIC',
         'KS11', 'N100', 'N225', 'NYA', 'SSMI', 'TWII']

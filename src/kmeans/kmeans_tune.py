@@ -23,7 +23,7 @@ from sklearn.decomposition import PCA
 
 sns.set_style("whitegrid")
 
-OUT_DIR = Path("results/kmeans_tuning")
+OUT_DIR = Path("results/k_means")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 DATA_PATH = Path("data/processed/stocks_gpr_features.csv")

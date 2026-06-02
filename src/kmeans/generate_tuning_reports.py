@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-OUT_DIR = Path("results/kmeans_tuning")
+OUT_DIR = Path("results/k_means")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
