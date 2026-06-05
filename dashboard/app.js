@@ -305,60 +305,91 @@ function renderRegime() {
   document.getElementById("km-table").innerHTML = head + rows;
 }
 
-/* =================== 5. VORHERSAGE (KNN) =================== */
-function renderForecast() {
-  const knn = D.knn;
-  const card = (dir) => {
-    const m = knn[dir];
-    return `<div class="kpi"><div class="value accent">AUC ${m.test_auc.toFixed(3)}</div>`
-      + `<div class="label"><b>${m.label}</b><br>F1 ${m.f1.toFixed(3)} · Accuracy ${m.accuracy.toFixed(3)} · CV-AUC ${m.cv_auc.toFixed(3)}<br>`
-      + `k=${m.best_k} · ${m.best_metric} · PCA=${m.n_pca}</div></div>`;
-  };
-  document.getElementById("knn-kpi").innerHTML = card("A") + card("B");
+/* =================== 5. VORHERSAGE: KNN vs. RANDOM FOREST =============== */
+let fiModel = "knn", fiDir = "A", cmModel = "knn";
 
-  // ROC
-  Plotly.react("knn-roc", [
-    { x: knn.A.roc.fpr, y: knn.A.roc.tpr, type: "scatter", mode: "lines", name: `A · AUC ${knn.A.test_auc.toFixed(3)}`,
-      line: { color: COLORS.accent2, width: 2.2 }, fill: "tozeroy", fillcolor: "rgba(163,22,33,0.06)" },
-    { x: knn.B.roc.fpr, y: knn.B.roc.tpr, type: "scatter", mode: "lines", name: `B · AUC ${knn.B.test_auc.toFixed(3)}`,
+function renderForecast() {
+  const knn = D.knn, rf = D.rf;
+
+  // Vergleichstabelle
+  const row = (name, m, valid, vc) =>
+    `<tr><td>${name}</td>`
+    + `<td>${m.A.test_auc.toFixed(3)}</td><td>${m.B.test_auc.toFixed(3)}</td>`
+    + `<td>${m.A.f1.toFixed(3)} / ${m.B.f1.toFixed(3)}</td>`
+    + `<td>${m.A.accuracy.toFixed(3)} / ${m.B.accuracy.toFixed(3)}</td>`
+    + `<td><span class="badge ${vc}">${valid}</span></td></tr>`;
+  document.getElementById("cmp-table").innerHTML =
+    "<tr><th>Modell</th><th>AUC A</th><th>AUC B</th><th>F1 A / B</th><th>Accuracy A / B</th><th>Validierung</th></tr>"
+    + row("K-Nearest-Neighbors", knn, "Out-of-Sample", "")
+    + row("Random Forest", rf, "In-Sample", "muted");
+
+  // Kombinierte ROC (4 Kurven)
+  Plotly.react("cmp-roc", [
+    { x: knn.A.roc.fpr, y: knn.A.roc.tpr, type: "scatter", mode: "lines", name: `KNN A · ${knn.A.test_auc.toFixed(3)}`,
+      line: { color: COLORS.accent2, width: 2.2 } },
+    { x: knn.B.roc.fpr, y: knn.B.roc.tpr, type: "scatter", mode: "lines", name: `KNN B · ${knn.B.test_auc.toFixed(3)}`,
       line: { color: COLORS.accent, width: 2.2 } },
+    { x: rf.A.roc.fpr, y: rf.A.roc.tpr, type: "scatter", mode: "lines", name: `RF A · ${rf.A.test_auc.toFixed(3)} (i.s.)`,
+      line: { color: COLORS.accent2, width: 1.6, dash: "dash" } },
+    { x: rf.B.roc.fpr, y: rf.B.roc.tpr, type: "scatter", mode: "lines", name: `RF B · ${rf.B.test_auc.toFixed(3)} (i.s.)`,
+      line: { color: COLORS.accent, width: 1.6, dash: "dash" } },
     { x: [0, 1], y: [0, 1], type: "scatter", mode: "lines", name: "Zufall",
-      line: { color: COLORS.muted, width: 1, dash: "dash" }, hoverinfo: "skip" },
+      line: { color: COLORS.muted, width: 1, dash: "dot" }, hoverinfo: "skip" },
   ], L({
     xaxis: { title: "Falsch-Positiv-Rate", gridcolor: "#F0F0F0", range: [0, 1] },
     yaxis: { title: "Richtig-Positiv-Rate", gridcolor: "#F0F0F0", range: [0, 1.02] },
-    legend: { x: 0.98, y: 0.05, xanchor: "right", yanchor: "bottom" },
+    legend: { x: 0.98, y: 0.02, xanchor: "right", yanchor: "bottom", font: { size: 10 } },
   }), CONFIG);
 
-  drawFeatureImportance("A");
+  drawFeatureImportance();
+  drawCMs();
 
-  // Konfusionsmatrizen
-  drawCM("knn-cm-a", knn.A.cm, ["Steigt", "Fällt"], [[0, "#FFFFFF"], [1, COLORS.accent2]]);
-  drawCM("knn-cm-b", knn.B.cm, ["GPR fällt", "GPR steigt"], [[0, "#FFFFFF"], [1, COLORS.accent]]);
-
-  const dir = knn.delta_auc < 0 ? "Richtung B (Aktien → GPR)" : "Richtung A (GPR → Aktien)";
-  document.getElementById("knn-info").innerHTML =
-    `<b>Δ AUC (A − B) = ${knn.delta_auc >= 0 ? "+" : ""}${knn.delta_auc.toFixed(3)}.</b> `
-    + `Beide Richtungen liegen über der Zufallsbaseline (AUC &gt; 0,50). `
-    + `${dir} ist geringfügig besser klassifizierbar — konsistent mit der Hypothese, dass `
-    + `Aktienmärkte und GPR sich gegenseitig nur schwach vorhersagen lassen.`;
+  document.getElementById("cmp-info").innerHTML =
+    `<b>KNN</b> misst Ähnlichkeit im Distanzraum (StandardScaler → MI-Selektion → PCA → KNN) und wird `
+    + `<b>out-of-sample</b> auf einem temporalen 20 %-Holdout bewertet — die AUC (A ${knn.A.test_auc.toFixed(2)} / B ${knn.B.test_auc.toFixed(2)}) `
+    + `spiegelt echte Prognoseleistung.<br><br>`
+    + `<b>Random Forest</b> (500 Bäume, Tiefe 5) wird hier <b>in-sample</b> trainiert und ausgewertet. `
+    + `Die deutlich höhere AUC (A ${rf.A.test_auc.toFixed(2)} / B ${rf.B.test_auc.toFixed(2)}) ist daher `
+    + `<b>optimistisch verzerrt</b> und nicht als Prognosegüte interpretierbar — sie zeigt nur, wie gut das Modell `
+    + `die Trainingsdaten beschreibt. Der Vergleich illustriert eindrücklich die In-Sample-Falle.`;
 }
 
-function drawFeatureImportance(dir) {
-  const m = D.knn[dir];
-  const entries = Object.entries(m.mi_scores).sort((a, b) => a[1] - b[1]);
-  const sel = new Set(m.selected_features);
-  const baseColor = dir === "A" ? COLORS.accent2 : COLORS.accent;
-  Plotly.react("knn-fi", [{
+function drawFeatureImportance() {
+  document.getElementById("fi-sub").textContent = fiModel === "knn"
+    ? "Mutual Information · dunkel = selektiert, grau = verworfen" : "Gini-Importance (Random Forest)";
+  const baseColor = fiDir === "A" ? COLORS.accent2 : COLORS.accent;
+  let entries, colors, xtitle;
+  if (fiModel === "knn") {
+    const m = D.knn[fiDir];
+    entries = Object.entries(m.mi_scores).sort((a, b) => a[1] - b[1]);
+    const sel = new Set(m.selected_features);
+    colors = entries.map(e => sel.has(e[0]) ? baseColor : "#DDDDDD");
+    xtitle = "Mutual-Information-Score";
+  } else {
+    const m = D.rf[fiDir];
+    entries = Object.entries(m.importances).sort((a, b) => a[1] - b[1]);
+    colors = entries.map(() => baseColor);
+    xtitle = "Gini-Importance";
+  }
+  Plotly.react("cmp-fi", [{
     type: "bar", orientation: "h",
     x: entries.map(e => e[1]), y: entries.map(e => e[0]),
-    marker: { color: entries.map(e => sel.has(e[0]) ? baseColor : "#DDDDDD") },
-    hovertemplate: "%{y}<br>MI %{x:.4f}<extra></extra>",
+    marker: { color: colors },
+    hovertemplate: "%{y}<br>%{x:.4f}<extra></extra>",
   }], L({
-    xaxis: { title: "Mutual-Information-Score", gridcolor: "#F0F0F0" },
+    xaxis: { title: xtitle, gridcolor: "#F0F0F0" },
     yaxis: { automargin: true, tickfont: { size: 10 } },
-    margin: { l: 150, r: 20, t: 20, b: 45 },
+    margin: { l: 155, r: 20, t: 20, b: 45 },
   }), CONFIG);
+}
+
+function drawCMs() {
+  const m = D[cmModel];
+  const isInSample = cmModel === "rf";
+  document.getElementById("cm-a-cap").textContent = "Richtung A · stock_down" + (isInSample ? " (in-sample)" : "");
+  document.getElementById("cm-b-cap").textContent = "Richtung B · gpr_up_next" + (isInSample ? " (in-sample)" : "");
+  drawCM("cmp-cm-a", m.A.cm, ["Steigt", "Fällt"], [[0, "#FFFFFF"], [1, COLORS.accent2]]);
+  drawCM("cmp-cm-b", m.B.cm, ["GPR fällt", "GPR steigt"], [[0, "#FFFFFF"], [1, COLORS.accent]]);
 }
 
 function drawCM(id, cm, labels, scale) {
@@ -468,9 +499,9 @@ function renderMethod() {
     `<div class="method"><span class="tag">Ereignisbasiert</span><h3>Event-Studie</h3>
       <p>Abnormale Renditen im ±5-Tage-Fenster um GPR-Schocks (95. Perzentil).</p>
       <div class="metric">n = ${ev.A.n} Events · CAR_post ${fmtPct(ev.A.car_post)}</div></div>`,
-    `<div class="method"><span class="tag">Überwacht</span><h3>Random Forest</h3>
-      <p>Ergänzende nichtlineare Klassifikation (Jupyter-Notebooks).</p>
-      <div class="metric">Siehe results/random_forest/</div></div>`,
+    `<div class="method"><span class="tag">Überwacht · in-sample</span><h3>Random Forest</h3>
+      <p>Nichtlineare Klassifikation (500 Bäume), deskriptiv auf demselben Zeitraum.</p>
+      <div class="metric">AUC A = ${D.rf.A.test_auc.toFixed(3)} · B = ${D.rf.B.test_auc.toFixed(3)} (i.s.)</div></div>`,
   ].join("");
 
   document.getElementById("pipeline").innerHTML =
@@ -483,10 +514,66 @@ stocks_gpr_<span class="out">daily</span> / <span class="out">monthly</span> / <
    <span class="arrow">└→</span> Random Forest  <span class="arrow">→</span> results/random_forest/`;
 }
 
+/* =================== 7. SYNTHESE =================== */
+function renderSynthesis() {
+  const knn = D.knn, rf = D.rf, ev = D.events;
+  const sig = p => p < 0.01 ? "***" : p < 0.05 ? "**" : p < 0.1 ? "*" : "n.s.";
+
+  // Richtungsevidenz-Tabelle
+  const stronger = (a, b, la, lb) => Math.abs(a - b) < 0.01 ? "≈ symmetrisch" : (a > b ? la : lb);
+  const rows = [
+    ["KNN (AUC, out-of-sample)", knn.A.test_auc.toFixed(3), knn.B.test_auc.toFixed(3),
+      stronger(knn.A.test_auc, knn.B.test_auc, "A knapp stärker", "B knapp stärker")],
+    ["Random Forest (AUC, in-sample)", rf.A.test_auc.toFixed(3), rf.B.test_auc.toFixed(3),
+      stronger(rf.A.test_auc, rf.B.test_auc, "A stärker", "B stärker")],
+    ["Event-Studie (CAR-post, p)",
+      `${fmtPct(ev.A.car_post)} (${sig(ev.A.p)})`, `${fmtPct(ev.B.car_post)} (${sig(ev.B.p)})`,
+      ev.B.p < ev.A.p ? "B signifikanter" : "A signifikanter"],
+  ];
+  document.getElementById("syn-table").innerHTML =
+    "<tr><th>Verfahren</th><th>Richtung A: GPR→Aktien</th><th>Richtung B: Aktien→GPR</th><th>Stärkere Richtung</th></tr>"
+    + rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("");
+
+  // AUC-Vergleichsbalken
+  Plotly.react("syn-auc", [
+    { x: ["Richtung A", "Richtung B"], y: [knn.A.test_auc, knn.B.test_auc], type: "bar", name: "KNN (o.o.s.)",
+      marker: { color: COLORS.accent }, hovertemplate: "%{x}<br>AUC %{y:.3f}<extra>KNN</extra>" },
+    { x: ["Richtung A", "Richtung B"], y: [rf.A.test_auc, rf.B.test_auc], type: "bar", name: "RF (in-sample)",
+      marker: { color: COLORS.muted, pattern: { shape: "/" } }, hovertemplate: "%{x}<br>AUC %{y:.3f}<extra>RF</extra>" },
+  ], L({
+    barmode: "group",
+    shapes: [{ type: "line", x0: -0.5, x1: 1.5, y0: 0.5, y1: 0.5, xref: "x", yref: "y",
+      line: { color: COLORS.accent2, width: 1, dash: "dash" } }],
+    yaxis: { title: "AUC", gridcolor: "#F0F0F0", range: [0.4, 1] },
+    annotations: [{ x: 1.45, y: 0.5, xref: "x", yref: "y", text: "Zufall", showarrow: false,
+      font: { size: 10, color: COLORS.accent2 }, yanchor: "bottom", xanchor: "right" }],
+    legend: { orientation: "h", y: -0.15 },
+  }), CONFIG);
+
+  // Verdict
+  const dirWord = knn.delta_auc < 0 ? "Richtung B (Aktien laufen dem GPR voraus)" : "Richtung A (GPR läuft den Aktien voraus)";
+  document.getElementById("syn-verdict").innerHTML =
+    `<b>Schwache, aber gerichtete Vorhersagbarkeit.</b> Alle überwachten Modelle liegen out-of-sample nur knapp über `
+    + `dem Zufall (KNN-AUC ≈ 0,61). Die marginale Asymmetrie deutet auf <b>${dirWord}</b> hin.<br><br>`
+    + `Die Event-Studie bestätigt das Bild qualitativ: GPR-Schocks gehen mit leicht negativen Aktien-Renditen einher, `
+    + `der Effekt ist aber klein. Der <b>Kontrast KNN ↔ RF</b> mahnt zur Vorsicht — `
+    + `Random Forest erreicht in-sample AUC ≈ ${rf.A.test_auc.toFixed(2)}, out-of-sample bliebe davon wenig übrig.`;
+
+  // Regime-Kontext
+  const km = D.kmeans;
+  const hiGpr = km.stats.reduce((a, b) => b.avg_gpr > a.avg_gpr ? b : a);
+  document.getElementById("syn-regime").innerHTML =
+    `K-Means trennt den Beobachtungszeitraum in <b>${km.best_k} Regime</b> (Silhouette ${km.silhouette}). `
+    + `Das Hoch-GPR-Regime (Regime ${hiGpr.cluster}, Ø GPR ${fmtNum(hiGpr.avg_gpr, 0)}) weist mit `
+    + `<b>${(hiGpr.loss_share * 100).toFixed(0)} % Verlustmonaten</b> und ${(hiGpr.spike_share * 100).toFixed(0)} % GPR-Spikes `
+    + `das ungünstigere Markt­umfeld auf. Die gerichteten Effekte oben sind also vor allem ein Phänomen erhöhter geopolitischer Anspannung.`;
+}
+
 /* =================== NAVIGATION + INIT =================== */
 const RENDERERS = {
   overview: renderOverview, timeseries: renderTimeseries, regions: renderRegions,
-  regime: renderRegime, forecast: renderForecast, events: renderEvents, method: renderMethod,
+  regime: renderRegime, forecast: renderForecast, events: renderEvents,
+  synthesis: renderSynthesis, method: renderMethod,
 };
 const rendered = {};
 
@@ -505,11 +592,20 @@ function initToggles() {
     [...e.currentTarget.children].forEach(b => b.classList.toggle("active", b === e.target));
     drawOverviewTS(e.target.dataset.v);
   });
-  // KNN Feature-Importance-Toggle
-  document.getElementById("knn-fi-toggle").addEventListener("click", e => {
+  // Feature-Importance: Modell- und Richtungs-Toggle
+  const fiActivate = (group, target) => [...group.children].forEach(b => b.classList.toggle("active", b === target));
+  document.getElementById("fi-model-toggle").addEventListener("click", e => {
     if (e.target.tagName !== "BUTTON") return;
-    [...e.currentTarget.children].forEach(b => b.classList.toggle("active", b === e.target));
-    drawFeatureImportance(e.target.dataset.v);
+    fiActivate(e.currentTarget, e.target); fiModel = e.target.dataset.v; drawFeatureImportance();
+  });
+  document.getElementById("fi-dir-toggle").addEventListener("click", e => {
+    if (e.target.tagName !== "BUTTON") return;
+    fiActivate(e.currentTarget, e.target); fiDir = e.target.dataset.v; drawFeatureImportance();
+  });
+  // Konfusionsmatrix-Modell-Toggle
+  document.getElementById("cm-model-toggle").addEventListener("click", e => {
+    if (e.target.tagName !== "BUTTON") return;
+    fiActivate(e.currentTarget, e.target); cmModel = e.target.dataset.v; drawCMs();
   });
   // Event-Richtungs-Toggle
   document.getElementById("ev-dir-toggle").addEventListener("click", e => {

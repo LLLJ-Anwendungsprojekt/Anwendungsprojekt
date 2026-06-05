@@ -424,6 +424,76 @@ def build_knn(df_feat: pd.DataFrame) -> dict:
     return {"A": a, "B": b, "delta_auc": round(a["test_auc"] - b["test_auc"], 4)}
 
 
+# ── Abschnitt 5b: Random Forest (Replikation des RF-Notebooks, in-sample) ────
+# Region-Map und Krisenfenster exakt aus
+# src/random_forest/random_forest_dataset_preparation.ipynb übernommen.
+RF_REGION_MAP = {
+    "NYA": "USA", "IXIC": "USA", "GSPTSE": "Nordamerika",
+    "GDAXI": "Europa", "N100": "Europa", "SSMI": "Europa",
+    "N225": "Japan", "HSI": "China_HK", "000001.SS": "China_HK",
+    "399001.SZ": "China_HK", "KS11": "Asien_Pazifik", "TWII": "Asien_Pazifik",
+}
+RF_CRISIS_WINDOWS = [("2001-08", "2002-06"), ("2008-08", "2009-06"),
+                     ("2011-01", "2011-09"), ("2014-02", "2014-09"), ("2020-01", "2020-06")]
+RF_PARAMS = dict(n_estimators=500, max_depth=5, min_samples_leaf=20,
+                 max_features="sqrt", class_weight="balanced", random_state=42, n_jobs=-1)
+
+
+def run_rf_direction(df: pd.DataFrame, feats: list, target: str) -> dict:
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.metrics import precision_score, recall_score
+
+    sub = df[feats + [target]].dropna().reset_index(drop=True)
+    X, y = sub[feats].values, sub[target].values
+    model = RandomForestClassifier(**RF_PARAMS)
+    model.fit(X, y)                                   # In-Sample (wie im Original-Notebook)
+    yproba = model.predict_proba(X)[:, 1]
+    ypred = model.predict(X)
+    fpr, tpr, _ = roc_curve(y, yproba)
+    cm = confusion_matrix(y, ypred)
+    importances = {feats[i]: round(float(model.feature_importances_[i]), 4) for i in range(len(feats))}
+
+    return {
+        "test_auc": round(float(roc_auc_score(y, yproba)), 4),   # in-sample AUC
+        "f1": round(float(f1_score(y, ypred)), 4),
+        "accuracy": round(float(accuracy_score(y, ypred)), 4),
+        "precision": round(float(precision_score(y, ypred, zero_division=0)), 4),
+        "recall": round(float(recall_score(y, ypred, zero_division=0)), 4),
+        "importances": importances,
+        "roc": {"fpr": [round(float(v), 4) for v in fpr], "tpr": [round(float(v), 4) for v in tpr]},
+        "cm": [[int(cm[0, 0]), int(cm[0, 1])], [int(cm[1, 0]), int(cm[1, 1])]],
+        "n": int(len(sub)),
+    }
+
+
+def build_rf(df_feat: pd.DataFrame) -> dict:
+    df = df_feat.copy()
+    df = df[df["YearMonth"] >= "2001-01"].copy()
+    # Abgeleitete Features wie im RF-Notebook
+    df["Region_RF"] = df["Index"].map(RF_REGION_MAP)
+    df["Region_encoded"] = df["Region_RF"].astype("category").cat.codes
+    df["Crisis_dummy"] = 0
+    for s, e in RF_CRISIS_WINDOWS:
+        df.loc[(df["YearMonth"] >= s) & (df["YearMonth"] <= e), "Crisis_dummy"] = 1
+
+    feats_a = ["GPRD_monthly_pct", "gpr_lag1", "gpr_lag2", "gpr_lag3",
+               "GPRD_ACT_monthly_pct", "GPRD_THREAT_monthly_pct", "gprd_zscore",
+               "gpr_spike", "Crisis_dummy", "Region_encoded"]
+    feats_b = ["Stock_monthly_pct", "stock_lag1", "stock_lag2", "stock_lag3", "stock_vol6",
+               "gpr_spike", "Crisis_dummy", "Region_encoded"]
+
+    print("  RF Richtung A (in-sample)...")
+    a = run_rf_direction(df, feats_a, "stock_down")
+    a["label"] = "Richtung A: GPR → Aktienmarkt"
+    print(f"    AUC={a['test_auc']}  F1={a['f1']}  Acc={a['accuracy']}")
+    print("  RF Richtung B (in-sample)...")
+    b = run_rf_direction(df, feats_b, "gpr_up_next")
+    b["label"] = "Richtung B: Aktienmarkt → GPR"
+    print(f"    AUC={b['test_auc']}  F1={b['f1']}  Acc={b['accuracy']}")
+    return {"A": a, "B": b, "delta_auc": round(a["test_auc"] - b["test_auc"], 4),
+            "note": "In-Sample (deskriptiv) — Training und Auswertung auf demselben Zeitraum 2001–2021."}
+
+
 # ── Abschnitt 6: Event-Studie (Replikation event_regression.py) ──────────────
 EVENT_WINDOW = 5
 ESTIM_GAP = 1
@@ -550,6 +620,9 @@ def main():
     print("Berechne KNN (echte reduzierte GridSearch)...")
     knn = build_knn(df)
 
+    print("Berechne Random Forest (in-sample, Replikation)...")
+    rf = build_rf(df)
+
     print("Berechne Event-Studie...")
     events = build_events(daily)
 
@@ -566,6 +639,7 @@ def main():
         "regions": regions,
         "kmeans": kmeans,
         "knn": knn,
+        "rf": rf,
         "events": events,
     }
 

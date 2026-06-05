@@ -21,6 +21,7 @@
       <li class="nav-item" data-target="regime">Marktregimes</li>
       <li class="nav-item" data-target="forecast">Vorhersage</li>
       <li class="nav-item" data-target="events">Event-Studie</li>
+      <li class="nav-item" data-target="synthesis">Synthese</li>
       <li class="nav-item" data-target="method">Methodik</li>
     </ul>
 
@@ -167,48 +168,66 @@
       </div>
     </section>
 
-    <!-- 5. VORHERSAGE -->
+    <!-- 5. VORHERSAGE: KNN vs. RANDOM FOREST -->
     <section class="section" id="forecast">
       <div class="section-header">
-        <h1>Vorhersage-Analyse (KNN)</h1>
-        <p>Bidirektionale Klassifikation: Können GPR-Features fallende Aktien vorhersagen (A) und Aktien-Features steigende GPR (B)? Echte Metriken aus reduzierter GridSearch.</p>
+        <h1>Vorhersage: KNN vs. Random Forest</h1>
+        <p>Zwei überwachte Klassifikatoren auf identischen Zielvariablen — Richtung A: Können GPR-Features fallende Aktien vorhersagen (<code>stock_down</code>)? Richtung B: Können Aktien-Features steigende GPR vorhersagen (<code>gpr_up_next</code>)?</p>
       </div>
 
-      <div class="kpi-row" id="knn-kpi" style="grid-template-columns:repeat(2,1fr)"></div>
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>Modellvergleich — AUC je Richtung</h3>
+          <div class="card-sub">KNN sauber out-of-sample · Random Forest in-sample (deskriptiv, optimistisch verzerrt)</div>
+          <table class="data" id="cmp-table"></table>
+        </div>
+      </div>
 
       <div class="grid cols-2">
         <div class="card">
-          <h3>ROC-Kurven</h3>
-          <div class="card-sub">Test-Holdout (20 %) · Diagonale = Zufall</div>
-          <div class="chart" id="knn-roc" style="height:380px"></div>
+          <h3>ROC-Kurven — beide Modelle</h3>
+          <div class="card-sub">Durchgezogen = KNN (Holdout) · gestrichelt = RF (in-sample) · Diagonale = Zufall</div>
+          <div class="chart" id="cmp-roc" style="height:400px"></div>
         </div>
         <div class="card">
-          <h3>Feature-Wichtigkeit (Mutual Information)</h3>
-          <div class="card-sub">Dunkel = selektiert · Grau = verworfen</div>
+          <h3>Feature-Wichtigkeit</h3>
+          <div class="card-sub" id="fi-sub">KNN: Mutual Information · RF: Gini-Importance</div>
           <div class="controls">
-            <div class="toggle-group" id="knn-fi-toggle">
+            <div class="toggle-group" id="fi-model-toggle">
+              <button class="active" data-v="knn">KNN</button>
+              <button data-v="rf">Random Forest</button>
+            </div>
+            <div class="toggle-group" id="fi-dir-toggle">
               <button class="active" data-v="A">Richtung A</button>
               <button data-v="B">Richtung B</button>
             </div>
           </div>
-          <div class="chart" id="knn-fi" style="height:340px"></div>
+          <div class="chart" id="cmp-fi" style="height:330px"></div>
         </div>
       </div>
 
       <div class="grid cols-2">
         <div class="card">
-          <h3>Konfusionsmatrix — Richtung A</h3>
-          <div class="card-sub">Ziel: stock_down</div>
-          <div class="chart" id="knn-cm-a" style="height:320px"></div>
+          <h3>Konfusionsmatrizen</h3>
+          <div class="card-sub">
+            <div class="controls" style="margin:0">
+              <div class="toggle-group" id="cm-model-toggle">
+                <button class="active" data-v="knn">KNN</button>
+                <button data-v="rf">Random Forest</button>
+              </div>
+            </div>
+          </div>
+          <div class="grid cols-2" style="margin:8px 0 0">
+            <div><div class="card-sub" id="cm-a-cap">Richtung A</div><div class="chart" id="cmp-cm-a" style="height:280px"></div></div>
+            <div><div class="card-sub" id="cm-b-cap">Richtung B</div><div class="chart" id="cmp-cm-b" style="height:280px"></div></div>
+          </div>
         </div>
         <div class="card">
-          <h3>Konfusionsmatrix — Richtung B</h3>
-          <div class="card-sub">Ziel: gpr_up_next</div>
-          <div class="chart" id="knn-cm-b" style="height:320px"></div>
+          <h3>Was unterscheidet die Modelle?</h3>
+          <div class="card-sub">Methodischer Kontrast</div>
+          <div class="info" id="cmp-info" style="margin-top:4px"></div>
         </div>
       </div>
-
-      <div class="info" id="knn-info"></div>
     </section>
 
     <!-- 6. EVENT-STUDIE -->
@@ -256,7 +275,44 @@
       </div>
     </section>
 
-    <!-- 7. METHODIK -->
+    <!-- 7. SYNTHESE -->
+    <section class="section" id="synthesis">
+      <div class="section-header">
+        <h1>Synthese: Wer führt wen?</h1>
+        <p>Drei Verfahren beantworten dieselbe gerichtete Frage. K-Means liefert den Regime-Kontext. Hier die gebündelte Evidenz.</p>
+      </div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>Richtungsevidenz aller Verfahren</h3>
+          <div class="card-sub">Richtung A: GPR → Aktien · Richtung B: Aktien → GPR</div>
+          <table class="data" id="syn-table"></table>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>AUC-Vergleich der Klassifikatoren</h3>
+          <div class="card-sub">Balken je Richtung · RF in-sample (hell schraffiert)</div>
+          <div class="chart" id="syn-auc" style="height:340px"></div>
+        </div>
+        <div class="card">
+          <h3>Gesamtbild</h3>
+          <div class="card-sub">Interpretation der Befunde</div>
+          <div class="info" id="syn-verdict" style="margin-top:4px"></div>
+        </div>
+      </div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>Regime-Kontext (K-Means)</h3>
+          <div class="card-sub">In welchen Marktzuständen treten die Effekte auf?</div>
+          <div class="info" id="syn-regime" style="margin-top:4px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. METHODIK -->
     <section class="section" id="method">
       <div class="section-header">
         <h1>Methodik &amp; Übersicht</h1>
