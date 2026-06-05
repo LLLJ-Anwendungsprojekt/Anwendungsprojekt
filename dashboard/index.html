@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPR &amp; Aktienmärkte</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="plotly.min.js" charset="utf-8"></script>
+</head>
+<body>
+<div class="app">
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar">
+    <div class="sidebar-title">GPR &amp; Aktienmärkte</div>
+    <div class="sidebar-subtitle">Geopolitisches Risiko · BI</div>
+
+    <ul class="nav" id="nav">
+      <li class="nav-item active" data-target="overview">Übersicht</li>
+      <li class="nav-item" data-target="timeseries">Zeitreihen</li>
+      <li class="nav-item" data-target="regions">Regionen</li>
+      <li class="nav-item" data-target="regime">Marktregimes</li>
+      <li class="nav-item" data-target="forecast">Vorhersage</li>
+      <li class="nav-item" data-target="events">Event-Studie</li>
+      <li class="nav-item" data-target="method">Methodik</li>
+    </ul>
+
+    <div class="sidebar-foot" id="foot"></div>
+  </aside>
+
+  <!-- ===================== MAIN ===================== -->
+  <main class="main">
+
+    <!-- 1. ÜBERSICHT -->
+    <section class="section active" id="overview">
+      <div class="section-header">
+        <h1>Übersicht</h1>
+        <p>Zusammenhang zwischen Geopolitischem Risiko (GPR) und 12 globalen Aktienindizes, 2000–2021.</p>
+      </div>
+      <div class="kpi-row" id="kpi-row"></div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>GPR vs. durchschnittliche Aktienrendite</h3>
+          <div class="card-sub">Monatswerte über alle Indizes · vertikale Linien = geopolitische Ereignisse</div>
+          <div class="controls">
+            <label>GPR-Komponente:</label>
+            <div class="toggle-group" id="ov-gpr-toggle">
+              <button class="active" data-v="gprd_mean">GPR gesamt</button>
+              <button data-v="gprd_act_mean">GPR-ACT</button>
+              <button data-v="gprd_threat_mean">GPR-THREAT</button>
+            </div>
+          </div>
+          <div class="chart" id="ov-timeseries" style="height:420px"></div>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>GPR-Änderung vs. Aktienrendite</h3>
+          <div class="card-sub">Jeder Punkt = ein Index-Monat · Farbe = Region · graue Linie = OLS</div>
+          <div class="chart" id="ov-scatter" style="height:380px"></div>
+        </div>
+        <div class="card">
+          <h3>Renditeverteilung: GPR-Spike vs. Normal</h3>
+          <div class="card-sub">Monate mit |GPR-Änderung| &gt; 1 SD gegenüber übrigen Monaten</div>
+          <div class="chart" id="ov-box" style="height:380px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. ZEITREIHEN -->
+    <section class="section" id="timeseries">
+      <div class="section-header">
+        <h1>Zeitreihen-Analyse</h1>
+        <p>Entwicklung der GPR-Komponenten, normalisierte Kursverläufe und rollierende Korrelation.</p>
+      </div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>GPR-Komponenten im Zeitverlauf</h3>
+          <div class="card-sub">Gesamt-GPR, realisierte Akte (ACT) und Bedrohungen (THREAT)</div>
+          <div class="chart" id="ts-components" style="height:380px"></div>
+        </div>
+      </div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>Index-Vergleich (rebasiert auf 100)</h3>
+          <div class="card-sub">Wähle Indizes · GPR als graue Linie auf zweiter Achse</div>
+          <div class="controls" id="ts-index-checks"></div>
+          <div class="chart" id="ts-index" style="height:400px"></div>
+        </div>
+      </div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>Rollierende 12-Monats-Korrelation (GPR ↔ Rendite)</h3>
+          <div class="card-sub">Separate Linien je Region · Nulllinie gestrichelt</div>
+          <div class="chart" id="ts-rolling" style="height:380px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. REGIONEN -->
+    <section class="section" id="regions">
+      <div class="section-header">
+        <h1>Regionale Analyse</h1>
+        <p>Monatsrenditen, Index-Korrelationen und Vergleich der vier Regionen.</p>
+      </div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>Heatmap der Monatsrenditen</h3>
+          <div class="card-sub">12 Indizes (nach Region sortiert) × Zeit · Skala auf ±10 % begrenzt</div>
+          <div class="chart" id="rg-heatmap" style="height:440px"></div>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>Korrelationsmatrix der Renditen</h3>
+          <div class="card-sub">12 × 12, nach Region sortiert</div>
+          <div class="chart" id="rg-corr" style="height:460px"></div>
+        </div>
+        <div class="card">
+          <h3>Regionen-Vergleich</h3>
+          <div class="card-sub">Ø Rendite, Anteil Verlustmonate, Ø GPR-Korrelation</div>
+          <div class="chart" id="rg-bars" style="height:460px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. MARKTREGIMES -->
+    <section class="section" id="regime">
+      <div class="section-header">
+        <h1>Marktregimes <span class="badge" id="km-badge"></span></h1>
+        <p>K-Means-Clustering der Monats-Features (live berechnet, RobustScaler-frei: StandardScaler → KMeans). Identifiziert wiederkehrende Marktzustände.</p>
+      </div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>Regime-Zeitstrahl</h3>
+          <div class="card-sub">Ø Monatsrendite · Hintergrundfarbe = dominantes Regime des Monats</div>
+          <div class="chart" id="km-timeline" style="height:360px"></div>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>PCA-Projektion der Cluster</h3>
+          <div class="card-sub" id="km-pca-sub">2D-PCA der Clustering-Features</div>
+          <div class="chart" id="km-pca" style="height:400px"></div>
+        </div>
+        <div class="card">
+          <h3>Cluster-Profile (z-Score)</h3>
+          <div class="card-sub">Abweichung der Feature-Mittelwerte vom Gesamtdurchschnitt</div>
+          <div class="chart" id="km-profiles" style="height:400px"></div>
+        </div>
+      </div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>Cluster-Statistiken</h3>
+          <div class="card-sub">Kennzahlen je Regime</div>
+          <table class="data" id="km-table"></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. VORHERSAGE -->
+    <section class="section" id="forecast">
+      <div class="section-header">
+        <h1>Vorhersage-Analyse (KNN)</h1>
+        <p>Bidirektionale Klassifikation: Können GPR-Features fallende Aktien vorhersagen (A) und Aktien-Features steigende GPR (B)? Echte Metriken aus reduzierter GridSearch.</p>
+      </div>
+
+      <div class="kpi-row" id="knn-kpi" style="grid-template-columns:repeat(2,1fr)"></div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>ROC-Kurven</h3>
+          <div class="card-sub">Test-Holdout (20 %) · Diagonale = Zufall</div>
+          <div class="chart" id="knn-roc" style="height:380px"></div>
+        </div>
+        <div class="card">
+          <h3>Feature-Wichtigkeit (Mutual Information)</h3>
+          <div class="card-sub">Dunkel = selektiert · Grau = verworfen</div>
+          <div class="controls">
+            <div class="toggle-group" id="knn-fi-toggle">
+              <button class="active" data-v="A">Richtung A</button>
+              <button data-v="B">Richtung B</button>
+            </div>
+          </div>
+          <div class="chart" id="knn-fi" style="height:340px"></div>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>Konfusionsmatrix — Richtung A</h3>
+          <div class="card-sub">Ziel: stock_down</div>
+          <div class="chart" id="knn-cm-a" style="height:320px"></div>
+        </div>
+        <div class="card">
+          <h3>Konfusionsmatrix — Richtung B</h3>
+          <div class="card-sub">Ziel: gpr_up_next</div>
+          <div class="chart" id="knn-cm-b" style="height:320px"></div>
+        </div>
+      </div>
+
+      <div class="info" id="knn-info"></div>
+    </section>
+
+    <!-- 6. EVENT-STUDIE -->
+    <section class="section" id="events">
+      <div class="section-header">
+        <h1>Event-Studie</h1>
+        <p>Abnormale Renditen (AR) und kumulierte AR (CAR) im ±5-Tage-Fenster um GPR-Schocks (95. Perzentil), rekonstruiert aus Tagesdaten.</p>
+      </div>
+
+      <div class="controls">
+        <label>Richtung:</label>
+        <div class="toggle-group" id="ev-dir-toggle">
+          <button class="active" data-v="A">A: GPR-Schock → Aktien</button>
+          <button data-v="B">B: Aktien-Crash → GPR</button>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>Durchschnittliche AR (±95 % KI)</h3>
+          <div class="card-sub" id="ev-ar-sub"></div>
+          <div class="chart" id="ev-ar" style="height:360px"></div>
+        </div>
+        <div class="card">
+          <h3>Kumuliertes CAR im Ereignisfenster</h3>
+          <div class="card-sub" id="ev-car-sub"></div>
+          <div class="chart" id="ev-car" style="height:360px"></div>
+        </div>
+      </div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>ACT- vs. THREAT-Schocks</h3>
+          <div class="card-sub">Kumulierte Aktien-CAR nach realisierten Akten (ACT) vs. Bedrohungen (THREAT)</div>
+          <div class="chart" id="ev-actthreat" style="height:380px"></div>
+        </div>
+      </div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>Regression B: GPR-CAR ~ Aktien-Schock</h3>
+          <div class="card-sub" id="ev-reg-sub"></div>
+          <div class="chart" id="ev-reg" style="height:360px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. METHODIK -->
+    <section class="section" id="method">
+      <div class="section-header">
+        <h1>Methodik &amp; Übersicht</h1>
+        <p>Vier komplementäre Analyseverfahren auf demselben Datensatz.</p>
+      </div>
+      <div class="method-grid" id="method-grid"></div>
+      <div class="pipeline" id="pipeline"></div>
+    </section>
+
+  </main>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
