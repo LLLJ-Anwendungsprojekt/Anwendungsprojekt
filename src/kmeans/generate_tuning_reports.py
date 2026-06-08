@@ -1,11 +1,9 @@
-"""Generate cluster profiles and boxplots for the tuning best result.
+"""
+Cluster-Profile und Boxplots für das beste Tuning-Ergebnis.
 
-Reads `results/kmeans_tuning/best_kmeans_assignments.csv` and writes:
-- `results/kmeans_tuning/cluster_means.csv`
-- `results/kmeans_tuning/cluster_mean_diffs_z.csv`
-- `results/kmeans_tuning/cluster_profiles.txt`
-- `results/kmeans_tuning/boxplots_grid.pdf`
-- `results/kmeans_tuning/boxplot_<feature>.pdf` (individual)
+Input:  results/k_means/best_kmeans_assignments.csv
+Output: results/k_means/cluster_means.csv, cluster_mean_diffs_z.csv,
+        cluster_profiles.txt, boxplots_grid.pdf, boxplot_<feature>.pdf
 """
 
 from pathlib import Path
@@ -28,7 +26,7 @@ def main():
     df = pd.read_csv(data_path)
     assign = pd.read_csv(assign_path)
 
-    # If assignments already include original columns, use them; else merge by order
+    # Enthalten die Zuordnungen schon die Originalspalten? Sonst nach Reihenfolge mergen
     if set(["Index", "YearMonth"]).issubset(assign.columns):
         merged = assign.copy()
     else:
@@ -60,11 +58,11 @@ def main():
                 val = diffs_z.loc[c, feat]
                 f.write(f"  {feat}: {val:+.3f}\n")
 
-    # Boxplots: pick top 6 features by max abs z-diff
+    # Top-6-Features nach maximaler |z-Differenz| für Boxplots
     abs_max = diffs_z.abs().max(axis=0)
     top_feats = abs_max.sort_values(ascending=False).head(6).index.tolist()
 
-    # Grid
+    # Gitter
     cols = 3
     rows = (len(top_feats) + cols - 1) // cols
     plt.figure(figsize=(5 * cols, 4 * rows))
@@ -76,7 +74,7 @@ def main():
     plt.savefig(OUT_DIR / "boxplots_grid.pdf", dpi=180)
     plt.close()
 
-    # Individual
+    # Einzeln
     for feat in top_feats:
         plt.figure(figsize=(6, 4))
         sns.boxplot(x="cluster", y=feat, data=merged)
@@ -85,7 +83,7 @@ def main():
         plt.savefig(OUT_DIR / f"boxplot_{feat}.pdf", dpi=180)
         plt.close()
 
-    print("Wrote profiles and boxplots to", OUT_DIR)
+    print("Profile und Boxplots gespeichert:", OUT_DIR)
 
 
 if __name__ == "__main__":

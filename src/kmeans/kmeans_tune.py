@@ -1,7 +1,9 @@
-"""Grid-search tuning for K-Means on the monthly features.
+"""
+Grid-Search-Tuning für K-Means auf den Monats-Features.
 
-Produces a CSV with results per configuration and saves the best config's
-cluster assignments and a PCA plot into `results/kmeans_tuning/`.
+Input:  data/processed/stocks_gpr_features.csv
+Output: results/k_means/grid_search_results.csv, best_kmeans_assignments.csv,
+        best_kmeans_pca.pdf
 """
 
 from pathlib import Path
@@ -93,7 +95,7 @@ def run_grid():
                     try:
                         sil, ch, model, labels, sc, imp = evaluate_config(X, scaler, k, n_init, seed)
                     except Exception as e:
-                        warnings.warn(f"config failed: {e}")
+                        warnings.warn(f"Konfiguration fehlgeschlagen: {e}")
                         sil, ch = np.nan, np.nan
                     sils.append(sil)
                     chs.append(ch)
@@ -113,13 +115,13 @@ def run_grid():
     grid_df = pd.DataFrame.from_records(records)
     grid_csv = OUT_DIR / "grid_search_results.csv"
     grid_df.to_csv(grid_csv, index=False)
-    print(f"Wrote grid results to {grid_csv}")
+    print(f"Grid-Ergebnisse gespeichert: {grid_csv}")
 
-    # choose best by silhouette mean
+    # Bestes per Silhouetten-Mittel
     best_row = grid_df.sort_values(["sil_mean", "ch_mean"], ascending=False).iloc[0]
-    print("Best config:", best_row.to_dict())
+    print("Beste Konfiguration:", best_row.to_dict())
 
-    # Refit best model (use median seed 42 and n_init from config)
+    # Bestes Modell refitten (Seed 42, n_init aus Config)
     best_scaler = StandardScaler() if best_row.scaler == "standard" else RobustScaler()
     best_k = int(best_row.k)
     best_n_init = int(best_row.n_init)
@@ -134,9 +136,9 @@ def run_grid():
     out_df = df.copy()
     out_df["cluster"] = labels
     out_df.to_csv(out_assign, index=False)
-    print("Saved best assignments to", out_assign)
+    print("Beste Zuordnungen gespeichert:", out_assign)
 
-    # plot PCA
+    # PCA-Plot
     pca = PCA(n_components=2, random_state=42)
     x2 = pca.fit_transform(X_scaled)
     plot_df = pd.DataFrame({"pca1": x2[:, 0], "pca2": x2[:, 1], "cluster": labels})
@@ -147,7 +149,7 @@ def run_grid():
     ppath = OUT_DIR / "best_kmeans_pca.pdf"
     plt.savefig(ppath, dpi=180)
     plt.close()
-    print("Saved PCA plot to", ppath)
+    print("PCA-Plot gespeichert:", ppath)
 
 
 if __name__ == "__main__":

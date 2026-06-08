@@ -1,15 +1,9 @@
-"""K-Means clustering for the processed stock/GPR feature dataset.
+"""
+K-Means-Clustering auf dem Monats-Feature-Datensatz (CLI mit argparse).
 
-The script works on ``data/processed/stocks_gpr_features.csv`` by default and
-creates three outputs in the chosen results directory:
-
-    - ``kmeans_cluster_assignments.csv``
-    - ``kmeans_clusters_pca.pdf``
-    - ``kmeans_summary.txt``
-
-The implementation follows the historical project version, but it is adapted
-to the current feature dataset and offers a more explicit feature-selection
-workflow for the monthly regime analysis use case.
+Input:  data/processed/stocks_gpr_features.csv
+Output: results/k_means/kmeans_cluster_assignments.csv, kmeans_clusters_pca.pdf,
+        kmeans_summary.txt
 """
 
 from __future__ import annotations
@@ -85,7 +79,7 @@ class KMeansResults:
 
 
 class KMeansAnalyzer:
-    """Encapsulates data loading, preprocessing, model fitting, and plotting."""
+    """Kapselt Laden, Vorverarbeitung, Modell-Fit und Plotting."""
 
     def __init__(self, random_state: int = 42):
         self.random_state = random_state
@@ -95,7 +89,7 @@ class KMeansAnalyzer:
         self.numeric_columns: List[str] = []
 
     def load_data(self, path: str) -> pd.DataFrame:
-        """Load a CSV file into a DataFrame."""
+        """Lädt eine CSV-Datei in einen DataFrame."""
         if not os.path.exists(path):
             raise FileNotFoundError(f"Datei nicht gefunden: {path}")
 
@@ -132,7 +126,7 @@ class KMeansAnalyzer:
         include_columns: Optional[Sequence[str]] = None,
         exclude_columns: Optional[Sequence[str]] = None,
     ) -> np.ndarray:
-        """Select numeric features, impute missing values, and scale them."""
+        """Numerische Features wählen, fehlende Werte imputieren und skalieren."""
         numeric_df = self._select_numeric_features(
             df,
             include_columns=include_columns,
@@ -151,7 +145,7 @@ class KMeansAnalyzer:
         return x_scaled
 
     def find_best_k(self, x: np.ndarray, k_min: int = 2, k_max: int = 10) -> Tuple[int, float, float]:
-        """Choose k via the silhouette score."""
+        """Wählt k per Silhouette-Score."""
         if k_min < 2:
             raise ValueError("k_min muss mindestens 2 sein.")
         if k_max <= k_min:
@@ -180,12 +174,12 @@ class KMeansAnalyzer:
         return best_k, best_inertia, best_silhouette
 
     def fit(self, x: np.ndarray, n_clusters: int) -> np.ndarray:
-        """Fit K-Means and return cluster labels."""
+        """Fittet K-Means und gibt die Cluster-Labels zurück."""
         self.model = KMeans(n_clusters=n_clusters, random_state=self.random_state, n_init=20)
         return self.model.fit_predict(x)
 
     def plot_clusters(self, x: np.ndarray, labels: np.ndarray, output_path: str) -> None:
-        """Plot clusters in 2D using PCA."""
+        """Plottet die Cluster 2D via PCA."""
         pca = PCA(n_components=2, random_state=self.random_state)
         x_2d = pca.fit_transform(x)
 
@@ -227,7 +221,7 @@ class KMeansAnalyzer:
         k_min: int = 2,
         k_max: int = 10,
     ) -> KMeansResults:
-        """Run the full K-Means pipeline and persist the outputs."""
+        """Führt die komplette K-Means-Pipeline aus und speichert die Outputs."""
         df = self.load_data(data_path)
         x = self.prepare_features(
             df,

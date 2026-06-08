@@ -1,12 +1,11 @@
 """
-Event Study + Lineare Regression
-GPR-Schock -> Aktienreaktion (A) | Aktien-Crash -> GPR-Reaktion (B)
+Event Study + Lineare Regression: GPR-Schock -> Aktien (A) | Crash -> GPR (B).
 
-Erzeugt genau 4 PDFs:
-  results/event_study_richtung_A.pdf
-  results/event_study_richtung_B.pdf
-  results/event_study_regression_B.pdf
-  results/event_study_act_vs_threat.pdf
+Input:  data/processed/stocks_gpr_daily.csv
+Output: results/lineare_regression/event_study_richtung_A.pdf
+        results/lineare_regression/event_study_richtung_B.pdf
+        results/lineare_regression/event_study_regression_B.pdf
+        results/lineare_regression/event_study_act_vs_threat.pdf
 """
 
 import os, sys, warnings

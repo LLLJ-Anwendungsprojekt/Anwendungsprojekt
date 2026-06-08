@@ -1,20 +1,17 @@
 """
-build_dataset.py
+Joint Rohdaten (Aktienindizes & GPR) zu drei aufbereiteten Dateien.
 
-Joint die Rohdaten (Aktienindizes & GPR) und erzeugt drei aufbereitete Dateien:
-
-    data/processed/stocks_gpr_daily.csv     -- Tages-Panel (Aktien <- GPR)
-    data/processed/stocks_gpr_monthly.csv   -- Monats-Panel (aggregiert)
-    data/processed/stocks_gpr_features.csv  -- Monats-Panel + Features (analysefertig)
-
-Folgt der Spezifikation aus docs/JOIN_PROMPT_1.md (bzw. dem Aufgaben-Prompt).
+Input:  data/raw/indexData.csv, data/raw/data_gpr_daily_recent.xls
+Output: data/processed/stocks_gpr_daily.csv      -- Tages-Panel (Aktien <- GPR)
+        data/processed/stocks_gpr_monthly.csv    -- Monats-Panel (aggregiert)
+        data/processed/stocks_gpr_features.csv   -- Monats-Panel + Features
 """
 
 import pandas as pd
 import numpy as np
 from pathlib import Path
 
-# ── Pfade ──────────────────────────────────────────────────────────────────────
+# ── Pfade ───────────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).parent.parent
 RAW_DIR  = BASE_DIR / "data" / "raw"
 OUT_DIR  = BASE_DIR / "data" / "processed"
@@ -28,9 +25,7 @@ OUT_MONTHLY  = OUT_DIR / "stocks_gpr_monthly.csv"
 OUT_FEATURES = OUT_DIR / "stocks_gpr_features.csv"
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# SCHRITT 1: Rohdateien einlesen
-# ══════════════════════════════════════════════════════════════════════════════
+# ── 1. Rohdateien einlesen ──────────────────────────────────────────────────
 print("[1/9] Lade Rohdateien...")
 gpr    = pd.read_excel(GPR_PATH, engine="xlrd")   # PFLICHT: Legacy .xls
 stocks = pd.read_csv(INDEX_PATH)
@@ -40,9 +35,7 @@ assert stocks.shape == (112457, 8), f"Stocks unerwartet: {stocks.shape}"
 print(f"      GPR: {gpr.shape}, Stocks: {stocks.shape}")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# SCHRITT 2: GPR reduzieren + umbenennen
-# ══════════════════════════════════════════════════════════════════════════════
+# ── 2. GPR reduzieren & umbenennen ──────────────────────────────────────────
 print("[2/9] GPR auf 3 Kern-Spalten reduzieren...")
 gpr_clean = gpr[['date', 'GPRD', 'GPRD_ACT', 'GPRD_THREAT']].copy()
 gpr_clean = gpr_clean.rename(columns={'date': 'Date'})
@@ -52,32 +45,23 @@ assert gpr_clean[['GPRD', 'GPRD_ACT', 'GPRD_THREAT']].isna().sum().sum() == 0, \
 assert gpr_clean['Date'].duplicated().sum() == 0, "GPR enthält Datums-Duplikate!"
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# SCHRITT 3: Stock-Daten bereinigen
-# ══════════════════════════════════════════════════════════════════════════════
+# ── 3. Stock-Daten bereinigen ───────────────────────────────────────────────
 print("[3/9] Stock-Daten bereinigen...")
-
-# 3a) Date: STR -> datetime
 stocks['Date'] = pd.to_datetime(stocks['Date'])
 
-# 3b) NaN-Zeilen entfernen (Feiertage / Handelsaussetzungen)
+# NaN-Zeilen entfernen (Feiertage / Handelsaussetzungen)
 n_before = len(stocks)
 stocks = stocks.dropna(subset=['Close']).copy()
 n_dropped = n_before - len(stocks)
 print(f"      NaN entfernt: {n_dropped} Zeilen (erwartet ~2204)")
 assert 2000 <= n_dropped <= 2500, f"Unerwartete NaN-Anzahl: {n_dropped}"
 
-# 3c) Nur benötigte Spalten
 stocks = stocks[['Index', 'Date', 'Close', 'Adj Close']].copy()
-
-# 3d) (Index, Date) eindeutig
 assert stocks.duplicated(subset=['Index', 'Date']).sum() == 0, \
     "(Index, Date)-Duplikate gefunden!"
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# SCHRITT 4: Gemeinsamer Zeitraum + Index-Auswahl
-# ══════════════════════════════════════════════════════════════════════════════
+# ── 4. Zeitraum & Indizes filtern ───────────────────────────────────────────
 print("[4/9] Zeitraum & Indizes filtern...")
 START = pd.Timestamp("2000-01-01")
 END   = pd.Timestamp("2021-05-31")
@@ -100,9 +84,7 @@ gpr_clean = gpr_clean[
 print(f"      Stocks gefiltert: {stocks.shape}, GPR gefiltert: {gpr_clean.shape}")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# SCHRITT 5: TAGES-JOIN (LEFT JOIN Aktien <- GPR)
-# ══════════════════════════════════════════════════════════════════════════════
+# ── 5. Tages-Join (Aktien <- GPR) ───────────────────────────────────────────
 print("[5/9] Tages-Join...")
 df_daily = stocks.merge(gpr_clean, on='Date', how='left')
 
@@ -116,9 +98,7 @@ df_daily.to_csv(OUT_DAILY, index=False)
 print(f"      -> {OUT_DAILY.name}: {df_daily.shape}")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# SCHRITT 6: AKTIEN auf Monatsebene (letzter Schlusskurs)
-# ══════════════════════════════════════════════════════════════════════════════
+# ── 6. Aktien-Monatsaggregation (letzter Schlusskurs) ───────────────────────
 print("[6/9] Aktien-Monatsaggregation...")
 stocks_monthly = (
     df_daily
@@ -127,7 +107,7 @@ stocks_monthly = (
     .agg(Close_last=('Close', 'last'))
 )
 
-# Monatsrendite je Index (kein Leak über Index-Grenzen!)
+# Monatsrendite je Index gruppiert -> kein Leak über Index-Grenzen
 stocks_monthly['Stock_monthly_pct'] = (
     stocks_monthly
     .groupby('Index')['Close_last']
@@ -135,9 +115,7 @@ stocks_monthly['Stock_monthly_pct'] = (
 )
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# SCHRITT 7: GPR auf Monatsebene (Durchschnitt)
-# ══════════════════════════════════════════════════════════════════════════════
+# ── 7. GPR-Monatsaggregation (Durchschnitt) ─────────────────────────────────
 print("[7/9] GPR-Monatsaggregation (Durchschnitt)...")
 gpr_monthly = (
     gpr_clean
@@ -155,9 +133,7 @@ gpr_monthly['GPRD_ACT_monthly_pct']    = gpr_monthly['GPRD_ACT_mean'].pct_change
 gpr_monthly['GPRD_THREAT_monthly_pct'] = gpr_monthly['GPRD_THREAT_mean'].pct_change() * 100
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# SCHRITT 8: MONATS-JOIN
-# ══════════════════════════════════════════════════════════════════════════════
+# ── 8. Monats-Join ──────────────────────────────────────────────────────────
 print("[8/9] Monats-Join...")
 df_monthly = stocks_monthly.merge(gpr_monthly, on='YearMonth', how='left')
 
@@ -168,37 +144,35 @@ df_monthly.to_csv(OUT_MONTHLY, index=False)
 print(f"      -> {OUT_MONTHLY.name}: {df_monthly.shape}")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# SCHRITT 9: Feature Engineering
-# ══════════════════════════════════════════════════════════════════════════════
+# ── 9. Feature Engineering ──────────────────────────────────────────────────
 print("[9/9] Feature Engineering...")
 df = df_monthly.sort_values(['Index', 'YearMonth']).copy()
 
-# (a) Lags je Index
+# Lags je Index
 for lag in [1, 2, 3]:
     df[f'gpr_lag{lag}']   = df.groupby('Index')['GPRD_monthly_pct'].shift(lag)
     df[f'stock_lag{lag}'] = df.groupby('Index')['Stock_monthly_pct'].shift(lag)
 
-# (b) Rollvolatilität 6 Monate je Index
+# Rollvolatilität 6 Monate je Index
 df['stock_vol6'] = (
     df.groupby('Index')['Stock_monthly_pct']
       .transform(lambda x: x.rolling(6).std())
 )
 
-# (c) Standardisiertes GPR-Level (z-Score)
+# Standardisiertes GPR-Level (z-Score)
 df['gprd_zscore'] = (df['GPRD_mean'] - df['GPRD_mean'].mean()) / df['GPRD_mean'].std()
 
-# (d) GPR-Spike-Indikator (|%-Veränderung| > 1 SD)
+# GPR-Spike-Indikator (|%-Veränderung| > 1 SD)
 gpr_std = df['GPRD_monthly_pct'].std()
 df['gpr_spike'] = (df['GPRD_monthly_pct'].abs() > gpr_std).astype(int)
 
-# (e) Winsorisierung 1./99. Perzentil
+# Winsorisierung 1./99. Perzentil
 for col in ['Stock_monthly_pct', 'GPRD_monthly_pct',
             'GPRD_ACT_monthly_pct', 'GPRD_THREAT_monthly_pct']:
     lo, hi = df[col].quantile(0.01), df[col].quantile(0.99)
     df[col] = df[col].clip(lo, hi)
 
-# (f) Zielvariablen
+# Zielvariablen
 df['stock_down']  = (df['Stock_monthly_pct'] < 0).astype(int)
 df['gpr_up_next'] = (
     df.groupby('Index')['GPRD_monthly_pct'].shift(-1) > 0

@@ -1,10 +1,9 @@
-"""Run K-Means clustering using only market-related features.
+"""
+K-Means-Clustering nur auf marktbezogenen Features.
 
-Outputs in `results/kmeans_market/`:
-- cluster assignments CSV
-- summary TXT
-- PCA plot
-- cluster_means.csv and boxplots
+Input:  data/processed/stocks_gpr_features.csv
+Output: results/kmeans_market/kmeans_market_assignments.csv, summary.txt,
+        kmeans_market_pca.pdf, cluster_means.csv, boxplots_market_grid.pdf
 """
 
 from pathlib import Path
@@ -34,6 +33,7 @@ MARKET_FEATURES = [
 
 
 def main():
+    # ── 1. Daten laden, imputieren & skalieren ──────────────────────────────
     df = pd.read_csv("data/processed/stocks_gpr_features.csv")
     available = [c for c in MARKET_FEATURES if c in df.columns]
     X = df[available].select_dtypes(include=[np.number]).copy()
@@ -43,7 +43,7 @@ def main():
     scaler = RobustScaler()
     X_s = scaler.fit_transform(X_imp)
 
-    # find best k by silhouette
+    # ── 2. Bestes k per Silhouette ──────────────────────────────────────────
     best_k = None
     best_sil = -1
     results = []
@@ -58,7 +58,7 @@ def main():
             best_labels = labels
             best_model = model
 
-    # save summary
+    # ── 3. Ergebnisse speichern ─────────────────────────────────────────────
     with open(OUT / "summary.txt", "w", encoding="utf8") as f:
         f.write(f"Best k: {best_k}\n")
         f.write(f"Best silhouette: {best_sil:.4f}\n")
@@ -70,7 +70,7 @@ def main():
     df_out["cluster"] = best_labels
     df_out.to_csv(OUT / "kmeans_market_assignments.csv", index=False)
 
-    # PCA plot
+    # ── 4. PCA-Plot ─────────────────────────────────────────────────────────
     pca = PCA(n_components=2, random_state=42)
     x2 = pca.fit_transform(X_s)
     plot_df = pd.DataFrame({"pca1": x2[:, 0], "pca2": x2[:, 1], "cluster": best_labels})
@@ -81,12 +81,12 @@ def main():
     plt.savefig(OUT / "kmeans_market_pca.pdf", dpi=180)
     plt.close()
 
-    # profiles
+    # ── 5. Cluster-Profile & Boxplots ───────────────────────────────────────
     features = [c for c in X.columns]
     profiles = df_out.groupby("cluster")[features].mean()
     profiles.to_csv(OUT / "cluster_means.csv")
 
-    # boxplots top features (all market features)
+    # Boxplot-Gitter über alle Markt-Features
     cols = 3
     rows = (len(features) + cols - 1) // cols
     plt.figure(figsize=(5 * cols, 4 * rows))
@@ -98,7 +98,7 @@ def main():
     plt.savefig(OUT / "boxplots_market_grid.pdf", dpi=180)
     plt.close()
 
-    # individual
+    # Einzelne Boxplots je Feature
     for feat in features:
         plt.figure(figsize=(6, 4))
         sns.boxplot(x="cluster", y=feat, data=df_out)

@@ -1,18 +1,15 @@
 """
-Algorithmus 4 (v2): KNN-Klassifikation — Feature Engineering + Selektion + PCA
+KNN-Klassifikation mit Feature Engineering, MI-Selektion und PCA.
 
-Richtung A: GPR-Features → Vorhersage ob Aktien fallen (stock_down)
-Richtung B: Aktien-Features → Vorhersage ob GPR im Folgemonat steigt (gpr_up_next)
+Richtung A: GPR-Features    -> Aktien fallen?    (stock_down)
+Richtung B: Aktien-Features -> GPR steigt t+1?   (gpr_up_next)
 
-Tuning-Massnahmen gegenüber v1:
-  - Feature Engineering: Momentum, Akzeleration, Interaktionsterme,
-    kumulative Returns, ACT-vs-THREAT-Divergenz
-  - SelectKBest(Mutual Information): k als GridSearch-Parameter entfernt
-    irrelevante Features, die den Distanzraum verschlechtern
-  - PCA(n_components=0.95): dekorreliert verbleibende Features
-    (GPR-Lags sind untereinander korreliert — PCA hilft KNN)
-  - Pipeline-Reihenfolge: StandardScaler → SelectKBest → PCA → KNN
-    kein Datenleck, da alle Schritte pro Fold auf Trainingsdaten gefittet
+Pipeline: StandardScaler -> SelectKBest(MI) -> PCA(0.95) -> KNN
+          (jeder Schritt wird pro CV-Fold nur auf Trainingsdaten gefittet)
+
+Input:  data/processed/stocks_gpr_features.csv
+Output: results/knn/knn_roc_curves.png, knn_confusion_matrices.png,
+        knn_feature_importance.png, knn_results.txt
 """
 
 import sys
@@ -39,7 +36,7 @@ warnings.filterwarnings('ignore')
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-# ─── 0. KONFIGURATION ────────────────────────────────────────────────────────
+# ── 0. Konfiguration ────────────────────────────────────────────────────────
 
 DATA       = "data/processed/stocks_gpr_features.csv"
 OUTPUT_DIR = "results/knn"
@@ -72,7 +69,7 @@ FEATS_B: list = []
 TARGET_A = 'stock_down'
 TARGET_B = 'gpr_up_next'
 
-# ─── 1. DATENAUFBEREITUNG + FEATURE ENGINEERING ──────────────────────────────
+# ── 1. Datenaufbereitung + Feature Engineering ──────────────────────────────
 
 def prepare():
     df = pd.read_csv(DATA)
@@ -85,11 +82,7 @@ def prepare():
 
 
 def engineer_features(df):
-    """
-    Leitet neue Features aus bestehenden Spalten ab.
-    Alle Operationen sind rein arithmetisch auf bereits korrekt
-    gruppierten Lag-Spalten — keine neuen Index-Grenzüberschreitungen.
-    """
+    """Leitet Features arithmetisch aus den Lag-Spalten ab (kein Index-Leak)."""
     # ── GPR-Dynamik ──────────────────────────────────────────────────────────
     df['gpr_momentum']        = df['GPRD_monthly_pct'] - df['gpr_lag1']
     df['gpr_momentum2']       = df['gpr_lag1'] - df['gpr_lag2']
@@ -151,7 +144,7 @@ def temporal_split(df, feats, target):
     y = sub[target].values
     return X[:-n_test], X[-n_test:], y[:-n_test], y[-n_test:]
 
-# ─── 2. GRIDSEARCH + EVALUATION ──────────────────────────────────────────────
+# ── 2. GridSearch + Evaluation ──────────────────────────────────────────────
 
 def _mi_func(X, y):
     """Wrapper mit festem random_state für reproduzierbare MI-Scores."""
@@ -159,15 +152,7 @@ def _mi_func(X, y):
 
 
 def run_gridsearch(X_train, y_train):
-    """
-    Pipeline-Reihenfolge:
-      StandardScaler  → Features skalieren (Pflicht für KNN-Distanzraum)
-      SelectKBest(MI) → irrelevante Features entfernen (k = GridSearch-Param)
-      PCA(0.95)       → korrelierte Features dekorrelieren
-      KNN             → Klassifikation im bereinigten Merkmalsraum
-
-    Jeder Schritt wird pro CV-Fold ausschliesslich auf Trainingsdaten gefittet.
-    """
+    """GridSearch über die KNN-Pipeline (siehe Modul-Docstring); TimeSeriesSplit."""
     pipe = Pipeline([
         ('scaler', StandardScaler()),
         ('select', SelectKBest(_mi_func)),
@@ -212,7 +197,7 @@ def evaluate(gs, X_test, y_test, feats):
         'y_proba':          y_proba,
     }
 
-# ─── 3. GRAFIKEN ─────────────────────────────────────────────────────────────
+# ── 3. Grafiken ─────────────────────────────────────────────────────────────
 
 def plot_roc_curves(res_a, res_b, outfile):
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
@@ -331,7 +316,7 @@ def plot_feature_importance(res_a, res_b, outfile):
     fig.savefig(outfile, dpi=150, bbox_inches='tight')
     plt.close()
 
-# ─── 4. TEXTBERICHT ──────────────────────────────────────────────────────────
+# ── 4. Textbericht ──────────────────────────────────────────────────────────
 
 def save_text_report(res_a, res_b, outfile):
     delta_auc = res_a['roc_auc'] - res_b['roc_auc']
@@ -426,7 +411,7 @@ def save_text_report(res_a, res_b, outfile):
     with open(outfile, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines))
 
-# ─── 5. RICHTUNG AUSFÜHREN ───────────────────────────────────────────────────
+# ── 5. Richtung ausführen ───────────────────────────────────────────────────
 
 def run_direction(df, feats, target, direction):
     if not check_features(df, feats, target, direction):
@@ -464,7 +449,7 @@ def run_direction(df, feats, target, direction):
     print(f"  F1-Score:        {res['f1']:.4f}")
     return res
 
-# ─── 6. MAIN ─────────────────────────────────────────────────────────────────
+# ── 6. Main ─────────────────────────────────────────────────────────────────
 
 def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
