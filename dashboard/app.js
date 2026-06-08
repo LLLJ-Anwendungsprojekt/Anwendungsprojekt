@@ -1,6 +1,8 @@
 /* ===================================================================
    GPR & Aktienmärkte — Dashboard Rendering (Plotly.js)
    Liest window.DASHBOARD_DATA (aus data.js) und rendert alle Abschnitte.
+   Struktur: Übersicht · K-Means · KNN · Random Forest · Event-Studie · Synthese.
+   Die vier Verfahren werden gleichberechtigt in je einem Tab dargestellt.
    =================================================================== */
 
 const D = window.DASHBOARD_DATA;
@@ -33,7 +35,7 @@ function fmtPct(v, d = 2) { return (v == null ? "–" : v.toFixed(d) + " %"); }
 function fmtNum(v, d = 2) { return (v == null ? "–" : v.toFixed(d)); }
 
 /* Vertikale Event-Linien als shapes + annotations */
-function eventShapes(yref = "paper") {
+function eventShapes() {
   return D.meta.events.map(e => ({
     type: "line", x0: md(e.month), x1: md(e.month), xref: "x",
     y0: 0, y1: 1, yref: "paper",
@@ -51,7 +53,6 @@ function eventAnnos() {
 /* =================== 1. ÜBERSICHT =================== */
 function renderOverview() {
   const o = D.overview, k = o.kpis;
-  // KPI-Karten
   document.getElementById("kpi-row").innerHTML = [
     `<div class="kpi"><div class="value accent">${k.n_months}</div><div class="label">Monate · 2000–2021</div></div>`,
     `<div class="kpi"><div class="value accent">${k.n_indices}</div><div class="label">Indizes · ${k.n_regions} Regionen</div></div>`,
@@ -60,6 +61,7 @@ function renderOverview() {
   ].join("");
 
   drawOverviewTS("gprd_mean");
+
   // Scatter
   const sc = o.scatter;
   const traces = D.meta.region_order.map(r => ({
@@ -114,124 +116,8 @@ function drawOverviewTS(gprKey) {
   }), CONFIG);
 }
 
-/* =================== 2. ZEITREIHEN =================== */
-let tsIndexInit = false;
-function renderTimeseries() {
-  const o = D.overview, x = o.months.map(md);
-  // GPR-Komponenten
-  Plotly.react("ts-components", [
-    { x, y: o.gprd_mean, name: "GPR gesamt", type: "scatter", mode: "lines",
-      line: { color: COLORS.muted, width: 1.8 }, fill: "tozeroy", fillcolor: "rgba(136,136,136,0.08)" },
-    { x, y: o.gprd_act_mean, name: "GPR-ACT", type: "scatter", mode: "lines",
-      line: { color: COLORS.accent, width: 1.6 } },
-    { x, y: o.gprd_threat_mean, name: "GPR-THREAT", type: "scatter", mode: "lines",
-      line: { color: "#6FB1E0", width: 1.6 } },
-  ], L({
-    shapes: eventShapes(), annotations: eventAnnos(),
-    xaxis: { type: "date", gridcolor: "#F0F0F0" }, yaxis: { title: "GPR-Index", gridcolor: "#F0F0F0" },
-    legend: { orientation: "h", y: -0.15 },
-  }), CONFIG);
-
-  if (!tsIndexInit) {
-    const box = document.getElementById("ts-index-checks");
-    const defaults = ["IXIC", "GDAXI", "HSI", "000001.SS"];
-    box.innerHTML = "<label>Indizes:</label>" + Object.keys(D.meta.indices).map(c =>
-      `<label class="chk"><input type="checkbox" value="${c}" ${defaults.includes(c) ? "checked" : ""}> ${D.meta.indices[c].name}</label>`
-    ).join("");
-    box.addEventListener("change", drawIndexCompare);
-    tsIndexInit = true;
-  }
-  drawIndexCompare();
-
-  // Rollierende Korrelation
-  const rc = D.timeseries.rolling_corr;
-  const rtraces = D.meta.region_order.map(r => ({
-    x, y: rc[r], name: r, type: "scatter", mode: "lines",
-    line: { color: COLORS.region[r], width: 1.8 },
-  }));
-  Plotly.react("ts-rolling", rtraces, L({
-    shapes: [{ type: "line", x0: x[0], x1: x[x.length - 1], y0: 0, y1: 0, xref: "x", yref: "y",
-      line: { color: COLORS.muted, width: 1, dash: "dash" } }],
-    xaxis: { type: "date", gridcolor: "#F0F0F0" },
-    yaxis: { title: "Korrelation (12M rollierend)", gridcolor: "#F0F0F0", range: [-1, 1] },
-    legend: { orientation: "h", y: -0.15 },
-  }), CONFIG);
-}
-
-function drawIndexCompare() {
-  const checks = [...document.querySelectorAll("#ts-index-checks input:checked")].map(i => i.value).slice(0, 6);
-  const x = D.overview.months.map(md);
-  const traces = [];
-  checks.forEach((c, idx) => {
-    const series = D.timeseries.close[c];
-    if (!series) return;
-    let base = null;
-    const reb = series.map(v => {
-      if (v == null) return null;
-      if (base == null) base = v;
-      return base ? (v / base) * 100 : null;
-    });
-    traces.push({ x, y: reb, name: D.meta.indices[c].name, type: "scatter", mode: "lines",
-      line: { width: 1.8 } });
-  });
-  // GPR auf zweiter Achse
-  traces.push({ x, y: D.overview.gprd_mean, name: "GPR", type: "scatter", mode: "lines", yaxis: "y2",
-    line: { color: COLORS.muted, width: 1, dash: "dot" }, opacity: 0.7 });
-  Plotly.react("ts-index", traces, L({
-    xaxis: { type: "date", gridcolor: "#F0F0F0" },
-    yaxis: { title: "Kurs (rebasiert = 100)", gridcolor: "#F0F0F0" },
-    yaxis2: { title: "GPR", overlaying: "y", side: "right", showgrid: false },
-    legend: { orientation: "h", y: -0.15 },
-    margin: { l: 55, r: 55, t: 30, b: 50 },
-  }), CONFIG);
-}
-
-/* =================== 3. REGIONEN =================== */
-function renderRegions() {
-  const r = D.regions, x = D.overview.months.map(md);
-  // Heatmap
-  Plotly.react("rg-heatmap", [{
-    z: r.heatmap_z, x, y: r.labels, type: "heatmap",
-    zmid: 0, zmin: -10, zmax: 10,
-    colorscale: [[0, "#A31621"], [0.5, "#FFFFFF"], [1, "#2E8B57"]],
-    colorbar: { title: "%", thickness: 12, len: 0.8 },
-    hovertemplate: "%{y}<br>%{x|%b %Y}<br>%{z:.2f}%<extra></extra>",
-  }], L({
-    xaxis: { type: "date", gridcolor: "#F0F0F0" },
-    yaxis: { automargin: true, autorange: "reversed" },
-    margin: { l: 110, r: 30, t: 20, b: 50 },
-  }), CONFIG);
-
-  // Korrelationsmatrix
-  Plotly.react("rg-corr", [{
-    z: r.corr_z, x: r.corr_labels, y: r.corr_labels, type: "heatmap",
-    zmin: -1, zmax: 1, zmid: 0,
-    colorscale: [[0, "#1C4E80"], [0.5, "#FFFFFF"], [1, "#A31621"]],
-    colorbar: { thickness: 12, len: 0.8 },
-    hovertemplate: "%{y} ↔ %{x}<br>r = %{z:.2f}<extra></extra>",
-  }], L({
-    xaxis: { tickangle: -45, automargin: true },
-    yaxis: { automargin: true, autorange: "reversed" },
-    margin: { l: 110, r: 30, t: 20, b: 110 },
-  }), CONFIG);
-
-  // Region-Vergleich
-  const regs = r.region_stats.map(s => s.region);
-  Plotly.react("rg-bars", [
-    { x: regs, y: r.region_stats.map(s => s.avg_return), name: "Ø Rendite (%)", type: "bar",
-      marker: { color: COLORS.accent }, hovertemplate: "%{x}<br>Ø Rendite %{y:.2f}%<extra></extra>" },
-    { x: regs, y: r.region_stats.map(s => s.loss_share * 100), name: "Verlustmonate (%)", type: "bar",
-      marker: { color: COLORS.accent2 }, hovertemplate: "%{x}<br>Verlustmonate %{y:.1f}%<extra></extra>" },
-    { x: regs, y: r.region_stats.map(s => s.gpr_corr * 100), name: "GPR-Korr. (×100)", type: "bar",
-      marker: { color: COLORS.muted }, hovertemplate: "%{x}<br>GPR-Korr %{y:.1f}<extra></extra>" },
-  ], L({
-    barmode: "group", yaxis: { gridcolor: "#F0F0F0", zeroline: true, zerolinecolor: "#E0E0E0" },
-    legend: { orientation: "h", y: -0.18 },
-  }), CONFIG);
-}
-
-/* =================== 4. MARKTREGIMES =================== */
-function renderRegime() {
+/* =================== 2. K-MEANS =================== */
+function renderKmeans() {
   const km = D.kmeans;
   document.getElementById("km-badge").textContent = `k = ${km.best_k} · Silhouette ${km.silhouette}`;
   document.getElementById("km-pca-sub").textContent =
@@ -261,7 +147,7 @@ function renderRegime() {
     shapes,
     xaxis: { type: "date", gridcolor: "#F0F0F0" },
     yaxis: { title: "Ø Aktienrendite (%)", gridcolor: "#F0F0F0", zeroline: true, zerolinecolor: "#E0E0E0" },
-    legend: { orientation: "h", y: -0.18 },
+    legend: { orientation: "h", y: -0.22, font: { size: 10 } },
   }), CONFIG);
 
   // PCA-Scatter
@@ -305,73 +191,24 @@ function renderRegime() {
   document.getElementById("km-table").innerHTML = head + rows;
 }
 
-/* =================== 5. VORHERSAGE: KNN vs. RANDOM FOREST =============== */
-let fiModel = "knn", fiDir = "A", cmModel = "knn";
-
-function renderForecast() {
-  const knn = D.knn, rf = D.rf;
-
-  // Vergleichstabelle
-  const row = (name, m, valid, vc) =>
-    `<tr><td>${name}</td>`
-    + `<td>${m.A.test_auc.toFixed(3)}</td><td>${m.B.test_auc.toFixed(3)}</td>`
-    + `<td>${m.A.f1.toFixed(3)} / ${m.B.f1.toFixed(3)}</td>`
-    + `<td>${m.A.accuracy.toFixed(3)} / ${m.B.accuracy.toFixed(3)}</td>`
-    + `<td><span class="badge ${vc}">${valid}</span></td></tr>`;
-  document.getElementById("cmp-table").innerHTML =
-    "<tr><th>Modell</th><th>AUC A</th><th>AUC B</th><th>F1 A / B</th><th>Accuracy A / B</th><th>Validierung</th></tr>"
-    + row("K-Nearest-Neighbors", knn, "Out-of-Sample", "")
-    + row("Random Forest", rf, "In-Sample", "muted");
-
-  // Kombinierte ROC (4 Kurven)
-  Plotly.react("cmp-roc", [
-    { x: knn.A.roc.fpr, y: knn.A.roc.tpr, type: "scatter", mode: "lines", name: `KNN A · ${knn.A.test_auc.toFixed(3)}`,
-      line: { color: COLORS.accent2, width: 2.2 } },
-    { x: knn.B.roc.fpr, y: knn.B.roc.tpr, type: "scatter", mode: "lines", name: `KNN B · ${knn.B.test_auc.toFixed(3)}`,
-      line: { color: COLORS.accent, width: 2.2 } },
-    { x: rf.A.roc.fpr, y: rf.A.roc.tpr, type: "scatter", mode: "lines", name: `RF A · ${rf.A.test_auc.toFixed(3)} (i.s.)`,
-      line: { color: COLORS.accent2, width: 1.6, dash: "dash" } },
-    { x: rf.B.roc.fpr, y: rf.B.roc.tpr, type: "scatter", mode: "lines", name: `RF B · ${rf.B.test_auc.toFixed(3)} (i.s.)`,
-      line: { color: COLORS.accent, width: 1.6, dash: "dash" } },
+/* =================== Klassifikator-Bausteine (gemeinsam für KNN & RF) ====== */
+function drawROC(elId, m, colorA, colorB, suffix) {
+  Plotly.react(elId, [
+    { x: m.A.roc.fpr, y: m.A.roc.tpr, type: "scatter", mode: "lines", name: `Richtung A · ${m.A.test_auc.toFixed(3)}${suffix}`,
+      line: { color: colorA, width: 2.2 } },
+    { x: m.B.roc.fpr, y: m.B.roc.tpr, type: "scatter", mode: "lines", name: `Richtung B · ${m.B.test_auc.toFixed(3)}${suffix}`,
+      line: { color: colorB, width: 2.2 } },
     { x: [0, 1], y: [0, 1], type: "scatter", mode: "lines", name: "Zufall",
       line: { color: COLORS.muted, width: 1, dash: "dot" }, hoverinfo: "skip" },
   ], L({
     xaxis: { title: "Falsch-Positiv-Rate", gridcolor: "#F0F0F0", range: [0, 1] },
     yaxis: { title: "Richtig-Positiv-Rate", gridcolor: "#F0F0F0", range: [0, 1.02] },
-    legend: { x: 0.98, y: 0.02, xanchor: "right", yanchor: "bottom", font: { size: 10 } },
+    legend: { x: 0.98, y: 0.02, xanchor: "right", yanchor: "bottom", font: { size: 11 } },
   }), CONFIG);
-
-  drawFeatureImportance();
-  drawCMs();
-
-  document.getElementById("cmp-info").innerHTML =
-    `<b>KNN</b> misst Ähnlichkeit im Distanzraum (StandardScaler → MI-Selektion → PCA → KNN) und wird `
-    + `<b>out-of-sample</b> auf einem temporalen 20 %-Holdout bewertet — die AUC (A ${knn.A.test_auc.toFixed(2)} / B ${knn.B.test_auc.toFixed(2)}) `
-    + `spiegelt echte Prognoseleistung.<br><br>`
-    + `<b>Random Forest</b> (500 Bäume, Tiefe 5) wird hier <b>in-sample</b> trainiert und ausgewertet. `
-    + `Die deutlich höhere AUC (A ${rf.A.test_auc.toFixed(2)} / B ${rf.B.test_auc.toFixed(2)}) ist daher `
-    + `<b>optimistisch verzerrt</b> und nicht als Prognosegüte interpretierbar — sie zeigt nur, wie gut das Modell `
-    + `die Trainingsdaten beschreibt. Der Vergleich illustriert eindrücklich die In-Sample-Falle.`;
 }
 
-function drawFeatureImportance() {
-  document.getElementById("fi-sub").textContent = fiModel === "knn"
-    ? "Mutual Information · dunkel = selektiert, grau = verworfen" : "Gini-Importance (Random Forest)";
-  const baseColor = fiDir === "A" ? COLORS.accent2 : COLORS.accent;
-  let entries, colors, xtitle;
-  if (fiModel === "knn") {
-    const m = D.knn[fiDir];
-    entries = Object.entries(m.mi_scores).sort((a, b) => a[1] - b[1]);
-    const sel = new Set(m.selected_features);
-    colors = entries.map(e => sel.has(e[0]) ? baseColor : "#DDDDDD");
-    xtitle = "Mutual-Information-Score";
-  } else {
-    const m = D.rf[fiDir];
-    entries = Object.entries(m.importances).sort((a, b) => a[1] - b[1]);
-    colors = entries.map(() => baseColor);
-    xtitle = "Gini-Importance";
-  }
-  Plotly.react("cmp-fi", [{
+function drawFI(elId, entries, colors, xtitle) {
+  Plotly.react(elId, [{
     type: "bar", orientation: "h",
     x: entries.map(e => e[1]), y: entries.map(e => e[0]),
     marker: { color: colors },
@@ -381,15 +218,6 @@ function drawFeatureImportance() {
     yaxis: { automargin: true, tickfont: { size: 10 } },
     margin: { l: 155, r: 20, t: 20, b: 45 },
   }), CONFIG);
-}
-
-function drawCMs() {
-  const m = D[cmModel];
-  const isInSample = cmModel === "rf";
-  document.getElementById("cm-a-cap").textContent = "Richtung A · stock_down" + (isInSample ? " (in-sample)" : "");
-  document.getElementById("cm-b-cap").textContent = "Richtung B · gpr_up_next" + (isInSample ? " (in-sample)" : "");
-  drawCM("cmp-cm-a", m.A.cm, ["Steigt", "Fällt"], [[0, "#FFFFFF"], [1, COLORS.accent2]]);
-  drawCM("cmp-cm-b", m.B.cm, ["GPR fällt", "GPR steigt"], [[0, "#FFFFFF"], [1, COLORS.accent]]);
 }
 
 function drawCM(id, cm, labels, scale) {
@@ -406,7 +234,70 @@ function drawCM(id, cm, labels, scale) {
   }), CONFIG);
 }
 
-/* =================== 6. EVENT-STUDIE =================== */
+/* =================== 3. KNN =================== */
+let knnFiDir = "A";
+function renderKnn() {
+  const knn = D.knn;
+  document.getElementById("knn-table").innerHTML =
+    "<tr><th>Kennzahl</th><th>Richtung A: GPR→Aktien</th><th>Richtung B: Aktien→GPR</th></tr>"
+    + `<tr><td>Test-AUC (Holdout)</td><td>${knn.A.test_auc.toFixed(3)}</td><td>${knn.B.test_auc.toFixed(3)}</td></tr>`
+    + `<tr><td>CV-AUC</td><td>${knn.A.cv_auc.toFixed(3)}</td><td>${knn.B.cv_auc.toFixed(3)}</td></tr>`
+    + `<tr><td>F1</td><td>${knn.A.f1.toFixed(3)}</td><td>${knn.B.f1.toFixed(3)}</td></tr>`
+    + `<tr><td>Accuracy</td><td>${knn.A.accuracy.toFixed(3)}</td><td>${knn.B.accuracy.toFixed(3)}</td></tr>`
+    + `<tr><td>Bestes k · Metrik</td><td>${knn.A.best_k} · ${knn.A.best_metric}</td><td>${knn.B.best_k} · ${knn.B.best_metric}</td></tr>`
+    + `<tr><td>PCA-Komponenten</td><td>${knn.A.n_pca}</td><td>${knn.B.n_pca}</td></tr>`;
+
+  drawROC("knn-roc", knn, COLORS.accent2, COLORS.accent, "");
+  drawKnnFI();
+  drawCM("knn-cm-a", knn.A.cm, ["Steigt", "Fällt"], [[0, "#FFFFFF"], [1, COLORS.accent2]]);
+  drawCM("knn-cm-b", knn.B.cm, ["GPR fällt", "GPR steigt"], [[0, "#FFFFFF"], [1, COLORS.accent]]);
+}
+
+function drawKnnFI() {
+  const m = D.knn[knnFiDir];
+  const baseColor = knnFiDir === "A" ? COLORS.accent2 : COLORS.accent;
+  const entries = Object.entries(m.mi_scores).sort((a, b) => a[1] - b[1]);
+  const sel = new Set(m.selected_features);
+  const colors = entries.map(e => sel.has(e[0]) ? baseColor : "#DDDDDD");
+  drawFI("knn-fi", entries, colors, "Mutual-Information-Score");
+}
+
+/* =================== 4. RANDOM FOREST =================== */
+let rfFiDir = "A";
+function renderRf() {
+  const rf = D.rf;
+  document.getElementById("rf-table").innerHTML =
+    "<tr><th>Kennzahl</th><th>Richtung A: GPR→Aktien</th><th>Richtung B: Aktien→GPR</th></tr>"
+    + `<tr><td>AUC (in-sample)</td><td>${rf.A.test_auc.toFixed(3)}</td><td>${rf.B.test_auc.toFixed(3)}</td></tr>`
+    + `<tr><td>F1</td><td>${rf.A.f1.toFixed(3)}</td><td>${rf.B.f1.toFixed(3)}</td></tr>`
+    + `<tr><td>Accuracy</td><td>${rf.A.accuracy.toFixed(3)}</td><td>${rf.B.accuracy.toFixed(3)}</td></tr>`
+    + `<tr><td>Precision</td><td>${rf.A.precision.toFixed(3)}</td><td>${rf.B.precision.toFixed(3)}</td></tr>`
+    + `<tr><td>Recall</td><td>${rf.A.recall.toFixed(3)}</td><td>${rf.B.recall.toFixed(3)}</td></tr>`
+    + `<tr><td>n (Beobachtungen)</td><td>${rf.A.n}</td><td>${rf.B.n}</td></tr>`;
+
+  drawROC("rf-roc", rf, COLORS.accent2, COLORS.accent, " (i.s.)");
+  drawRfFI();
+  drawCM("rf-cm-a", rf.A.cm, ["Steigt", "Fällt"], [[0, "#FFFFFF"], [1, COLORS.accent2]]);
+  drawCM("rf-cm-b", rf.B.cm, ["GPR fällt", "GPR steigt"], [[0, "#FFFFFF"], [1, COLORS.accent]]);
+
+  document.getElementById("rf-info").innerHTML =
+    `Der Random Forest wird hier <b>in-sample</b> trainiert und ausgewertet (Training und Test auf demselben `
+    + `Zeitraum 2001–2021). Die hohe AUC (A ${rf.A.test_auc.toFixed(2)} / B ${rf.B.test_auc.toFixed(2)}) ist daher `
+    + `<b>optimistisch verzerrt</b> und beschreibt nur, wie gut das Modell die Trainingsdaten erfasst — sie ist `
+    + `<b>keine</b> Prognosegüte. Der direkte Kontrast zum out-of-sample bewerteten KNN `
+    + `(AUC A ${D.knn.A.test_auc.toFixed(2)} / B ${D.knn.B.test_auc.toFixed(2)}) illustriert die In-Sample-Falle: `
+    + `Aus In-Sample-Güte lässt sich nicht auf echte Vorhersagekraft schließen.`;
+}
+
+function drawRfFI() {
+  const m = D.rf[rfFiDir];
+  const baseColor = rfFiDir === "A" ? COLORS.accent2 : COLORS.accent;
+  const entries = Object.entries(m.importances).sort((a, b) => a[1] - b[1]);
+  const colors = entries.map(() => baseColor);
+  drawFI("rf-fi", entries, colors, "Gini-Importance");
+}
+
+/* =================== 5. EVENT-STUDIE =================== */
 function renderEvents() {
   drawEventDir("A");
   // ACT vs THREAT
@@ -432,21 +323,6 @@ function renderEvents() {
     annotations: [{ x: 0.5, y: 1.05, xref: "paper", yref: "paper", showarrow: false,
       text: `ACT CAR_post ${fmtPct(ev.ACT.car_post)} · THREAT CAR_post ${fmtPct(ev.THREAT.car_post)}`,
       font: { size: 11, color: COLORS.muted } }],
-  }), CONFIG);
-
-  // Regression B
-  const rb = ev.regB_scatter;
-  document.getElementById("ev-reg-sub").textContent =
-    `β = ${rb.slope} · R² = ${rb.r2} · p = ${rb.p.toExponential(2)} · n = ${rb.x.length}`;
-  Plotly.react("ev-reg", [
-    { x: rb.x, y: rb.y, type: "scattergl", mode: "markers", name: "Events",
-      marker: { color: COLORS.accent, size: 5, opacity: 0.4 }, hoverinfo: "skip" },
-    { x: rb.line_x, y: rb.line_y, type: "scatter", mode: "lines", name: "Regression",
-      line: { color: COLORS.accent2, width: 2.2 } },
-  ], L({
-    xaxis: { title: "Aktien-Schock am Event-Tag (%)", gridcolor: "#F0F0F0", zeroline: true, zerolinecolor: "#E0E0E0" },
-    yaxis: { title: "CAR GPR (t+1…t+5, %)", gridcolor: "#F0F0F0", zeroline: true, zerolinecolor: "#E0E0E0" },
-    legend: { orientation: "h", y: -0.2 },
   }), CONFIG);
 }
 
@@ -486,35 +362,7 @@ function drawEventDir(dir) {
   }), CONFIG);
 }
 
-/* =================== 7. METHODIK =================== */
-function renderMethod() {
-  const km = D.kmeans, knn = D.knn, ev = D.events;
-  document.getElementById("method-grid").innerHTML = [
-    `<div class="method"><span class="tag">Unüberwacht</span><h3>K-Means Clustering</h3>
-      <p>Erkennung wiederkehrender Marktregime aus monatlichen GPR- und Aktien-Features.</p>
-      <div class="metric">k = ${km.best_k} · Silhouette ${km.silhouette}</div></div>`,
-    `<div class="method"><span class="tag">Überwacht</span><h3>KNN-Klassifikation</h3>
-      <p>Bidirektionale Vorhersagbarkeit mit Feature-Engineering, MI-Selektion und PCA.</p>
-      <div class="metric">AUC A = ${knn.A.test_auc.toFixed(3)} · B = ${knn.B.test_auc.toFixed(3)}</div></div>`,
-    `<div class="method"><span class="tag">Ereignisbasiert</span><h3>Event-Studie</h3>
-      <p>Abnormale Renditen im ±5-Tage-Fenster um GPR-Schocks (95. Perzentil).</p>
-      <div class="metric">n = ${ev.A.n} Events · CAR_post ${fmtPct(ev.A.car_post)}</div></div>`,
-    `<div class="method"><span class="tag">Überwacht · in-sample</span><h3>Random Forest</h3>
-      <p>Nichtlineare Klassifikation (500 Bäume), deskriptiv auf demselben Zeitraum.</p>
-      <div class="metric">AUC A = ${D.rf.A.test_auc.toFixed(3)} · B = ${D.rf.B.test_auc.toFixed(3)} (i.s.)</div></div>`,
-  ].join("");
-
-  document.getElementById("pipeline").innerHTML =
-`Rohdaten (indexData.csv + GPR.xls)
-   <span class="arrow">↓ build_dataset.py</span>
-stocks_gpr_<span class="out">daily</span> / <span class="out">monthly</span> / <span class="out">features</span>.csv
-   <span class="arrow">├→</span> Event-Studie   <span class="arrow">→</span> results/lineare_regression/
-   <span class="arrow">├→</span> K-Means        <span class="arrow">→</span> results/k_means/
-   <span class="arrow">├→</span> KNN            <span class="arrow">→</span> results/knn/
-   <span class="arrow">└→</span> Random Forest  <span class="arrow">→</span> results/random_forest/`;
-}
-
-/* =================== 7. SYNTHESE =================== */
+/* =================== 6. SYNTHESE =================== */
 function renderSynthesis() {
   const knn = D.knn, rf = D.rf, ev = D.events;
   const sig = p => p < 0.01 ? "***" : p < 0.05 ? "**" : p < 0.1 ? "*" : "n.s.";
@@ -571,9 +419,8 @@ function renderSynthesis() {
 
 /* =================== NAVIGATION + INIT =================== */
 const RENDERERS = {
-  overview: renderOverview, timeseries: renderTimeseries, regions: renderRegions,
-  regime: renderRegime, forecast: renderForecast, events: renderEvents,
-  synthesis: renderSynthesis, method: renderMethod,
+  overview: renderOverview, kmeans: renderKmeans, knn: renderKnn,
+  rf: renderRf, events: renderEvents, synthesis: renderSynthesis,
 };
 const rendered = {};
 
@@ -585,34 +432,19 @@ function navigate(target) {
   setTimeout(() => window.dispatchEvent(new Event("resize")), 30);
 }
 
+function bindToggle(id, onPick) {
+  document.getElementById(id).addEventListener("click", e => {
+    if (e.target.tagName !== "BUTTON") return;
+    [...e.currentTarget.children].forEach(b => b.classList.toggle("active", b === e.target));
+    onPick(e.target.dataset.v);
+  });
+}
+
 function initToggles() {
-  // Übersicht GPR-Toggle
-  document.getElementById("ov-gpr-toggle").addEventListener("click", e => {
-    if (e.target.tagName !== "BUTTON") return;
-    [...e.currentTarget.children].forEach(b => b.classList.toggle("active", b === e.target));
-    drawOverviewTS(e.target.dataset.v);
-  });
-  // Feature-Importance: Modell- und Richtungs-Toggle
-  const fiActivate = (group, target) => [...group.children].forEach(b => b.classList.toggle("active", b === target));
-  document.getElementById("fi-model-toggle").addEventListener("click", e => {
-    if (e.target.tagName !== "BUTTON") return;
-    fiActivate(e.currentTarget, e.target); fiModel = e.target.dataset.v; drawFeatureImportance();
-  });
-  document.getElementById("fi-dir-toggle").addEventListener("click", e => {
-    if (e.target.tagName !== "BUTTON") return;
-    fiActivate(e.currentTarget, e.target); fiDir = e.target.dataset.v; drawFeatureImportance();
-  });
-  // Konfusionsmatrix-Modell-Toggle
-  document.getElementById("cm-model-toggle").addEventListener("click", e => {
-    if (e.target.tagName !== "BUTTON") return;
-    fiActivate(e.currentTarget, e.target); cmModel = e.target.dataset.v; drawCMs();
-  });
-  // Event-Richtungs-Toggle
-  document.getElementById("ev-dir-toggle").addEventListener("click", e => {
-    if (e.target.tagName !== "BUTTON") return;
-    [...e.currentTarget.children].forEach(b => b.classList.toggle("active", b === e.target));
-    drawEventDir(e.target.dataset.v);
-  });
+  bindToggle("ov-gpr-toggle", v => drawOverviewTS(v));
+  bindToggle("knn-fi-toggle", v => { knnFiDir = v; drawKnnFI(); });
+  bindToggle("rf-fi-toggle", v => { rfFiDir = v; drawRfFI(); });
+  bindToggle("ev-dir-toggle", v => drawEventDir(v));
 }
 
 document.addEventListener("DOMContentLoaded", () => {

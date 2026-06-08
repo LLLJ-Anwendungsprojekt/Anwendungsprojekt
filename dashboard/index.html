@@ -16,13 +16,11 @@
 
     <ul class="nav" id="nav">
       <li class="nav-item active" data-target="overview">Übersicht</li>
-      <li class="nav-item" data-target="timeseries">Zeitreihen</li>
-      <li class="nav-item" data-target="regions">Regionen</li>
-      <li class="nav-item" data-target="regime">Marktregimes</li>
-      <li class="nav-item" data-target="forecast">Vorhersage</li>
+      <li class="nav-item" data-target="kmeans">K-Means</li>
+      <li class="nav-item" data-target="knn">KNN</li>
+      <li class="nav-item" data-target="rf">Random Forest</li>
       <li class="nav-item" data-target="events">Event-Studie</li>
       <li class="nav-item" data-target="synthesis">Synthese</li>
-      <li class="nav-item" data-target="method">Methodik</li>
     </ul>
 
     <div class="sidebar-foot" id="foot"></div>
@@ -35,7 +33,7 @@
     <section class="section active" id="overview">
       <div class="section-header">
         <h1>Übersicht</h1>
-        <p>Zusammenhang zwischen Geopolitischem Risiko (GPR) und 12 globalen Aktienindizes, 2000–2021.</p>
+        <p>Zusammenhang zwischen Geopolitischem Risiko (GPR) und 12 globalen Aktienindizes, 2000–2021. Vier Verfahren beleuchten diesen Zusammenhang aus unterschiedlichen Blickwinkeln.</p>
       </div>
       <div class="kpi-row" id="kpi-row"></div>
 
@@ -69,73 +67,11 @@
       </div>
     </section>
 
-    <!-- 2. ZEITREIHEN -->
-    <section class="section" id="timeseries">
+    <!-- 2. K-MEANS -->
+    <section class="section" id="kmeans">
       <div class="section-header">
-        <h1>Zeitreihen-Analyse</h1>
-        <p>Entwicklung der GPR-Komponenten, normalisierte Kursverläufe und rollierende Korrelation.</p>
-      </div>
-
-      <div class="grid cols-1">
-        <div class="card">
-          <h3>GPR-Komponenten im Zeitverlauf</h3>
-          <div class="card-sub">Gesamt-GPR, realisierte Akte (ACT) und Bedrohungen (THREAT)</div>
-          <div class="chart" id="ts-components" style="height:380px"></div>
-        </div>
-      </div>
-
-      <div class="grid cols-1">
-        <div class="card">
-          <h3>Index-Vergleich (rebasiert auf 100)</h3>
-          <div class="card-sub">Wähle Indizes · GPR als graue Linie auf zweiter Achse</div>
-          <div class="controls" id="ts-index-checks"></div>
-          <div class="chart" id="ts-index" style="height:400px"></div>
-        </div>
-      </div>
-
-      <div class="grid cols-1">
-        <div class="card">
-          <h3>Rollierende 12-Monats-Korrelation (GPR ↔ Rendite)</h3>
-          <div class="card-sub">Separate Linien je Region · Nulllinie gestrichelt</div>
-          <div class="chart" id="ts-rolling" style="height:380px"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 3. REGIONEN -->
-    <section class="section" id="regions">
-      <div class="section-header">
-        <h1>Regionale Analyse</h1>
-        <p>Monatsrenditen, Index-Korrelationen und Vergleich der vier Regionen.</p>
-      </div>
-
-      <div class="grid cols-1">
-        <div class="card">
-          <h3>Heatmap der Monatsrenditen</h3>
-          <div class="card-sub">12 Indizes (nach Region sortiert) × Zeit · Skala auf ±10 % begrenzt</div>
-          <div class="chart" id="rg-heatmap" style="height:440px"></div>
-        </div>
-      </div>
-
-      <div class="grid cols-2">
-        <div class="card">
-          <h3>Korrelationsmatrix der Renditen</h3>
-          <div class="card-sub">12 × 12, nach Region sortiert</div>
-          <div class="chart" id="rg-corr" style="height:460px"></div>
-        </div>
-        <div class="card">
-          <h3>Regionen-Vergleich</h3>
-          <div class="card-sub">Ø Rendite, Anteil Verlustmonate, Ø GPR-Korrelation</div>
-          <div class="chart" id="rg-bars" style="height:460px"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 4. MARKTREGIMES -->
-    <section class="section" id="regime">
-      <div class="section-header">
-        <h1>Marktregimes <span class="badge" id="km-badge"></span></h1>
-        <p>K-Means-Clustering der Monats-Features (live berechnet, RobustScaler-frei: StandardScaler → KMeans). Identifiziert wiederkehrende Marktzustände.</p>
+        <h1>K-Means-Clustering <span class="badge" id="km-badge"></span></h1>
+        <p>Unüberwachte Erkennung wiederkehrender Marktregime aus monatlichen GPR- und Aktien-Features (StandardScaler → KMeans, optimales <i>k</i> via Silhouette-Score). Liefert den Regime-Kontext für die übrigen Verfahren.</p>
       </div>
 
       <div class="grid cols-1">
@@ -168,69 +104,106 @@
       </div>
     </section>
 
-    <!-- 5. VORHERSAGE: KNN vs. RANDOM FOREST -->
-    <section class="section" id="forecast">
+    <!-- 3. KNN -->
+    <section class="section" id="knn">
       <div class="section-header">
-        <h1>Vorhersage: KNN vs. Random Forest</h1>
-        <p>Zwei überwachte Klassifikatoren auf identischen Zielvariablen — Richtung A: Können GPR-Features fallende Aktien vorhersagen (<code>stock_down</code>)? Richtung B: Können Aktien-Features steigende GPR vorhersagen (<code>gpr_up_next</code>)?</p>
+        <h1>K-Nearest-Neighbors <span class="badge">out-of-sample</span></h1>
+        <p>Distanzbasierte Klassifikation (StandardScaler → MI-Selektion → PCA → KNN), sauber auf einem temporalen 20 %-Holdout bewertet. Richtung A: GPR-Features → fallende Aktien (<code>stock_down</code>). Richtung B: Aktien-Features → steigende GPR (<code>gpr_up_next</code>).</p>
       </div>
 
       <div class="grid cols-1">
         <div class="card">
-          <h3>Modellvergleich — AUC je Richtung</h3>
-          <div class="card-sub">KNN sauber out-of-sample · Random Forest in-sample (deskriptiv, optimistisch verzerrt)</div>
-          <table class="data" id="cmp-table"></table>
+          <h3>Kennzahlen</h3>
+          <div class="card-sub">Test-Werte auf dem Holdout · CV-AUC aus TimeSeriesSplit</div>
+          <table class="data" id="knn-table"></table>
         </div>
       </div>
 
       <div class="grid cols-2">
         <div class="card">
-          <h3>ROC-Kurven — beide Modelle</h3>
-          <div class="card-sub">Durchgezogen = KNN (Holdout) · gestrichelt = RF (in-sample) · Diagonale = Zufall</div>
-          <div class="chart" id="cmp-roc" style="height:400px"></div>
+          <h3>ROC-Kurven</h3>
+          <div class="card-sub">Beide Richtungen · Diagonale = Zufall</div>
+          <div class="chart" id="knn-roc" style="height:380px"></div>
         </div>
         <div class="card">
-          <h3>Feature-Wichtigkeit</h3>
-          <div class="card-sub" id="fi-sub">KNN: Mutual Information · RF: Gini-Importance</div>
+          <h3>Feature-Wichtigkeit (Mutual Information)</h3>
+          <div class="card-sub">dunkel = selektiert, grau = verworfen</div>
           <div class="controls">
-            <div class="toggle-group" id="fi-model-toggle">
-              <button class="active" data-v="knn">KNN</button>
-              <button data-v="rf">Random Forest</button>
-            </div>
-            <div class="toggle-group" id="fi-dir-toggle">
+            <div class="toggle-group" id="knn-fi-toggle">
               <button class="active" data-v="A">Richtung A</button>
               <button data-v="B">Richtung B</button>
             </div>
           </div>
-          <div class="chart" id="cmp-fi" style="height:330px"></div>
+          <div class="chart" id="knn-fi" style="height:320px"></div>
         </div>
       </div>
 
       <div class="grid cols-2">
         <div class="card">
-          <h3>Konfusionsmatrizen</h3>
-          <div class="card-sub">
-            <div class="controls" style="margin:0">
-              <div class="toggle-group" id="cm-model-toggle">
-                <button class="active" data-v="knn">KNN</button>
-                <button data-v="rf">Random Forest</button>
-              </div>
-            </div>
-          </div>
-          <div class="grid cols-2" style="margin:8px 0 0">
-            <div><div class="card-sub" id="cm-a-cap">Richtung A</div><div class="chart" id="cmp-cm-a" style="height:280px"></div></div>
-            <div><div class="card-sub" id="cm-b-cap">Richtung B</div><div class="chart" id="cmp-cm-b" style="height:280px"></div></div>
-          </div>
+          <div class="card-sub">Richtung A · stock_down</div>
+          <div class="chart" id="knn-cm-a" style="height:300px"></div>
         </div>
         <div class="card">
-          <h3>Was unterscheidet die Modelle?</h3>
-          <div class="card-sub">Methodischer Kontrast</div>
-          <div class="info" id="cmp-info" style="margin-top:4px"></div>
+          <div class="card-sub">Richtung B · gpr_up_next</div>
+          <div class="chart" id="knn-cm-b" style="height:300px"></div>
         </div>
       </div>
     </section>
 
-    <!-- 6. EVENT-STUDIE -->
+    <!-- 4. RANDOM FOREST -->
+    <section class="section" id="rf">
+      <div class="section-header">
+        <h1>Random Forest <span class="badge muted">in-sample</span></h1>
+        <p>Nichtlineare Klassifikation (500 Bäume, Tiefe 5, klassengewichtet) auf denselben Zielvariablen. Hier <b>deskriptiv in-sample</b> trainiert und ausgewertet — die Kennzahlen beschreiben die Trainingsdaten und sind <b>nicht</b> als Prognosegüte interpretierbar.</p>
+      </div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>Kennzahlen</h3>
+          <div class="card-sub">In-Sample (optimistisch verzerrt) — siehe Hinweis unten</div>
+          <table class="data" id="rf-table"></table>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>ROC-Kurven</h3>
+          <div class="card-sub">Beide Richtungen · Diagonale = Zufall · in-sample</div>
+          <div class="chart" id="rf-roc" style="height:380px"></div>
+        </div>
+        <div class="card">
+          <h3>Feature-Wichtigkeit (Gini-Importance)</h3>
+          <div class="card-sub">Beitrag jedes Merkmals zur Knotenreinheit</div>
+          <div class="controls">
+            <div class="toggle-group" id="rf-fi-toggle">
+              <button class="active" data-v="A">Richtung A</button>
+              <button data-v="B">Richtung B</button>
+            </div>
+          </div>
+          <div class="chart" id="rf-fi" style="height:320px"></div>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <div class="card-sub">Richtung A · stock_down (in-sample)</div>
+          <div class="chart" id="rf-cm-a" style="height:300px"></div>
+        </div>
+        <div class="card">
+          <div class="card-sub">Richtung B · gpr_up_next (in-sample)</div>
+          <div class="chart" id="rf-cm-b" style="height:300px"></div>
+        </div>
+      </div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>Methodischer Hinweis</h3>
+          <div class="info" id="rf-info" style="margin-top:4px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. EVENT-STUDIE -->
     <section class="section" id="events">
       <div class="section-header">
         <h1>Event-Studie</h1>
@@ -265,21 +238,13 @@
           <div class="chart" id="ev-actthreat" style="height:380px"></div>
         </div>
       </div>
-
-      <div class="grid cols-1">
-        <div class="card">
-          <h3>Regression B: GPR-CAR ~ Aktien-Schock</h3>
-          <div class="card-sub" id="ev-reg-sub"></div>
-          <div class="chart" id="ev-reg" style="height:360px"></div>
-        </div>
-      </div>
     </section>
 
-    <!-- 7. SYNTHESE -->
+    <!-- 6. SYNTHESE -->
     <section class="section" id="synthesis">
       <div class="section-header">
         <h1>Synthese: Wer führt wen?</h1>
-        <p>Drei Verfahren beantworten dieselbe gerichtete Frage. K-Means liefert den Regime-Kontext. Hier die gebündelte Evidenz.</p>
+        <p>Die vier Verfahren beantworten dieselbe gerichtete Frage aus verschiedenen Perspektiven. Hier die gebündelte Evidenz.</p>
       </div>
 
       <div class="grid cols-1">
@@ -310,16 +275,6 @@
           <div class="info" id="syn-regime" style="margin-top:4px"></div>
         </div>
       </div>
-    </section>
-
-    <!-- 8. METHODIK -->
-    <section class="section" id="method">
-      <div class="section-header">
-        <h1>Methodik &amp; Übersicht</h1>
-        <p>Vier komplementäre Analyseverfahren auf demselben Datensatz.</p>
-      </div>
-      <div class="method-grid" id="method-grid"></div>
-      <div class="pipeline" id="pipeline"></div>
     </section>
 
   </main>

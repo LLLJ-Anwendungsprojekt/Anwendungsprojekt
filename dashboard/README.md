@@ -21,13 +21,24 @@ und ohne Internetverbindung** (Plotly.js ist lokal eingebunden).
 
 ## Abschnitte
 
+Die vier Analyseverfahren werden gleichberechtigt in je einem Tab dargestellt,
+gerahmt von Übersicht und Synthese (6 Tabs):
+
 1. **Übersicht** — KPIs, GPR vs. Aktien (Dual-Axis), Streudiagramm, Spike-Verteilung
-2. **Zeitreihen** — GPR-Komponenten, rebasierter Index-Vergleich, rollierende Korrelation
-3. **Regionen** — Renditen-Heatmap, Korrelationsmatrix, Regionen-Vergleich
-4. **Marktregimes** — K-Means (live berechnet), Zeitstrahl, PCA, Cluster-Profile
-5. **Vorhersage** — KNN bidirektional: ROC, Feature-Wichtigkeit, Konfusionsmatrizen
-6. **Event-Studie** — AR/CAR um GPR-Schocks, ACT vs. THREAT, Regression B
-7. **Methodik** — Verfahrensübersicht und Datenpipeline
+2. **K-Means** — Regime-Zeitstrahl, PCA-Projektion, Cluster-Profile, Cluster-Statistiken
+3. **KNN** — Kennzahlen-Tabelle, ROC, Feature-Wichtigkeit (MI), Konfusionsmatrizen (out-of-sample)
+4. **Random Forest** — Kennzahlen-Tabelle, ROC, Feature-Wichtigkeit (Gini), Konfusionsmatrizen (in-sample)
+5. **Event-Studie** — AR/CAR um GPR-Schocks, ACT vs. THREAT
+6. **Synthese** — Richtungsevidenz aller Verfahren, AUC-Vergleich, Verdict, Regime-Kontext
+
+> KNN und Random Forest haben bewusst eine **parallele Struktur** (gleiche
+> Kennzahlen, ROC, Feature-Wichtigkeit, Konfusion), damit der Kontrast
+> *out-of-sample* (KNN) ↔ *in-sample* (RF) direkt ablesbar ist.
+>
+> Hinweis: `build_dashboard.py` berechnet weiterhin **alle** Analysewerte (auch
+> regionale Heatmaps, rollierende Korrelation etc.) und legt sie in `data.js` ab.
+> Nicht jede Größe wird gerendert — zusätzliche Grafiken lassen sich ohne erneuten
+> Build wieder einblenden.
 
 ## Daten neu berechnen
 
