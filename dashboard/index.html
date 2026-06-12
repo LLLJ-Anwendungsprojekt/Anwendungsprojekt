@@ -16,10 +16,10 @@
 
     <ul class="nav" id="nav">
       <li class="nav-item active" data-target="overview">Übersicht</li>
+      <li class="nav-item" data-target="events">Lineare Regression</li>
       <li class="nav-item" data-target="kmeans">K-Means</li>
-      <li class="nav-item" data-target="knn">KNN</li>
       <li class="nav-item" data-target="rf">Random Forest</li>
-      <li class="nav-item" data-target="events">Event-Studie</li>
+      <li class="nav-item" data-target="knn">KNN</li>
       <li class="nav-item" data-target="synthesis">Synthese</li>
     </ul>
 
@@ -67,7 +67,52 @@
       </div>
     </section>
 
-    <!-- 2. K-MEANS -->
+    <!-- 2. LINEARE REGRESSION (Event-Studie) -->
+    <section class="section" id="events">
+      <div class="section-header">
+        <h1>Lineare Regression</h1>
+        <p>Abnormale Renditen (AR) und kumulierte AR (CAR) im ±5-Tage-Fenster um GPR-Schocks (95. Perzentil), rekonstruiert aus Tagesdaten. Die <b>lineare Regression</b> der kumulierten Reaktion (CAR) auf die Schockstärke quantifiziert Richtung und Stärke des Zusammenhangs.</p>
+      </div>
+
+      <div class="controls">
+        <label>Richtung:</label>
+        <div class="toggle-group" id="ev-dir-toggle">
+          <button class="active" data-v="A">A: GPR-Schock → Aktien</button>
+          <button data-v="B">B: Aktien-Crash → GPR</button>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>Durchschnittliche AR (±95 % KI)</h3>
+          <div class="card-sub" id="ev-ar-sub"></div>
+          <div class="chart" id="ev-ar" style="height:360px"></div>
+        </div>
+        <div class="card">
+          <h3>Kumuliertes CAR im Ereignisfenster</h3>
+          <div class="card-sub" id="ev-car-sub"></div>
+          <div class="chart" id="ev-car" style="height:360px"></div>
+        </div>
+      </div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>Lineare Regression: CAR ~ Schockstärke</h3>
+          <div class="card-sub" id="ev-reg-sub"></div>
+          <div class="chart" id="ev-reg" style="height:400px"></div>
+        </div>
+      </div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>ACT- vs. THREAT-Schocks</h3>
+          <div class="card-sub">Kumulierte Aktien-CAR nach realisierten Akten (ACT) vs. Bedrohungen (THREAT)</div>
+          <div class="chart" id="ev-actthreat" style="height:380px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. K-MEANS -->
     <section class="section" id="kmeans">
       <div class="section-header">
         <h1>K-Means-Clustering <span class="badge" id="km-badge"></span></h1>
@@ -100,52 +145,6 @@
           <h3>Cluster-Statistiken</h3>
           <div class="card-sub">Kennzahlen je Regime</div>
           <table class="data" id="km-table"></table>
-        </div>
-      </div>
-    </section>
-
-    <!-- 3. KNN -->
-    <section class="section" id="knn">
-      <div class="section-header">
-        <h1>K-Nearest-Neighbors <span class="badge">out-of-sample</span></h1>
-        <p>Distanzbasierte Klassifikation (StandardScaler → MI-Selektion → PCA → KNN), sauber auf einem temporalen 20 %-Holdout bewertet. Richtung A: GPR-Features → fallende Aktien (<code>stock_down</code>). Richtung B: Aktien-Features → steigende GPR (<code>gpr_up_next</code>).</p>
-      </div>
-
-      <div class="grid cols-1">
-        <div class="card">
-          <h3>Kennzahlen</h3>
-          <div class="card-sub">Test-Werte auf dem Holdout · CV-AUC aus TimeSeriesSplit</div>
-          <table class="data" id="knn-table"></table>
-        </div>
-      </div>
-
-      <div class="grid cols-2">
-        <div class="card">
-          <h3>ROC-Kurven</h3>
-          <div class="card-sub">Beide Richtungen · Diagonale = Zufall</div>
-          <div class="chart" id="knn-roc" style="height:380px"></div>
-        </div>
-        <div class="card">
-          <h3>Feature-Wichtigkeit (Mutual Information)</h3>
-          <div class="card-sub">dunkel = selektiert, grau = verworfen</div>
-          <div class="controls">
-            <div class="toggle-group" id="knn-fi-toggle">
-              <button class="active" data-v="A">Richtung A</button>
-              <button data-v="B">Richtung B</button>
-            </div>
-          </div>
-          <div class="chart" id="knn-fi" style="height:320px"></div>
-        </div>
-      </div>
-
-      <div class="grid cols-2">
-        <div class="card">
-          <div class="card-sub">Richtung A · stock_down</div>
-          <div class="chart" id="knn-cm-a" style="height:300px"></div>
-        </div>
-        <div class="card">
-          <div class="card-sub">Richtung B · gpr_up_next</div>
-          <div class="chart" id="knn-cm-b" style="height:300px"></div>
         </div>
       </div>
     </section>
@@ -203,39 +202,48 @@
       </div>
     </section>
 
-    <!-- 5. EVENT-STUDIE -->
-    <section class="section" id="events">
+    <!-- 5. KNN -->
+    <section class="section" id="knn">
       <div class="section-header">
-        <h1>Event-Studie</h1>
-        <p>Abnormale Renditen (AR) und kumulierte AR (CAR) im ±5-Tage-Fenster um GPR-Schocks (95. Perzentil), rekonstruiert aus Tagesdaten.</p>
+        <h1>K-Nearest-Neighbors <span class="badge">out-of-sample</span></h1>
+        <p>Distanzbasierte Klassifikation (StandardScaler → MI-Selektion → PCA → KNN), sauber auf einem temporalen 20 %-Holdout bewertet. Richtung A: GPR-Features → fallende Aktien (<code>stock_down</code>). Richtung B: Aktien-Features → steigende GPR (<code>gpr_up_next</code>).</p>
       </div>
 
-      <div class="controls">
-        <label>Richtung:</label>
-        <div class="toggle-group" id="ev-dir-toggle">
-          <button class="active" data-v="A">A: GPR-Schock → Aktien</button>
-          <button data-v="B">B: Aktien-Crash → GPR</button>
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>Kennzahlen</h3>
+          <div class="card-sub">Test-Werte auf dem Holdout · CV-AUC aus TimeSeriesSplit</div>
+          <table class="data" id="knn-table"></table>
         </div>
       </div>
 
       <div class="grid cols-2">
         <div class="card">
-          <h3>Durchschnittliche AR (±95 % KI)</h3>
-          <div class="card-sub" id="ev-ar-sub"></div>
-          <div class="chart" id="ev-ar" style="height:360px"></div>
+          <h3>ROC-Kurven</h3>
+          <div class="card-sub">Beide Richtungen · Diagonale = Zufall</div>
+          <div class="chart" id="knn-roc" style="height:380px"></div>
         </div>
         <div class="card">
-          <h3>Kumuliertes CAR im Ereignisfenster</h3>
-          <div class="card-sub" id="ev-car-sub"></div>
-          <div class="chart" id="ev-car" style="height:360px"></div>
+          <h3>Feature-Wichtigkeit (Mutual Information)</h3>
+          <div class="card-sub">dunkel = selektiert, grau = verworfen</div>
+          <div class="controls">
+            <div class="toggle-group" id="knn-fi-toggle">
+              <button class="active" data-v="A">Richtung A</button>
+              <button data-v="B">Richtung B</button>
+            </div>
+          </div>
+          <div class="chart" id="knn-fi" style="height:320px"></div>
         </div>
       </div>
 
-      <div class="grid cols-1">
+      <div class="grid cols-2">
         <div class="card">
-          <h3>ACT- vs. THREAT-Schocks</h3>
-          <div class="card-sub">Kumulierte Aktien-CAR nach realisierten Akten (ACT) vs. Bedrohungen (THREAT)</div>
-          <div class="chart" id="ev-actthreat" style="height:380px"></div>
+          <div class="card-sub">Richtung A · stock_down</div>
+          <div class="chart" id="knn-cm-a" style="height:300px"></div>
+        </div>
+        <div class="card">
+          <div class="card-sub">Richtung B · gpr_up_next</div>
+          <div class="chart" id="knn-cm-b" style="height:300px"></div>
         </div>
       </div>
     </section>

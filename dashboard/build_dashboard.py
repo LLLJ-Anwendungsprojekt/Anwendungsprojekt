@@ -547,8 +547,11 @@ def event_stats(ev: pd.DataFrame) -> dict:
     ci_car = 1.96 * np.sqrt((sem ** 2).cumsum())
     car_post = ev["CAR_post"]
     pval = scistats.ttest_1samp(car_post, 0).pvalue
-    # Regression CAR_post ~ shock_mag
-    sl, ic, r, pr, _ = scistats.linregress(ev["shock_mag"], car_post)
+    # Lineare Regression CAR_post ~ shock_mag (+ Streupunkte und Geraden-Endpunkte für den Plot)
+    rb = ev.dropna(subset=["shock_mag", "CAR_post"])
+    sl, ic, r, pr, _ = scistats.linregress(rb["shock_mag"], rb["CAR_post"])
+    xl = [float(rb["shock_mag"].min()), float(rb["shock_mag"].max())]
+    yl = [ic + sl * xl[0], ic + sl * xl[1]]
     return {
         "n": int(n),
         "rel_days": REL_DAYS,
@@ -559,8 +562,15 @@ def event_stats(ev: pd.DataFrame) -> dict:
         "car_post": round(float(car_post.mean()), 4),
         "p": float(pval),
         "reg_slope": round(float(sl), 5),
+        "reg_intercept": round(float(ic), 5),
         "reg_r2": round(float(r ** 2), 4),
         "reg_p": float(pr),
+        "reg_scatter": {
+            "x": rb["shock_mag"].round(3).tolist(),
+            "y": rb["CAR_post"].round(3).tolist(),
+            "line_x": [round(v, 3) for v in xl],
+            "line_y": [round(float(v), 4) for v in yl],
+        },
     }
 
 

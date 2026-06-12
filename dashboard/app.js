@@ -1,7 +1,7 @@
 /* ===================================================================
    GPR & Aktienmärkte — Dashboard Rendering (Plotly.js)
    Liest window.DASHBOARD_DATA (aus data.js) und rendert alle Abschnitte.
-   Struktur: Übersicht · K-Means · KNN · Random Forest · Event-Studie · Synthese.
+   Struktur: Übersicht · Lineare Regression · K-Means · Random Forest · KNN · Synthese.
    Die vier Verfahren werden gleichberechtigt in je einem Tab dargestellt.
    =================================================================== */
 
@@ -297,7 +297,7 @@ function drawRfFI() {
   drawFI("rf-fi", entries, colors, "Gini-Importance");
 }
 
-/* =================== 5. EVENT-STUDIE =================== */
+/* =================== 5. LINEARE REGRESSION (Event-Studie) =================== */
 function renderEvents() {
   drawEventDir("A");
   // ACT vs THREAT
@@ -335,6 +335,8 @@ function drawEventDir(dir) {
   document.getElementById("ev-car-sub").textContent =
     `CAR_post = ${fmtPct(e.car_post)} · p = ${e.p.toExponential(2)}`;
 
+  drawEventReg(dir);
+
   Plotly.react("ev-ar", [{
     x: rel, y: e.mean_ar, type: "bar", name: `Ø AR ${target}`,
     marker: { color: e.mean_ar.map(v => v >= 0 ? COLORS.positive : COLORS.negative) },
@@ -359,6 +361,37 @@ function drawEventDir(dir) {
     xaxis: { title: "Tage relativ zum Event", gridcolor: "#F0F0F0", dtick: 1 },
     yaxis: { title: `Ø Kumulatives AR ${target} (%)`, gridcolor: "#F0F0F0", zeroline: true, zerolinecolor: "#E0E0E0" },
     showlegend: false,
+  }), CONFIG);
+}
+
+/* Lineare Regression: kumulierte Reaktion (CAR_post) ~ Schockstärke am Event-Tag */
+function drawEventReg(dir) {
+  const e = D.events[dir], sc = e.reg_scatter;
+  const target = dir === "A" ? "Aktien" : "GPR";
+  const xtitle = dir === "A" ? "GPR-Schock am Event-Tag (%)" : "Aktien-Schock am Event-Tag (%)";
+  const intercept = e.reg_intercept != null ? e.reg_intercept
+    : (sc.line_y[0] - e.reg_slope * sc.line_x[0]);
+  const sign = intercept >= 0 ? "+" : "−";
+
+  document.getElementById("ev-reg-sub").textContent =
+    `OLS · β = ${fmtNum(e.reg_slope, 4)} · R² = ${fmtNum(e.reg_r2, 4)} · p = ${e.reg_p.toExponential(2)} · n = ${sc.x.length}`;
+
+  Plotly.react("ev-reg", [
+    { x: sc.x, y: sc.y, type: "scattergl", mode: "markers", name: "Events",
+      marker: { color: COLORS.accent, size: 5, opacity: 0.45 },
+      hovertemplate: "Schock %{x:.2f}%<br>CAR %{y:.2f}%<extra></extra>" },
+    { x: sc.line_x, y: sc.line_y, type: "scatter", mode: "lines", name: "Regressionsgerade",
+      line: { color: COLORS.accent2, width: 2.6 }, hoverinfo: "skip" },
+  ], L({
+    shapes: [
+      { type: "line", x0: 0, x1: 0, y0: 0, y1: 1, xref: "x", yref: "paper", line: { color: COLORS.muted, dash: "dot", width: 1 } },
+    ],
+    xaxis: { title: xtitle, gridcolor: "#F0F0F0", zeroline: true, zerolinecolor: "#E0E0E0" },
+    yaxis: { title: `CAR ${target} (t+1 … t+5, %)`, gridcolor: "#F0F0F0", zeroline: true, zerolinecolor: "#E0E0E0" },
+    legend: { orientation: "h", y: -0.18 },
+    annotations: [{ x: 0.02, y: 0.98, xref: "paper", yref: "paper", showarrow: false, align: "left",
+      text: `y = ${fmtNum(e.reg_slope, 4)}·x ${sign} ${fmtNum(Math.abs(intercept), 3)}<br>R² = ${fmtNum(e.reg_r2, 4)}`,
+      font: { size: 11, color: COLORS.muted } }],
   }), CONFIG);
 }
 
