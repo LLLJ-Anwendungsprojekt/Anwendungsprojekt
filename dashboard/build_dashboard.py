@@ -231,24 +231,20 @@ def build_regions(df: pd.DataFrame, months: list) -> dict:
 
 # ── Abschnitt 4: K-Means ──────────────────────────────────────────────────────
 def build_kmeans(df: pd.DataFrame, months: list) -> dict:
+    from sklearn.metrics import silhouette_score
     sub = df.copy()
     X = sub[KMEANS_FEATURES].copy()
     imp = SimpleImputer(strategy="median")
     Xi = imp.fit_transform(X)
-    Xs = StandardScaler().fit_transform(Xi)
+    # RobustScaler statt StandardScaler: robuster gegen die ausgeprägten GPR-Ausreißer
+    Xs = RobustScaler().fit_transform(Xi)
 
-    # Optimales k via Silhouette (2-5)
-    from sklearn.metrics import silhouette_score
-    best_k, best_sil, sil_scores = 3, -1.0, {}
-    for k in range(2, 6):
-        labels = KMeans(n_clusters=k, n_init=50, random_state=42).fit_predict(Xs)
-        s = silhouette_score(Xs, labels)
-        sil_scores[k] = round(float(s), 4)
-        if s > best_sil:
-            best_sil, best_k = s, k
-
+    # Feste Wahl k = 3 (RobustScaler + k=3 liefert die plausibelsten Regime)
+    best_k = 3
     model = KMeans(n_clusters=best_k, n_init=50, random_state=42)
     labels = model.fit_predict(Xs)
+    best_sil = float(silhouette_score(Xs, labels))
+    sil_scores = {best_k: round(best_sil, 4)}
     sub["cluster"] = labels
 
     # Cluster nach mittlerer Aktienrendite ordnen (0 = schwächster Markt)

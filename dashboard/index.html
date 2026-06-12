@@ -15,11 +15,14 @@
     <div class="sidebar-subtitle">Geopolitisches Risiko · BI</div>
 
     <ul class="nav" id="nav">
+      <li class="nav-group">Daten</li>
       <li class="nav-item active" data-target="overview">Übersicht</li>
+      <li class="nav-group">Verfahren</li>
       <li class="nav-item" data-target="events">Lineare Regression</li>
       <li class="nav-item" data-target="kmeans">K-Means</li>
       <li class="nav-item" data-target="rf">Random Forest</li>
       <li class="nav-item" data-target="knn">KNN</li>
+      <li class="nav-group">Ergebnis</li>
       <li class="nav-item" data-target="synthesis">Synthese</li>
     </ul>
 
@@ -36,6 +39,14 @@
         <p>Zusammenhang zwischen Geopolitischem Risiko (GPR) und 12 globalen Aktienindizes, 2000–2021. Vier Verfahren beleuchten diesen Zusammenhang aus unterschiedlichen Blickwinkeln.</p>
       </div>
       <div class="kpi-row" id="kpi-row"></div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>Datengrundlage</h3>
+          <div class="card-sub">Welche Indizes, welcher Zeitraum, welche Kennzahlen die Analyse speist</div>
+          <div class="databasis" id="ov-databasis"></div>
+        </div>
+      </div>
 
       <div class="grid cols-1">
         <div class="card">
@@ -110,13 +121,20 @@
           <div class="chart" id="ev-actthreat" style="height:380px"></div>
         </div>
       </div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>Kernaussage</h3>
+          <div class="info" id="ev-verdict" style="margin-top:4px"></div>
+        </div>
+      </div>
     </section>
 
     <!-- 3. K-MEANS -->
     <section class="section" id="kmeans">
       <div class="section-header">
         <h1>K-Means-Clustering <span class="badge" id="km-badge"></span></h1>
-        <p>Unüberwachte Erkennung wiederkehrender Marktregime aus monatlichen GPR- und Aktien-Features (StandardScaler → KMeans, optimales <i>k</i> via Silhouette-Score). Liefert den Regime-Kontext für die übrigen Verfahren.</p>
+        <p>Unüberwachte Erkennung wiederkehrender Marktregime aus monatlichen GPR- und Aktien-Features (RobustScaler → KMeans mit <i>k</i> = 3). Liefert den Regime-Kontext für die übrigen Verfahren.</p>
       </div>
 
       <div class="grid cols-1">
@@ -145,6 +163,13 @@
           <h3>Cluster-Statistiken</h3>
           <div class="card-sub">Kennzahlen je Regime</div>
           <table class="data" id="km-table"></table>
+        </div>
+      </div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>Kernaussage</h3>
+          <div class="info" id="km-verdict" style="margin-top:4px"></div>
         </div>
       </div>
     </section>
@@ -244,6 +269,13 @@
         <div class="card">
           <div class="card-sub">Richtung B · gpr_up_next</div>
           <div class="chart" id="knn-cm-b" style="height:300px"></div>
+        </div>
+      </div>
+
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>Kernaussage</h3>
+          <div class="info" id="knn-verdict" style="margin-top:4px"></div>
         </div>
       </div>
     </section>

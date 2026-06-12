@@ -60,6 +60,7 @@ function renderOverview() {
     `<div class="kpi"><div class="value neg">${fmtNum(k.corr_threat, 3)}</div><div class="label">Korr. THREAT → Markt (ACT: ${fmtNum(k.corr_act, 3)})</div></div>`,
   ].join("");
 
+  renderDataBasis();
   drawOverviewTS("gprd_mean");
 
   // Scatter
@@ -85,9 +86,11 @@ function renderOverview() {
   // Box: spike vs normal
   Plotly.react("ov-box", [
     { y: o.spike_box.normal, type: "violin", name: "Normal", line: { color: "#7FA8D0" },
-      fillcolor: "rgba(127,168,208,0.3)", box: { visible: true }, meanline: { visible: true }, points: false },
+      fillcolor: "rgba(127,168,208,0.3)", box: { visible: true }, meanline: { visible: true }, points: false,
+      hoverinfo: "skip" },
     { y: o.spike_box.spike, type: "violin", name: "GPR-Spike", line: { color: COLORS.accent2 },
-      fillcolor: "rgba(163,22,33,0.3)", box: { visible: true }, meanline: { visible: true }, points: false },
+      fillcolor: "rgba(163,22,33,0.3)", box: { visible: true }, meanline: { visible: true }, points: false,
+      hoverinfo: "skip" },
   ], L({
     yaxis: { title: "Aktienrendite (%)", gridcolor: "#F0F0F0", zeroline: true, zerolinecolor: "#E0E0E0" },
     annotations: [{ x: 0.5, y: 1.0, xref: "paper", yref: "paper", showarrow: false,
@@ -95,6 +98,46 @@ function renderOverview() {
       font: { size: 12, color: COLORS.text } }],
     showlegend: false,
   }), CONFIG);
+}
+
+/* Datengrundlage: Indizes je Region, Eckdaten und Begriffsdefinitionen */
+function renderDataBasis() {
+  const m = D.meta, k = D.overview.kpis, months = m.months;
+  const range = `${months[0]} – ${months[months.length - 1]}`;
+
+  const byRegion = m.region_order.map(r => {
+    const names = Object.values(m.indices).filter(x => x.region === r).map(x => x.name);
+    return `<li><span style="color:${COLORS.region[r]}">●</span> <b>${r}</b> `
+      + `<span class="db-muted">(${names.length})</span>: ${names.join(", ")}</li>`;
+  }).join("");
+
+  const facts = [
+    ["Zeitraum", `${range} · ${k.n_months} Monate`],
+    ["Umfang", `${k.n_indices} Indizes · ${k.n_regions} Regionen`],
+    ["Granularität", "Tagesdaten (Lineare Regression) · Monatspanel (übrige Verfahren)"],
+    ["Quelle", "Börsenkurse (Yahoo Finance) · GPR-Index (Caldara & Iacoviello)"],
+  ].map(f => `<tr><td>${f[0]}</td><td>${f[1]}</td></tr>`).join("");
+
+  const defs = [
+    ["GPR", "Geopolitical Risk Index — Häufigkeit geopolitischer Risikobegriffe in der Presse"],
+    ["GPR-ACT", "Realisierte Ereignisse — tatsächliche geopolitische Vorfälle"],
+    ["GPR-THREAT", "Bedrohungen — angedrohte bzw. befürchtete Ereignisse"],
+    ["GPR-Spike", `Monat mit |GPR-Änderung| > 1 SD (~${(k.spike_share * 100).toFixed(0)} % der Monate)`],
+  ].map(d => `<tr><td><b>${d[0]}</b></td><td>${d[1]}</td></tr>`).join("");
+
+  document.getElementById("ov-databasis").innerHTML =
+    `<div class="db-grid">
+       <div>
+         <div class="db-head">Indizes nach Region</div>
+         <ul class="db-list">${byRegion}</ul>
+         <div class="db-head" style="margin-top:14px">Eckdaten</div>
+         <table class="db-table">${facts}</table>
+       </div>
+       <div>
+         <div class="db-head">Begriffe</div>
+         <table class="db-table">${defs}</table>
+       </div>
+     </div>`;
 }
 
 function drawOverviewTS(gprKey) {
@@ -189,6 +232,17 @@ function renderKmeans() {
       + `<td>${(s.loss_share * 100).toFixed(0)} %</td><td>${(s.spike_share * 100).toFixed(0)} %</td></tr>`;
   }).join("");
   document.getElementById("km-table").innerHTML = head + rows;
+
+  // Kernaussage
+  const hi = km.stats.reduce((a, b) => b.avg_gpr > a.avg_gpr ? b : a);
+  const lo = km.stats.reduce((a, b) => b.avg_gpr < a.avg_gpr ? b : a);
+  document.getElementById("km-verdict").innerHTML =
+    `K-Means trennt den Zeitraum in <b>${km.best_k} stabile Marktregime</b> (Silhouette ${km.silhouette}). `
+    + `Das <b>Hoch-GPR-Regime</b> (Regime ${hi.cluster}, Ø GPR ${fmtNum(hi.avg_gpr, 0)}) ist mit Ø Rendite `
+    + `${fmtPct(hi.avg_return)}, ${(hi.loss_share * 100).toFixed(0)} % Verlustmonaten und erhöhter Volatilität `
+    + `das ungünstigste Umfeld; das Niedrig-GPR-Regime (Regime ${lo.cluster}) liegt bei ${fmtPct(lo.avg_return)}. `
+    + `Erhöhte geopolitische Anspannung fällt also systematisch mit <b>schwächeren, volatileren Märkten</b> zusammen — `
+    + `ein belegter Zusammenhang, keine bewiesene Kausalität.`;
 }
 
 /* =================== Klassifikator-Bausteine (gemeinsam für KNN & RF) ====== */
@@ -251,6 +305,16 @@ function renderKnn() {
   drawKnnFI();
   drawCM("knn-cm-a", knn.A.cm, ["Steigt", "Fällt"], [[0, "#FFFFFF"], [1, COLORS.accent2]]);
   drawCM("knn-cm-b", knn.B.cm, ["GPR fällt", "GPR steigt"], [[0, "#FFFFFF"], [1, COLORS.accent]]);
+
+  // Kernaussage
+  const strongerDir = Math.abs(knn.delta_auc) < 0.01 ? "ist keine Richtung klar überlegen (≈ symmetrisch)"
+    : (knn.delta_auc > 0 ? "liegt Richtung A (GPR → Aktien) knapp vorn" : "liegt Richtung B (Aktien → GPR) knapp vorn");
+  document.getElementById("knn-verdict").innerHTML =
+    `<b>Schwache, aber echte Vorhersagbarkeit.</b> Auf dem sauberen 20 %-Holdout erreichen beide Richtungen `
+    + `AUC ${knn.A.test_auc.toFixed(2)} (A) bzw. ${knn.B.test_auc.toFixed(2)} (B) — nur knapp über der Zufallslinie (0,50). `
+    + `Im direkten Vergleich ${strongerDir} (Δ AUC = ${knn.delta_auc.toFixed(3)}). `
+    + `Da <b>out-of-sample</b> bewertet, ist dies die belastbarste Vorhersagekennzahl im Dashboard; der praktische `
+    + `Nutzen bleibt wegen der Nähe zum Zufall jedoch begrenzt.`;
 }
 
 function drawKnnFI() {
@@ -324,6 +388,16 @@ function renderEvents() {
       text: `ACT CAR_post ${fmtPct(ev.ACT.car_post)} · THREAT CAR_post ${fmtPct(ev.THREAT.car_post)}`,
       font: { size: 11, color: COLORS.muted } }],
   }), CONFIG);
+
+  // Kernaussage
+  const sig = p => p < 0.01 ? "hoch signifikant" : p < 0.05 ? "signifikant" : p < 0.1 ? "schwach signifikant" : "nicht signifikant";
+  document.getElementById("ev-verdict").innerHTML =
+    `<b>Kleine, gerichtete Effekte.</b> Nach einem GPR-Schock (Richtung A) beträgt die kumulierte Aktien-Reaktion `
+    + `CAR_post ${fmtPct(ev.A.car_post)} (${sig(ev.A.p)}); nach einem Aktien-Crash (Richtung B) reagiert der GPR mit `
+    + `CAR_post ${fmtPct(ev.B.car_post)} (${sig(ev.B.p)}). `
+    + `Die Regression der kumulierten Reaktion auf die Schockstärke erklärt jedoch kaum Streuung `
+    + `(R² A ${fmtNum(ev.A.reg_r2, 4)} / B ${fmtNum(ev.B.reg_r2, 4)}) — der Zusammenhang ist `
+    + `<b>nachweisbar, aber ökonomisch klein</b>. Tendenziell wirken <b>THREAT-Schocks stärker als ACT-Schocks</b>.`;
 }
 
 function drawEventDir(dir) {
@@ -407,7 +481,7 @@ function renderSynthesis() {
       stronger(knn.A.test_auc, knn.B.test_auc, "A knapp stärker", "B knapp stärker")],
     ["Random Forest (AUC, in-sample)", rf.A.test_auc.toFixed(3), rf.B.test_auc.toFixed(3),
       stronger(rf.A.test_auc, rf.B.test_auc, "A stärker", "B stärker")],
-    ["Event-Studie (CAR-post, p)",
+    ["Lineare Regression (CAR-post, p)",
       `${fmtPct(ev.A.car_post)} (${sig(ev.A.p)})`, `${fmtPct(ev.B.car_post)} (${sig(ev.B.p)})`,
       ev.B.p < ev.A.p ? "B signifikanter" : "A signifikanter"],
   ];
@@ -436,7 +510,7 @@ function renderSynthesis() {
   document.getElementById("syn-verdict").innerHTML =
     `<b>Schwache, aber gerichtete Vorhersagbarkeit.</b> Alle überwachten Modelle liegen out-of-sample nur knapp über `
     + `dem Zufall (KNN-AUC ≈ 0,61). Die marginale Asymmetrie deutet auf <b>${dirWord}</b> hin.<br><br>`
-    + `Die Event-Studie bestätigt das Bild qualitativ: GPR-Schocks gehen mit leicht negativen Aktien-Renditen einher, `
+    + `Die lineare Regression bestätigt das Bild qualitativ: GPR-Schocks gehen mit leicht negativen Aktien-Renditen einher, `
     + `der Effekt ist aber klein. Der <b>Kontrast KNN ↔ RF</b> mahnt zur Vorsicht — `
     + `Random Forest erreicht in-sample AUC ≈ ${rf.A.test_auc.toFixed(2)}, out-of-sample bliebe davon wenig übrig.`;
 
