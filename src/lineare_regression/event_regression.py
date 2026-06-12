@@ -1,11 +1,12 @@
 """
-Event Study + Lineare Regression: GPR-Schock -> Aktien (A) | Crash -> GPR (B).
+Event Study + Lineare Regression
+GPR-Schock -> Aktienreaktion (A) | Aktien-Crash -> GPR-Reaktion (B)
 
-Input:  data/processed/stocks_gpr_daily.csv
-Output: results/lineare_regression/event_study_richtung_A.pdf
-        results/lineare_regression/event_study_richtung_B.pdf
-        results/lineare_regression/event_study_regression_B.pdf
-        results/lineare_regression/event_study_act_vs_threat.pdf
+Erzeugt genau 4 PDFs:
+  results/event_study_richtung_A.pdf
+  results/event_study_richtung_B.pdf
+  results/event_study_regression_B.pdf
+  results/event_study_act_vs_threat.pdf
 """
 
 import os, sys, warnings
@@ -24,7 +25,7 @@ DATA = "data/processed/stocks_gpr_daily.csv"
 KEEP = ["000001.SS", "399001.SZ", "GDAXI", "GSPTSE", "HSI", "IXIC",
         "KS11", "N100", "N225", "NYA", "SSMI", "TWII"]
 START, END   = "2000-01-01", "2021-05-31"
-OUTPUT_DIR   = "results/lineare_regression"
+OUTPUT_DIR   = "results"
 EVENT_WINDOW = 5
 ESTIM_GAP    = 1
 ESTIM_LEN    = 25
@@ -223,11 +224,12 @@ def plot_act_vs_threat(ev_act, ev_thr, outfile):
         m      = sm.OLS(y, sm.add_constant(x)).fit(cov_type="HAC", cov_kwds={"maxlags": HAC_LAGS})
         pred   = m.get_prediction(sm.add_constant(x_line)).summary_frame(alpha=0.05)
 
+        line_color = "#111111"  # kontrastiert klar mit den farbigen Streupunkten dahinter
         ax1.scatter(x, y, s=10, alpha=0.3, color=color, edgecolors="none", label="Events")
-        ax1.plot(x_line, pred["mean"], color=color, lw=2.0,
+        ax1.plot(x_line, pred["mean"], color=line_color, lw=2.4,
                  label=f"β={s['slope']:+.4f}  p={s['p_slope']:.2e}")
         ax1.fill_between(x_line, pred["mean_ci_lower"], pred["mean_ci_upper"],
-                         color=color, alpha=0.12, label="95%-KI")
+                         color=line_color, alpha=0.15, label="95%-KI")
         ax1.axhline(0, color="gray", lw=0.6, ls="--")
         ax1.axvline(0, color="gray", lw=0.6, ls="--")
         ax1.set_title(f"Regression: CAR_post ~ GPRD_{label}-Schock\n"
