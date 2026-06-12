@@ -310,11 +310,11 @@ function renderKnn() {
   const strongerDir = Math.abs(knn.delta_auc) < 0.01 ? "ist keine Richtung klar überlegen (≈ symmetrisch)"
     : (knn.delta_auc > 0 ? "liegt Richtung A (GPR → Aktien) knapp vorn" : "liegt Richtung B (Aktien → GPR) knapp vorn");
   document.getElementById("knn-verdict").innerHTML =
-    `<b>Schwache, aber echte Vorhersagbarkeit.</b> Auf dem sauberen 20 %-Holdout erreichen beide Richtungen `
+    `Auf dem temporalen 20 %-Holdout erreichen beide Richtungen `
     + `AUC ${knn.A.test_auc.toFixed(2)} (A) bzw. ${knn.B.test_auc.toFixed(2)} (B) — nur knapp über der Zufallslinie (0,50). `
     + `Im direkten Vergleich ${strongerDir} (Δ AUC = ${knn.delta_auc.toFixed(3)}). `
-    + `Da <b>out-of-sample</b> bewertet, ist dies die belastbarste Vorhersagekennzahl im Dashboard; der praktische `
-    + `Nutzen bleibt wegen der Nähe zum Zufall jedoch begrenzt.`;
+    + `Die Bewertung erfolgt <b>out-of-sample</b> und beschreibt damit die Übertragung auf ungesehene Zeiträume; `
+    + `wegen der Nähe zum Zufall ist die erreichte Vorhersagbarkeit gering.`;
 }
 
 function drawKnnFI() {
@@ -471,25 +471,56 @@ function drawEventReg(dir) {
 
 /* =================== 6. SYNTHESE =================== */
 function renderSynthesis() {
-  const knn = D.knn, rf = D.rf, ev = D.events;
+  const knn = D.knn, rf = D.rf, ev = D.events, km = D.kmeans, k = D.overview.kpis;
   const sig = p => p < 0.01 ? "***" : p < 0.05 ? "**" : p < 0.1 ? "*" : "n.s.";
+  const sigWord = p => p < 0.01 ? "hoch signifikant" : p < 0.05 ? "signifikant" : p < 0.1 ? "schwach signifikant" : "nicht signifikant";
 
-  // Richtungsevidenz-Tabelle
-  const stronger = (a, b, la, lb) => Math.abs(a - b) < 0.01 ? "≈ symmetrisch" : (a > b ? la : lb);
-  const rows = [
-    ["KNN (AUC, out-of-sample)", knn.A.test_auc.toFixed(3), knn.B.test_auc.toFixed(3),
-      stronger(knn.A.test_auc, knn.B.test_auc, "A knapp stärker", "B knapp stärker")],
-    ["Random Forest (AUC, in-sample)", rf.A.test_auc.toFixed(3), rf.B.test_auc.toFixed(3),
-      stronger(rf.A.test_auc, rf.B.test_auc, "A stärker", "B stärker")],
-    ["Lineare Regression (CAR-post, p)",
-      `${fmtPct(ev.A.car_post)} (${sig(ev.A.p)})`, `${fmtPct(ev.B.car_post)} (${sig(ev.B.p)})`,
-      ev.B.p < ev.A.p ? "B signifikanter" : "A signifikanter"],
+  // ── ① Antwort-Banner ──────────────────────────────────────────────
+  const dirWord = Math.abs(knn.delta_auc) < 0.005 ? "Keine Richtung dominiert klar"
+    : (knn.delta_auc < 0 ? "Aktien laufen dem GPR leicht voraus" : "GPR läuft den Aktien leicht voraus");
+  document.getElementById("syn-banner").innerHTML =
+    `<div class="lead">Gesamtbefund</div>`
+    + `<b>${dirWord}</b> — doch alle Vorhersagesignale sind schwach (beste out-of-sample-AUC ≈ ${knn.A.test_auc.toFixed(2)}, `
+    + `nur knapp über dem Zufall). Geopolitisches Risiko bewegt die Märkte spürbar vor allem in `
+    + `<b>Spike-Phasen</b> (Ø ${fmtPct(k.avg_return_spike)} vs. ${fmtPct(k.avg_return_normal)} sonst).`;
+
+  // ── ② Verfahren-Vergleich (neutral, ohne Rangfolge) ────────────────
+  const evBest = ev.A.p < ev.B.p ? ev.A : ev.B;        // signifikantere Richtung
+  const evDir = ev.A.p < ev.B.p ? "A" : "B";
+  const methods = [
+    { name: "Lineare Regression", type: "deskriptiv", metric: fmtPct(evBest.car_post),
+      label: `CAR_post · Richtung ${evDir} (${sigWord(evBest.p)})`,
+      take: "Gerichteter Effekt nachweisbar, aber ökonomisch klein (R² ≈ 0)." },
+    { name: "K-Means", type: "unüberwacht", metric: `${km.best_k} Regime`,
+      label: `Silhouette ${km.silhouette}`,
+      take: "Gut getrennte Regime: Hoch-GPR = schwache, volatile Märkte." },
+    { name: "Random Forest", type: "in-sample", metric: rf.A.test_auc.toFixed(2),
+      label: "AUC (Richtung A) · in-sample",
+      take: "Hohe AUC, aber in-sample — beschreibt nur die Trainingsdaten." },
+    { name: "KNN", type: "out-of-sample", metric: knn.A.test_auc.toFixed(2),
+      label: "AUC (Richtung A) · Holdout",
+      take: "Sauber out-of-sample bewertet; Signal knapp über dem Zufall." },
   ];
-  document.getElementById("syn-table").innerHTML =
-    "<tr><th>Verfahren</th><th>Richtung A: GPR→Aktien</th><th>Richtung B: Aktien→GPR</th><th>Stärkere Richtung</th></tr>"
-    + rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("");
+  document.getElementById("syn-methods").innerHTML = methods.map(m =>
+    `<div class="method-card">`
+    + `<div class="m-name">${m.name}</div><div class="m-type">${m.type}</div>`
+    + `<div class="m-metric">${m.metric}</div><div class="m-metric-label">${m.label}</div>`
+    + `<div class="m-take">${m.take}</div></div>`
+  ).join("");
 
-  // AUC-Vergleichsbalken
+  // Kennzahlen-Vergleichstabelle (alle 4, heterogene Metriken)
+  document.getElementById("syn-table").innerHTML =
+    "<tr><th>Verfahren</th><th>Typ</th><th>Kernfrage</th><th>Kennzahl</th><th>Aussage</th></tr>"
+    + `<tr><td>Lineare Regression</td><td>deskriptiv</td><td>Reaktion auf Schock?</td>`
+    + `<td>CAR_post ${fmtPct(evBest.car_post)} (${sig(evBest.p)})</td><td>klein, gerichtet</td></tr>`
+    + `<tr><td>K-Means</td><td>unüberwacht</td><td>Welche Marktregime?</td>`
+    + `<td>${km.best_k} Regime · Sil. ${km.silhouette}</td><td>klar getrennt</td></tr>`
+    + `<tr><td>Random Forest</td><td>in-sample</td><td>Klassifizierbar?</td>`
+    + `<td>AUC ${rf.A.test_auc.toFixed(3)} / ${rf.B.test_auc.toFixed(3)}</td><td>nur deskriptiv</td></tr>`
+    + `<tr><td>KNN</td><td>out-of-sample</td><td>Vorhersagbar?</td>`
+    + `<td>AUC ${knn.A.test_auc.toFixed(3)} / ${knn.B.test_auc.toFixed(3)}</td><td>schwach, aber echt</td></tr>`;
+
+  // AUC-Vergleichsbalken (KNN out-of-sample vs RF in-sample)
   Plotly.react("syn-auc", [
     { x: ["Richtung A", "Richtung B"], y: [knn.A.test_auc, knn.B.test_auc], type: "bar", name: "KNN (o.o.s.)",
       marker: { color: COLORS.accent }, hovertemplate: "%{x}<br>AUC %{y:.3f}<extra>KNN</extra>" },
@@ -505,23 +536,39 @@ function renderSynthesis() {
     legend: { orientation: "h", y: -0.15 },
   }), CONFIG);
 
-  // Verdict
-  const dirWord = knn.delta_auc < 0 ? "Richtung B (Aktien laufen dem GPR voraus)" : "Richtung A (GPR läuft den Aktien voraus)";
+  // Warum die Verfahren auseinanderliegen (ohne Rangfolge)
   document.getElementById("syn-verdict").innerHTML =
-    `<b>Schwache, aber gerichtete Vorhersagbarkeit.</b> Alle überwachten Modelle liegen out-of-sample nur knapp über `
-    + `dem Zufall (KNN-AUC ≈ 0,61). Die marginale Asymmetrie deutet auf <b>${dirWord}</b> hin.<br><br>`
-    + `Die lineare Regression bestätigt das Bild qualitativ: GPR-Schocks gehen mit leicht negativen Aktien-Renditen einher, `
-    + `der Effekt ist aber klein. Der <b>Kontrast KNN ↔ RF</b> mahnt zur Vorsicht — `
-    + `Random Forest erreicht in-sample AUC ≈ ${rf.A.test_auc.toFixed(2)}, out-of-sample bliebe davon wenig übrig.`;
+    `Die Verfahren sind <b>nicht direkt vergleichbar</b> — sie beantworten unterschiedliche Fragen mit unterschiedlichen `
+    + `Metriken. <b>K-Means</b> ist unüberwacht (Silhouette misst Trennschärfe, keine Vorhersage). `
+    + `<b>Random Forest</b> wurde <b>in-sample</b> ausgewertet: Die hohe AUC (${rf.A.test_auc.toFixed(2)}) beschreibt die `
+    + `Trainingsdaten, nicht die Prognose — der Kontrast zur <b>out-of-sample</b> bewerteten KNN-AUC `
+    + `(${knn.A.test_auc.toFixed(2)}) illustriert diese In-Sample-Falle. Die lineare Regression liefert die Effektgröße `
+    + `(CAR), nicht die Klassifikationsgüte. Die Kennzahlen ergänzen sich also, statt sich zu einer Rangliste zu fügen.`;
 
-  // Regime-Kontext
-  const km = D.kmeans;
+  // ── ③ Datenbefunde (Auswirkungen, modellunabhängig) ────────────────
+  document.getElementById("syn-data").innerHTML =
+    `<b>Wie stark beeinflussen sich GPR und Aktien?</b> Der Zusammenhang ist <b>negativ, aber klein</b>: `
+    + `GPR-THREAT korreliert mit den Aktienrenditen mit ${fmtNum(k.corr_threat, 3)}, GPR-ACT mit ${fmtNum(k.corr_act, 3)}. `
+    + `Spürbar wird der Effekt vor allem in Stressphasen — in GPR-Spike-Monaten fällt die Ø Rendite auf `
+    + `<b>${fmtPct(k.avg_return_spike)}</b> (vs. ${fmtPct(k.avg_return_normal)} sonst).<br><br>`
+    + `<b>Was ist belastbar?</b> <b>Belastbar</b> sind die gleichzeitigen Muster: der Spike-Renditeeffekt und `
+    + `<b>THREAT > ACT</b> (antizipierte Risiken bewegen Märkte stärker als realisierte) sind über den gesamten `
+    + `Zeitraum konsistent. <b>Wenig belastbar</b> ist dagegen die vorlaufende Wirkung — wer wen vorhersagt, `
+    + `liegt nahe am Zufall und taugt nicht als verlässliches Signal.`;
+
   const hiGpr = km.stats.reduce((a, b) => b.avg_gpr > a.avg_gpr ? b : a);
   document.getElementById("syn-regime").innerHTML =
-    `K-Means trennt den Beobachtungszeitraum in <b>${km.best_k} Regime</b> (Silhouette ${km.silhouette}). `
-    + `Das Hoch-GPR-Regime (Regime ${hiGpr.cluster}, Ø GPR ${fmtNum(hiGpr.avg_gpr, 0)}) weist mit `
+    `Das Hoch-GPR-Regime (Regime ${hiGpr.cluster}, Ø GPR ${fmtNum(hiGpr.avg_gpr, 0)}) weist mit `
     + `<b>${(hiGpr.loss_share * 100).toFixed(0)} % Verlustmonaten</b> und ${(hiGpr.spike_share * 100).toFixed(0)} % GPR-Spikes `
-    + `das ungünstigere Markt­umfeld auf. Die gerichteten Effekte oben sind also vor allem ein Phänomen erhöhter geopolitischer Anspannung.`;
+    + `das ungünstigste Marktumfeld auf. Die gerichteten Effekte sind also vor allem ein Phänomen `
+    + `erhöhter geopolitischer Anspannung — in ruhigen Phasen verschwinden sie weitgehend.`;
+
+  // ── ④ Einordnung & Limitationen ───────────────────────────────────
+  document.getElementById("syn-limits").innerHTML =
+    `<b>Vorsicht bei der Interpretation.</b> Die out-of-sample-Vorhersagekraft liegt <b>nahe am Zufall</b> — `
+    + `kein handelbares Signal. Random-Forest-Kennzahlen sind <b>in-sample</b> und keine Prognosegüte. `
+    + `Alle Befunde belegen <b>Zusammenhänge, keine Kausalität</b>. Effekte sind teils statistisch signifikant, `
+    + `ökonomisch jedoch klein.`;
 }
 
 /* =================== NAVIGATION + INIT =================== */

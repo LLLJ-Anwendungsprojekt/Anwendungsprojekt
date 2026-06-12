@@ -284,13 +284,21 @@
     <section class="section" id="synthesis">
       <div class="section-header">
         <h1>Synthese: Wer führt wen?</h1>
-        <p>Die vier Verfahren beantworten dieselbe gerichtete Frage aus verschiedenen Perspektiven. Hier die gebündelte Evidenz.</p>
+        <p>Zuerst der Vergleich der vier Verfahren — was jedes beiträgt und warum sich die Kennzahlen unterscheiden — danach die modellunabhängigen Datenbefunde.</p>
       </div>
+
+      <!-- ① Antwort-Banner -->
+      <div class="verdict-banner" id="syn-banner"></div>
+
+      <!-- ② Algorithmen-Vergleich -->
+      <h2 class="syn-h2">Die vier Verfahren im Vergleich</h2>
+      <div class="syn-sub">Unterschiedliche Fragen, unterschiedliche Metriken — die Kennzahlen sind nicht direkt vergleichbar.</div>
+      <div class="method-row" id="syn-methods"></div>
 
       <div class="grid cols-1">
         <div class="card">
-          <h3>Richtungsevidenz aller Verfahren</h3>
-          <div class="card-sub">Richtung A: GPR → Aktien · Richtung B: Aktien → GPR</div>
+          <h3>Direkter Kennzahlen-Vergleich</h3>
+          <div class="card-sub">Heterogene Metriken — je Verfahren die aussagekräftigste Kennzahl</div>
           <table class="data" id="syn-table"></table>
         </div>
       </div>
@@ -298,21 +306,36 @@
       <div class="grid cols-2">
         <div class="card">
           <h3>AUC-Vergleich der Klassifikatoren</h3>
-          <div class="card-sub">Balken je Richtung · RF in-sample (hell schraffiert)</div>
+          <div class="card-sub">KNN (out-of-sample) vs. Random Forest (in-sample, hell schraffiert)</div>
           <div class="chart" id="syn-auc" style="height:340px"></div>
         </div>
         <div class="card">
-          <h3>Gesamtbild</h3>
-          <div class="card-sub">Interpretation der Befunde</div>
+          <h3>Warum die Verfahren auseinanderliegen</h3>
+          <div class="card-sub">Interpretation der Unterschiede</div>
           <div class="info" id="syn-verdict" style="margin-top:4px"></div>
         </div>
       </div>
 
-      <div class="grid cols-1">
+      <!-- ③ Datenbefunde -->
+      <h2 class="syn-h2">Was die Daten über die Welt sagen</h2>
+      <div class="syn-sub">Empirische Auswirkungen — unabhängig vom gewählten Modell</div>
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>Kernbefunde</h3>
+          <div class="info" id="syn-data" style="margin-top:4px"></div>
+        </div>
         <div class="card">
           <h3>Regime-Kontext (K-Means)</h3>
           <div class="card-sub">In welchen Marktzuständen treten die Effekte auf?</div>
           <div class="info" id="syn-regime" style="margin-top:4px"></div>
+        </div>
+      </div>
+
+      <!-- ④ Limitationen -->
+      <div class="grid cols-1">
+        <div class="card">
+          <h3>Einordnung &amp; Limitationen</h3>
+          <div class="info warn" id="syn-limits" style="margin-top:4px"></div>
         </div>
       </div>
     </section>
