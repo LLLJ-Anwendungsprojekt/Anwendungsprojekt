@@ -44,6 +44,16 @@ deshalb NICHT verifizieren konntest. Erfinde keine Ergebnisse.
 
 ## 1. Forschungsfrage, Daten & Aufbau
 - Sind Fragestellung, Hypothesen und gewählte Methoden schlüssig verbunden?
+- **Werden ALLE Fragestellungen beantwortet?** Wenn mehrere oder bidirektionale
+  Fragen gestellt sind (z. B. Richtung A: X → Y UND Richtung B: Y → X), muss am
+  Ende JEDE explizit und belegt beantwortet werden — nicht nur implizit gestreift
+  oder eine still fallen gelassen. Prüfe, ob die in der Einleitung gestellten
+  Fragen und die im Fazit gegebenen Antworten deckungsgleich sind.
+- **Korrekte Datenbeschreibung**: Werden die Daten (Variablen, Einheiten,
+  Indizes/Gruppen, Zeitraum, Granularität, Zielvariablen) im Text vollständig und
+  FACHLICH korrekt beschrieben — und deckt sich diese Beschreibung mit den
+  tatsächlichen Dateien (keine falsch erklärten Spalten, keine erfundenen
+  Variablen, keine vertauschten Definitionen)?
 - Datenherkunft, Zeitraum, Stichprobengröße, Filter/Bereinigung dokumentiert?
 - Gibt es eine reproduzierbare Datenpipeline? Sind Pfade portabel oder
   hartcodiert? Sind Zufallsseeds gesetzt?
@@ -67,6 +77,11 @@ deshalb NICHT verifizieren konntest. Erfinde keine Ergebnisse.
   Zielvariable bzw. das, woraus sie abgeleitet ist?
 
 ## 3. Modellierung & Bewertung
+- **Korrekte Algorithmusbeschreibung**: Wird jedes Verfahren im Text fachlich
+  richtig erklärt (Funktionsweise, Annahmen, Eignung für die Aufgabe) — und
+  entspricht diese Beschreibung dem, was der Code tatsächlich tut (z. B. Scaler,
+  Anzahl Cluster k, Distanzmetrik, Split-Strategie, Zielvariable)? Keine
+  Lehrbuch-Beschreibung, die von der konkreten Implementierung abweicht.
 - Passen Metriken zur Aufgabe (z. B. AUC/F1 bei unbalancierten Klassen statt
   nur Accuracy)? Wird gegen eine **Baseline** (z. B. Mehrheitsklasse) verglichen?
 - Wird Hyperparameter-Tuning durchgeführt — und wenn ein Grid definiert ist,
@@ -108,13 +123,38 @@ deshalb NICHT verifizieren konntest. Erfinde keine Ergebnisse.
   Abhängigkeiten, kleine Stichprobe), oder fehlen sie?
 - **Konvergenz/Triangulation**: Werden Ergebnisse mehrerer Methoden sinnvoll
   zusammengeführt, oder unverbunden nebeneinander gestellt?
-- **Sprache/Struktur**: Roter Faden, Nachvollziehbarkeit, saubere Definitionen,
-  korrekte Fachbegriffe, Abbildungs-/Tabellenbezüge.
+- **Roter Faden**: Trägt ein durchgehender Argumentationsfaden von den
+  Fragestellungen über Daten → Methoden → Ergebnisse → Synthese bis zur
+  expliziten Antwort auf jede Frage? Motiviert jedes Kapitel das nächste, oder
+  stehen Teile (Verfahren, Plots) zusammenhanglos nebeneinander? Wird am Ende der
+  Bogen zurück zur Einleitung geschlossen?
+- **Sprache/Struktur**: Nachvollziehbarkeit, saubere Definitionen, korrekte
+  Fachbegriffe, Abbildungs-/Tabellenbezüge.
+
+## 7. Code-Beispiele im Text (Auswahl & Erläuterung)
+- **Relevanz/Auswahl**: Sind die abgedruckten Code-Ausschnitte die WICHTIGSTEN,
+  repräsentativen Stellen — der Kern jeder Methode (Train/Test-Split, Pipeline,
+  Modell-Fit, Bewertung, statistischer Test) — und nicht beliebige oder triviale
+  Schnipsel (Imports, Plot-Kosmetik, Pfad-Konstanten)?
+- **Korrektheit der Erläuterung**: Beschreibt der Begleittext exakt, was der
+  gezeigte Code tut? Keine Fehl- oder Überinterpretation eines Snippets, keine
+  Diskrepanz zwischen Beschriftung/Kommentar und tatsächlicher Operation.
+- **Treue zum Repo**: Stimmt der abgedruckte Code mit der ausgeführten Version im
+  Repo überein (kein geschöntes, gekürztes oder veraltetes Snippet, das andere
+  Ergebnisse liefern würde als die berichteten)?
+- **Vollständigkeit fürs Verständnis**: Reichen die gezeigten Stellen, um Methode
+  und Ergebnis nachzuvollziehen? Fehlt eine kritische Stelle (wo wird geteilt, wo
+  gefittet, wo bewertet?), gerade dort, wo Leakage oder Fehler säßen?
+- **Lesbarkeit**: Sind die Snippets so gekürzt/kommentiert, dass sie dem
+  Verständnis dienen — statt seitenlange Roh-Dumps, die niemand liest?
 
 # Ausgabeformat
 
 ## A. Executive Summary (max. 8 Sätze)
-Gesamturteil, die 3 gravierendsten Punkte, das größte methodische Risiko.
+Gesamturteil, die 3 gravierendsten Punkte, das größte methodische Risiko. Nenne
+außerdem explizit: (a) Werden beide/alle Fragestellungen klar beantwortet? (b)
+Trägt der rote Faden von der Frage bis zum Fazit? (c) Sind Daten und Algorithmen
+korrekt beschrieben und durch die wichtigsten Code-Beispiele belegt?
 
 ## B. Befundtabelle
 | # | Ebene (Methodik/Code/Argumentation) | Schweregrad (FEHLER/RISIKO/VERBESSERUNG) | Befund | Beleg (Datei:Zeile / Zahl / Zitat) | Empfehlung |
@@ -122,7 +162,9 @@ Gesamturteil, die 3 gravierendsten Punkte, das größte methodische Risiko.
 ## C. Detailanalyse je Verfahren/Kapitel
 Pro Methode: Aufbau (kurz) -> Was ist korrekt -> Was ist falsch/riskant ->
 konkrete Code-/Formulierungsbelege -> wie es richtig wäre (mit
-Mini-Code-Skizze, wo hilfreich).
+Mini-Code-Skizze, wo hilfreich). Beurteile dabei je Verfahren auch: Ist die
+Beschreibung im Text fachlich korrekt und deckt sie sich mit dem Code? Ist das
+abgedruckte Code-Beispiel die wichtigste Stelle und richtig erläutert?
 
 ## D. Argumentations-Review
 Separate Bewertung der Darstellung: Wo wird über-/unterinterpretiert, wo fehlt
