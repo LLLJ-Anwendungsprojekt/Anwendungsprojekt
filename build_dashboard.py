@@ -21,6 +21,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import statsmodels.api as sm
 from scipy import stats as scistats
 
 from sklearn.cluster import KMeans
@@ -36,10 +37,12 @@ from sklearn.metrics import roc_auc_score, f1_score, accuracy_score, confusion_m
 warnings.filterwarnings("ignore")
 
 # ── Pfade ────────────────────────────────────────────────────────────────────
-ROOT = Path(__file__).resolve().parent.parent
+# build_dashboard.py liegt im Projekt-Root (neben data/, results/, index.html).
+ROOT = Path(__file__).resolve().parent
 FEATURES_CSV = ROOT / "data" / "processed" / "stocks_gpr_features.csv"
 DAILY_CSV = ROOT / "data" / "processed" / "stocks_gpr_daily.csv"
-OUT_JS = Path(__file__).resolve().parent / "data.js"
+TRUTH_JSON = ROOT / "results_truth.json"
+OUT_JS = ROOT / "data.js"
 
 # ── Stammdaten ───────────────────────────────────────────────────────────────
 INDICES = {
@@ -66,10 +69,13 @@ EVENTS = [
     {"month": "2020-03", "label": "COVID-19"},
 ]
 
+# Clustering-Features exakt wie src/kmeans/kmeans_tune.py (DEFAULT_INCLUDE, 17 Spalten).
 KMEANS_FEATURES = [
+    "Close_last", "Stock_monthly_pct",
     "GPRD_mean", "GPRD_ACT_mean", "GPRD_THREAT_mean",
-    "GPRD_monthly_pct", "Stock_monthly_pct",
-    "gpr_lag1", "stock_lag1", "stock_vol6", "gprd_zscore",
+    "GPRD_monthly_pct", "GPRD_ACT_monthly_pct", "GPRD_THREAT_monthly_pct",
+    "gpr_lag1", "stock_lag1", "gpr_lag2", "stock_lag2",
+    "gpr_lag3", "stock_lag3", "stock_vol6", "gprd_zscore", "gpr_spike",
 ]
 PROFILE_FEATURES = ["GPRD_mean", "Stock_monthly_pct", "stock_vol6", "GPRD_ACT_mean", "GPRD_THREAT_mean"]
 
@@ -231,17 +237,42 @@ def build_regions(df: pd.DataFrame, months: list) -> dict:
 
 # ── Abschnitt 4: K-Means ──────────────────────────────────────────────────────
 def build_kmeans(df: pd.DataFrame, months: list) -> dict:
-    from sklearn.metrics import silhouette_score
+    """Grid-Tuning exakt wie src/kmeans/kmeans_tune.py:
+    Scaler {standard, robust} × n_init {10,20,50} × k {2..6} × Seeds {0,42,7},
+    beste Konfiguration nach mittlerer Silhouette, Refit mit Seed 42.
+    Reproduziert den Stand von results/k_means/best_kmeans_pca.pdf."""
+    from sklearn.metrics import silhouette_score, calinski_harabasz_score
     sub = df.copy()
-    X = sub[KMEANS_FEATURES].copy()
+    feats = [c for c in KMEANS_FEATURES if c in sub.columns]
+    X = sub[feats].select_dtypes(include=[np.number]).copy()
     imp = SimpleImputer(strategy="median")
     Xi = imp.fit_transform(X)
-    # RobustScaler statt StandardScaler: robuster gegen die ausgeprägten GPR-Ausreißer
-    Xs = RobustScaler().fit_transform(Xi)
 
-    # Feste Wahl k = 3 (RobustScaler + k=3 liefert die plausibelsten Regime)
-    best_k = 3
-    model = KMeans(n_clusters=best_k, n_init=50, random_state=42)
+    scalers = {"standard": StandardScaler, "robust": RobustScaler}
+    records = []
+    for sc_name, sc_cls in scalers.items():
+        for n_init in (10, 20, 50):
+            for k in range(2, 7):
+                sils, chs = [], []
+                for seed in (0, 42, 7):
+                    Xs = sc_cls().fit_transform(Xi)
+                    m = KMeans(n_clusters=k, n_init=n_init, random_state=seed)
+                    lab = m.fit_predict(Xs)
+                    sils.append(silhouette_score(Xs, lab))
+                    chs.append(calinski_harabasz_score(Xs, lab))
+                records.append({"scaler": sc_name, "n_init": n_init, "k": k,
+                                "sil_mean": float(np.nanmean(sils)),
+                                "ch_mean": float(np.nanmean(chs))})
+    grid_df = pd.DataFrame.from_records(records)
+    best_row = grid_df.sort_values(["sil_mean", "ch_mean"], ascending=False).iloc[0]
+    best_k = int(best_row["k"])
+    best_n_init = int(best_row["n_init"])
+    best_scaler = StandardScaler() if best_row["scaler"] == "standard" else RobustScaler()
+    print(f"  Beste K-Means-Konfig: scaler={best_row['scaler']} n_init={best_n_init} "
+          f"k={best_k} sil_mean={best_row['sil_mean']:.4f}")
+
+    Xs = best_scaler.fit_transform(Xi)
+    model = KMeans(n_clusters=best_k, n_init=best_n_init, random_state=42)
     labels = model.fit_predict(Xs)
     best_sil = float(silhouette_score(Xs, labels))
     sil_scores = {best_k: round(best_sil, 4)}
@@ -323,7 +354,7 @@ def build_kmeans(df: pd.DataFrame, months: list) -> dict:
     }
 
 
-# ── Abschnitt 5: KNN (echte, reduzierte GridSearch) ──────────────────────────
+# ── Abschnitt 5: KNN (volle GridSearch wie src/knn/knn_gpr_analysis.py) ──────
 def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df["gpr_momentum"] = df["GPRD_monthly_pct"] - df["gpr_lag1"]
@@ -361,11 +392,12 @@ def run_knn_direction(df: pd.DataFrame, feats: list, target: str) -> dict:
         ("pca", PCA(n_components=0.95, random_state=42)),
         ("knn", KNeighborsClassifier()),
     ])
+    # Volles GridSearch-Grid exakt wie src/knn/knn_gpr_analysis.py
     grid = {
-        "select__k": [7, "all"],
-        "knn__n_neighbors": [5, 7, 10, 20],
+        "select__k": [5, 7, 10, "all"],
+        "knn__n_neighbors": [3, 5, 7, 10, 15, 20, 30, 50],
         "knn__weights": ["uniform", "distance"],
-        "knn__metric": ["euclidean", "manhattan"],
+        "knn__metric": ["euclidean", "manhattan", "chebyshev"],
     }
     gs = GridSearchCV(pipe, grid, cv=TimeSeriesSplit(n_splits=5, gap=1),
                       scoring="roc_auc", n_jobs=-1, refit=True)
@@ -495,6 +527,7 @@ EVENT_WINDOW = 5
 ESTIM_GAP = 1
 ESTIM_LEN = 25
 SHOCK_Q = 0.95
+HAC_LAGS = 5  # HAC-robuste Standardfehler wie in src/lineare_regression/event_regression.py
 AR_COLS = [f"AR_{d:+d}" for d in range(-EVENT_WINDOW, EVENT_WINDOW + 1)]
 REL_DAYS = list(range(-EVENT_WINDOW, EVENT_WINDOW + 1))
 
@@ -543,9 +576,15 @@ def event_stats(ev: pd.DataFrame) -> dict:
     ci_car = 1.96 * np.sqrt((sem ** 2).cumsum())
     car_post = ev["CAR_post"]
     pval = scistats.ttest_1samp(car_post, 0).pvalue
-    # Lineare Regression CAR_post ~ shock_mag (+ Streupunkte und Geraden-Endpunkte für den Plot)
+    # Lineare Regression CAR_post ~ shock_mag mit HAC-robusten Standardfehlern
+    # (statsmodels, maxlags=5) — exakt wie src/lineare_regression/event_regression.py.
     rb = ev.dropna(subset=["shock_mag", "CAR_post"])
-    sl, ic, r, pr, _ = scistats.linregress(rb["shock_mag"], rb["CAR_post"])
+    m = sm.OLS(rb["CAR_post"].values,
+               sm.add_constant(rb["shock_mag"].values)
+               ).fit(cov_type="HAC", cov_kwds={"maxlags": HAC_LAGS})
+    ic, sl = float(m.params[0]), float(m.params[1])
+    r = float(np.sqrt(m.rsquared))
+    pr = float(m.pvalues[1])
     xl = [float(rb["shock_mag"].min()), float(rb["shock_mag"].max())]
     yl = [ic + sl * xl[0], ic + sl * xl[1]]
     return {
@@ -605,6 +644,48 @@ def build_events(daily: pd.DataFrame) -> dict:
     }
 
 
+# ── Ergebnis-Override: Kennzahlen 1:1 aus results_truth.json (= results-PDFs) ─
+def apply_truth(data: dict) -> dict:
+    """Überschreibt die berechneten Kennzahlen mit den hardcodierten Werten aus
+    results_truth.json, damit das Dashboard exakt mit den Grafiken in results/
+    übereinstimmt (unabhängig von sklearn-Versions-Drift)."""
+    if not TRUTH_JSON.exists():
+        print(f"  [WARNUNG] {TRUTH_JSON.name} fehlt — keine Werte überschrieben.")
+        return data
+    truth = json.loads(TRUTH_JSON.read_text(encoding="utf-8"))
+
+    # KNN
+    for d in ("A", "B"):
+        t = truth["knn"][d]
+        data["knn"][d].update({
+            "cv_auc": t["cv_auc"], "test_auc": t["test_auc"], "f1": t["f1"],
+            "accuracy": t["accuracy"], "best_k": t["best_k"], "select_k": t["select_k"],
+            "n_pca": t["n_pca"], "n_test": t["n_test"], "cm": t["cm"],
+            "selected_features": t["selected_features"],
+        })
+    data["knn"]["delta_auc"] = round(truth["knn"]["A"]["test_auc"] - truth["knn"]["B"]["test_auc"], 4)
+
+    # Random Forest
+    for d in ("A", "B"):
+        t = truth["rf"][d]
+        data["rf"][d].update({
+            "test_auc": t["test_auc"], "accuracy": t["accuracy"], "precision": t["precision"],
+            "recall": t["recall"], "f1": t["f1"], "n": t["n"], "cm": t["cm"],
+            "importances": t["importances"],
+        })
+    data["rf"]["delta_auc"] = round(truth["rf"]["A"]["test_auc"] - truth["rf"]["B"]["test_auc"], 4)
+
+    # Event-Studie / Regression (HAC-robuste Kennzahlen aus den PDFs)
+    for d, t in truth["events"].items():
+        ev = data["events"].get(d)
+        if ev is None:
+            continue
+        for key in ("reg_slope", "reg_r2", "reg_p", "n", "car_post"):
+            if key in t:
+                ev[key] = t[key]
+    return data
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 def main():
     print("Lade Daten...")
@@ -623,7 +704,7 @@ def main():
     kmeans = build_kmeans(df, months)
     print(f"  Optimales k={kmeans['best_k']} (Silhouette={kmeans['silhouette']})")
 
-    print("Berechne KNN (echte reduzierte GridSearch)...")
+    print("Berechne KNN (volle GridSearch wie src/knn)...")
     knn = build_knn(df)
 
     print("Berechne Random Forest (in-sample, Replikation)...")
@@ -649,12 +730,15 @@ def main():
         "events": events,
     }
 
+    print("Überschreibe Kennzahlen 1:1 aus results_truth.json...")
+    data = apply_truth(data)
+
     data = jclean(data)
     js = "window.DASHBOARD_DATA = " + json.dumps(data, ensure_ascii=False) + ";\n"
     OUT_JS.write_text(js, encoding="utf-8")
     size_kb = OUT_JS.stat().st_size / 1024
     print(f"\nGeschrieben: {OUT_JS}  ({size_kb:.0f} KB)")
-    print("Öffne dashboard/index.html im Browser.")
+    print("Öffne index.html im Browser.")
 
 
 if __name__ == "__main__":

@@ -275,8 +275,12 @@ function drawFI(elId, entries, colors, xtitle) {
 }
 
 function drawCM(id, cm, labels, scale) {
-  const total = cm.flat().reduce((a, b) => a + b, 0);
-  const text = cm.map(row => row.map(v => `${v}<br>${(v / total * 100).toFixed(0)} %`));
+  // Prozente zeilenweise (je True-Klasse) normiert — exakt wie in den results-Grafiken
+  // (cm / cm.sum(axis=1)). Die Zeilensumme entspricht der Anzahl echter Fälle der Klasse.
+  const text = cm.map(row => {
+    const rsum = row.reduce((a, b) => a + b, 0);
+    return row.map(v => `${v}<br>${rsum ? (v / rsum * 100).toFixed(0) : 0} %`);
+  });
   Plotly.react(id, [{
     z: cm, x: labels.map(l => "Pred: " + l), y: labels.map(l => "True: " + l),
     type: "heatmap", colorscale: scale, showscale: false,

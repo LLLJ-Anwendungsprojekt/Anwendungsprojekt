@@ -1,0 +1,84 @@
+{
+  "_comment": "Hardcodierte Ergebnis-Werte, 1:1 aus den Grafiken in results/ abgelesen. Diese Werte sind die verbindliche Wahrheit fuer das Dashboard und ueberschreiben jede Neuberechnung. Quelle je Feld in '_source'.",
+  "_source": {
+    "knn": "results/knn/knn_roc_curves.png, knn_confusion_matrices.png, knn_feature_importance.png",
+    "rf": "results/random_forest/rf_roc_curve_*_full_period.pdf, rf_confusion_matrix_*_full_period.pdf, rf_feature_importance_*_full_period.pdf",
+    "events": "results/lineare_regression/event_study_regression_B.pdf, event_study_act_vs_threat.pdf (HAC-robuste p-Werte)"
+  },
+
+  "knn": {
+    "A": {
+      "cv_auc": 0.590,
+      "test_auc": 0.595,
+      "f1": 0.352,
+      "accuracy": 0.542,
+      "best_k": 10,
+      "select_k": 5,
+      "n_pca": 4,
+      "n_test": 602,
+      "cm": [[251, 129], [147, 75]],
+      "selected_features": ["GPRD_monthly_pct", "gpr_act_x_zscore", "gpr_momentum2", "gpr_lag1", "gpr_lag2"]
+    },
+    "B": {
+      "cv_auc": 0.576,
+      "test_auc": 0.633,
+      "f1": 0.595,
+      "accuracy": 0.605,
+      "best_k": 30,
+      "select_k": 5,
+      "n_pca": 5,
+      "n_test": 602,
+      "cm": [[189, 123], [115, 175]],
+      "selected_features": ["vol_x_zscore", "stock_down_lag1", "stock_x_vol", "stock_cumchange_3", "gpr_x_stock"]
+    }
+  },
+
+  "rf": {
+    "A": {
+      "test_auc": 0.824,
+      "accuracy": 0.7629,
+      "precision": 0.7114,
+      "recall": 0.7309,
+      "f1": 0.7210,
+      "n": 2872,
+      "cm": [[1311, 357], [324, 880]],
+      "importances": {
+        "GPR_zscore": 0.205,
+        "gprd_ret": 0.186,
+        "gprd_threat_ret": 0.142,
+        "gpr_lag1": 0.116,
+        "gpr_lag3": 0.108,
+        "gpr_lag2": 0.108,
+        "gprd_act_ret": 0.100,
+        "Crisis_dummy": 0.021,
+        "Region_encoded": 0.009,
+        "GPR_spike": 0.003
+      }
+    },
+    "B": {
+      "test_auc": 0.717,
+      "accuracy": 0.6601,
+      "precision": 0.6335,
+      "recall": 0.6838,
+      "f1": 0.6577,
+      "n": 2848,
+      "cm": [[950, 538], [430, 930]],
+      "importances": {
+        "stock_ret_lag3": 0.254,
+        "stock_ret_lag2": 0.250,
+        "stock_ret_lag1": 0.149,
+        "stock_ret": 0.137,
+        "stock_vol6": 0.115,
+        "Region_encoded": 0.041,
+        "GPR_spike": 0.034,
+        "Crisis_dummy": 0.021
+      }
+    }
+  },
+
+  "events": {
+    "B":      { "reg_slope": -2.9678, "reg_r2": 0.0012, "reg_p": 0.0446, "n": 3151 },
+    "ACT":    { "reg_slope": -0.0005, "reg_r2": 0.0006, "reg_p": 0.161,  "n": 3198, "car_post": 0.202 },
+    "THREAT": { "reg_slope": -0.0043, "reg_r2": 0.0035, "reg_p": 0.000799, "n": 3182, "car_post": -0.062 }
+  }
+}
