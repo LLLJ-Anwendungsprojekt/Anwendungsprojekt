@@ -496,8 +496,8 @@ function renderSynthesis() {
       label: `Silhouette ${km.silhouette}` },
     { name: "Random Forest", type: "in-sample", metric: rf.A.test_auc.toFixed(2),
       label: "AUC · in-sample" },
-    { name: "KNN", type: "out-of-sample", metric: knn.A.test_auc.toFixed(2),
-      label: "AUC · Holdout" },
+    { name: "KNN", type: "out-of-sample", metric: knn.B.test_auc.toFixed(3),
+      label: "AUC · Richtung B · Holdout" },
   ];
   document.getElementById("syn-methods").innerHTML = methods.map(m =>
     `<div class="method-card">`
