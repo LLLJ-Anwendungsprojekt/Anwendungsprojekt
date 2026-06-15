@@ -32,7 +32,7 @@
   <!-- ===================== MAIN ===================== -->
   <main class="main">
 
-    <!-- 1. ÜBERSICHT -->
+    <!-- ÜBERSICHT -->
     <section class="section active" id="overview">
       <div class="section-header">
         <h1>Übersicht</h1>
@@ -178,13 +178,13 @@
     <section class="section" id="rf">
       <div class="section-header">
         <h1>Random Forest <span class="badge muted">in-sample</span></h1>
-        <p>Nichtlineare Klassifikation (500 Bäume, Tiefe 5, klassengewichtet) auf denselben Zielvariablen. Hier <b>deskriptiv in-sample</b> trainiert und ausgewertet — die Kennzahlen beschreiben die Trainingsdaten und sind <b>nicht</b> als Prognosegüte interpretierbar.</p>
+        <p>Nichtlineare Klassifikation (500 Bäume, Tiefe 5, klassengewichtet) auf denselben Zielvariablen. Hier <b>deskriptiv in-sample</b> trainiert und ausgewertet, die Kennzahlen beschreiben die Trainingsdaten und sind <b>nicht</b> als Prognosegüte interpretierbar.</p>
       </div>
 
       <div class="grid cols-1">
         <div class="card">
           <h3>Kennzahlen</h3>
-          <div class="card-sub">In-Sample (optimistisch verzerrt) — siehe Hinweis unten</div>
+          <div class="card-sub">In-Sample (optimistisch verzerrt), siehe Hinweis unten</div>
           <table class="data" id="rf-table"></table>
         </div>
       </div>
@@ -284,7 +284,7 @@
     <section class="section" id="synthesis">
       <div class="section-header">
         <h1>Synthese: Wer führt wen?</h1>
-        <p>Zuerst der Vergleich der vier Verfahren — was jedes beiträgt und warum sich die Kennzahlen unterscheiden — danach die modellunabhängigen Datenbefunde.</p>
+        <p>Zuerst der Vergleich der vier Verfahren, was jedes beiträgt und warum sich die Kennzahlen unterscheiden, danach die modellunabhängigen Datenbefunde.</p>
       </div>
 
       <!-- ① Antwort-Banner -->
@@ -292,13 +292,13 @@
 
       <!-- ② Algorithmen-Vergleich -->
       <h2 class="syn-h2">Die vier Verfahren im Vergleich</h2>
-      <div class="syn-sub">Unterschiedliche Fragen, unterschiedliche Metriken — die Kennzahlen sind nicht direkt vergleichbar.</div>
+      <div class="syn-sub">Unterschiedliche Fragen, unterschiedliche Metriken, die Kennzahlen sind nicht direkt vergleichbar.</div>
       <div class="method-row" id="syn-methods"></div>
 
       <div class="grid cols-1">
         <div class="card">
           <h3>Direkter Kennzahlen-Vergleich</h3>
-          <div class="card-sub">Heterogene Metriken — je Verfahren die aussagekräftigste Kennzahl</div>
+          <div class="card-sub">Heterogene Metriken, je Verfahren die aussagekräftigste Kennzahl</div>
           <table class="data" id="syn-table"></table>
         </div>
       </div>
@@ -318,7 +318,7 @@
 
       <!-- ③ Datenbefunde -->
       <h2 class="syn-h2">Was die Daten über die Welt sagen</h2>
-      <div class="syn-sub">Empirische Auswirkungen — unabhängig vom gewählten Modell</div>
+      <div class="syn-sub">Empirische Auswirkungen, unabhängig vom gewählten Modell</div>
       <div class="grid cols-2">
         <div class="card">
           <h3>Kernbefunde</h3>
