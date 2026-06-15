@@ -25,7 +25,7 @@ DATA = "data/processed/stocks_gpr_daily.csv"
 KEEP = ["000001.SS", "399001.SZ", "GDAXI", "GSPTSE", "HSI", "IXIC",
         "KS11", "N100", "N225", "NYA", "SSMI", "TWII"]
 START, END   = "2000-01-01", "2021-05-31"
-OUTPUT_DIR   = "results"
+OUTPUT_DIR   = "results/lineare_regression"
 EVENT_WINDOW = 5
 ESTIM_GAP    = 1
 ESTIM_LEN    = 25
