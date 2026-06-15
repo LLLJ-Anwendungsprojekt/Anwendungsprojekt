@@ -477,7 +477,6 @@ function drawEventReg(dir) {
 function renderSynthesis() {
   const knn = D.knn, rf = D.rf, ev = D.events, km = D.kmeans, k = D.overview.kpis;
   const sig = p => p < 0.01 ? "***" : p < 0.05 ? "**" : p < 0.1 ? "*" : "n.s.";
-  const sigWord = p => p < 0.01 ? "hoch signifikant" : p < 0.05 ? "signifikant" : p < 0.1 ? "schwach signifikant" : "nicht signifikant";
 
   // ── ① Antwort-Banner ──────────────────────────────────────────────
   const dirWord = Math.abs(knn.delta_auc) < 0.005 ? "Keine Richtung dominiert klar"
@@ -492,7 +491,7 @@ function renderSynthesis() {
   const evBest = ev.A.p < ev.B.p ? ev.A : ev.B;        // signifikantere Richtung
   const methods = [
     { name: "Lineare Regression", type: "deskriptiv", metric: fmtPct(evBest.car_post),
-      label: `CAR_post (${sigWord(evBest.p)})` },
+      label: `CAR_post` },
     { name: "K-Means", type: "unüberwacht", metric: `${km.best_k} Regime`,
       label: `Silhouette ${km.silhouette}` },
     { name: "Random Forest", type: "in-sample", metric: rf.A.test_auc.toFixed(2),
