@@ -1,0 +1,21 @@
+#Python 3.14 
+# Setup:  python -m venv .venv  &&  .venv\Scripts\activate  &&  pip install -r requirements.txt
+
+# Data Processing
+pandas==3.0.2
+numpy==2.4.4
+scipy==1.17.1
+xlrd==2.0.1
+
+# Visualization
+matplotlib==3.10.8
+seaborn==0.13.2
+
+# Machine Learning
+scikit-learn==1.8.0
+statsmodels==0.14.6
+
+# Development & Notebooks
+pytest==8.4.2
+jupyter==1.1.1
+ipython==9.6.0
