@@ -490,26 +490,21 @@ function renderSynthesis() {
 
   // ── ② Verfahren-Vergleich (neutral, ohne Rangfolge) ────────────────
   const evBest = ev.A.p < ev.B.p ? ev.A : ev.B;        // signifikantere Richtung
-  const evDir = ev.A.p < ev.B.p ? "A" : "B";
   const methods = [
     { name: "Lineare Regression", type: "deskriptiv", metric: fmtPct(evBest.car_post),
-      label: `CAR_post · Richtung ${evDir} (${sigWord(evBest.p)})`,
-      take: "Gerichteter Effekt nachweisbar, aber ökonomisch klein (R² ≈ 0)." },
+      label: `CAR_post (${sigWord(evBest.p)})` },
     { name: "K-Means", type: "unüberwacht", metric: `${km.best_k} Regime`,
-      label: `Silhouette ${km.silhouette}`,
-      take: "Gut getrennte Regime: Hoch-GPR = schwache, volatile Märkte." },
+      label: `Silhouette ${km.silhouette}` },
     { name: "Random Forest", type: "in-sample", metric: rf.A.test_auc.toFixed(2),
-      label: "AUC (Richtung A) · in-sample",
-      take: "Hohe AUC, aber in-sample — beschreibt nur die Trainingsdaten." },
+      label: "AUC · in-sample" },
     { name: "KNN", type: "out-of-sample", metric: knn.A.test_auc.toFixed(2),
-      label: "AUC (Richtung A) · Holdout",
-      take: "Sauber out-of-sample bewertet; Signal knapp über dem Zufall." },
+      label: "AUC · Holdout" },
   ];
   document.getElementById("syn-methods").innerHTML = methods.map(m =>
     `<div class="method-card">`
     + `<div class="m-name">${m.name}</div><div class="m-type">${m.type}</div>`
     + `<div class="m-metric">${m.metric}</div><div class="m-metric-label">${m.label}</div>`
-    + `<div class="m-take">${m.take}</div></div>`
+    + `</div>`
   ).join("");
 
   // Kennzahlen-Vergleichstabelle (alle 4, heterogene Metriken)
